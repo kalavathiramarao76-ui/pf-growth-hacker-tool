@@ -23,6 +23,7 @@ const ContentAnalyzerPage = () => {
   const [alternativeFormats, setAlternativeFormats] = useState(null);
   const [realTimeAnalysis, setRealTimeAnalysis] = useState(null);
   const [user, setUser] = useState(null);
+  const [userEngagementMetrics, setUserEngagementMetrics] = useState(null);
 
   useEffect(() => {
     const storedContent = LocalStorage.get('content');
@@ -78,48 +79,40 @@ const ContentAnalyzerPage = () => {
       } else {
         LocalStorage.set('analysisHistory', newAnalysisHistory);
       }
-      const alternativeFormatsResponse = await fetch('/api/suggest-alternative-formats', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content, contentType }),
-      });
-      const alternativeFormatsData = await alternativeFormatsResponse.json();
-      setAlternativeFormats(alternativeFormatsData);
+      await fetchUserEngagementMetrics();
     } catch (error) {
       console.error(error);
     }
   };
 
-  const handleTrackEngagement = async () => {
-    try {
-      const response = await fetch('/api/track-engagement', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      const data = await response.json();
-      setEngagement(data);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const handleLoadAnalysisHistory = async () => {
+  const fetchUserEngagementMetrics = async () => {
     try {
       if (user) {
         const userId = user.id;
-        const analysisHistoryResponse = await fetch('/api/load-analysis-history', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId }),
-        });
-        const analysisHistoryData = await analysisHistoryResponse.json();
-        if (analysisHistoryData.success) {
-          setAnalysisHistory(analysisHistoryData.analysisHistory);
-          LocalStorage.set('analysisHistory', analysisHistoryData.analysisHistory);
-        }
+        const response = await fetch(`/api/user-engagement-metrics/${userId}`);
+        const data = await response.json();
+        setUserEngagementMetrics(data);
+        suggestAlternativeFormats(data);
       }
     } catch (error) {
       console.error(error);
+    }
+  };
+
+  const suggestAlternativeFormats = (engagementMetrics: any) => {
+    if (engagementMetrics) {
+      const engagementScores = engagementMetrics.scores;
+      const suggestedFormats: string[] = [];
+      if (engagementScores.video > engagementScores.text) {
+        suggestedFormats.push('video');
+      }
+      if (engagementScores.image > engagementScores.text) {
+        suggestedFormats.push('image');
+      }
+      if (engagementScores.audio > engagementScores.text) {
+        suggestedFormats.push('audio');
+      }
+      setAlternativeFormats(suggestedFormats);
     }
   };
 
@@ -132,7 +125,7 @@ const ContentAnalyzerPage = () => {
         contentType={contentType}
         image={image}
         video={video}
-        handleAnalyze={handleAnalyze}
+        onAnalyze={handleAnalyze}
       />
       {analysis && (
         <OptimizationSuggestions
@@ -144,25 +137,7 @@ const ContentAnalyzerPage = () => {
         <EngagementTracker engagement={engagement} />
       )}
       {alternativeFormats && (
-        <AlternativeFormats alternativeFormats={alternativeFormats} />
-      )}
-      {user && (
-        <button onClick={handleLoadAnalysisHistory}>Load Analysis History</button>
-      )}
-      {analysisHistory.length > 0 && (
-        <div>
-          <h2>Analysis History</h2>
-          <ul>
-            {analysisHistory.map((analysis, index) => (
-              <li key={index}>
-                <p>Content: {analysis.content}</p>
-                <p>Content Type: {analysis.contentType}</p>
-                <p>Analysis: {analysis.analysis}</p>
-                <p>Suggestions: {analysis.suggestions}</p>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <AlternativeFormats formats={alternativeFormats} />
       )}
     </div>
   );

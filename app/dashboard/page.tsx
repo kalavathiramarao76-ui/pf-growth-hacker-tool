@@ -80,58 +80,50 @@ export default function DashboardPage() {
   const handleNextTutorialStep = () => {
     setTutorialStep(tutorialStep + 1);
     if (tutorialStep === 3) {
-      setShowTutorial(false);
     }
   };
 
-  const handleSkipTutorial = () => {
-    setShowTutorial(false);
-  };
-
   return (
-    <div className="dashboard-container">
-      {showTutorial && (
-        <div className="tutorial-overlay">
-          {tutorialStep === 1 && (
-            <div className="tutorial-step">
-              <h2>Welcome to the AI-Powered Content Optimizer!</h2>
-              <p>This is your dashboard, where you can access all the features of the application.</p>
-              <button onClick={handleNextTutorialStep}>Next</button>
-            </div>
-          )}
-          {tutorialStep === 2 && (
-            <div className="tutorial-step">
-              <h2>Navigation Menu</h2>
-              <p>Use the navigation menu on the left to access different sections of the application.</p>
-              <button onClick={handleNextTutorialStep}>Next</button>
-              <button onClick={handleSkipTutorial}>Skip Tutorial</button>
-            </div>
-          )}
-          {tutorialStep === 3 && (
-            <div className="tutorial-step">
-              <h2>Getting Started</h2>
-              <p>Click on the "Create Content" button to start creating your first piece of content.</p>
-              <button onClick={handleSkipTutorial}>Finish Tutorial</button>
-            </div>
-          )}
-        </div>
-      )}
-      <DashboardHeader user={user} />
-      <div className="dashboard-content">
-        <div className="widget-container">
+    <div>
+      <DashboardHeader />
+      <div className="container mx-auto p-4 pt-6 md:p-6 lg:p-12 xl:p-24">
+        <div className="flex flex-wrap justify-center">
           {widgets.map((widget) => (
             <DashboardCard key={widget.id} title={widget.title} icon={widget.icon} onClick={widget.onClick} />
           ))}
-          <button className="add-widget-button" onClick={handleAddWidget}>
-            <AiOutlinePlus size={24} />
-            Add Widget
-          </button>
         </div>
-        <div className="settings-container">
-          <WidgetSettings widgets={widgets} onRemoveWidget={handleRemoveWidget} onReorderWidgets={handleReorderWidgets} />
+        <div className="mt-12 text-center">
+          <h2 className="text-3xl font-bold">Unlock the Full Potential of AI-Powered Content Optimizer</h2>
+          <p className="text-lg">Upgrade to our premium plan and get access to advanced features, priority support, and more.</p>
+          <div className="flex flex-wrap justify-center mt-6">
+            <div className="w-full lg:w-1/2 xl:w-1/3 p-6">
+              <h3 className="text-2xl font-bold">Premium Plan</h3>
+              <ul>
+                <li>Advanced analytics and insights</li>
+                <li>Priority support and dedicated account manager</li>
+                <li>Access to exclusive content and resources</li>
+              </ul>
+              <p className="text-lg font-bold">$29.99/month</p>
+              <button className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded" onClick={handleUpgradePlan}>
+                Upgrade Now
+              </button>
+            </div>
+            <div className="w-full lg:w-1/2 xl:w-1/3 p-6">
+              <h3 className="text-2xl font-bold">Benefits of Upgrading</h3>
+              <ul>
+                <li>Improve your content's performance and engagement</li>
+                <li>Get personalized support and guidance</li>
+                <li>Stay ahead of the competition with exclusive resources</li>
+              </ul>
+            </div>
+            <div className="w-full lg:w-1/2 xl:w-1/3 p-6">
+              <h3 className="text-2xl font-bold">What Our Users Say</h3>
+              <p className="text-lg">"AI-Powered Content Optimizer has been a game-changer for our business. The premium plan has given us the insights and support we need to take our content to the next level."</p>
+              <p className="text-lg">- John Doe, CEO of Example Company</p>
+            </div>
+          </div>
         </div>
       </div>
-      <NavigationMenu />
     </div>
   );
 }
