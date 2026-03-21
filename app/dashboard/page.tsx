@@ -22,6 +22,7 @@ export default function DashboardPage() {
   ]);
 
   const [subscription, setSubscription] = useState(null);
+  const [showTutorial, setShowTutorial] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -31,6 +32,11 @@ export default function DashboardPage() {
     const storedSubscription = localStorage.getItem('subscription');
     if (storedSubscription) {
       setSubscription(JSON.parse(storedSubscription));
+    }
+    const storedTutorial = localStorage.getItem('tutorial');
+    if (!storedTutorial) {
+      setShowTutorial(true);
+      localStorage.setItem('tutorial', 'true');
     }
   }, []);
 
@@ -76,30 +82,41 @@ export default function DashboardPage() {
     { id: 3, title: 'Content Calendar', icon: <FaRegCalendarAlt size={24} />, onClick: () => router.push('/content-calendar') },
     { id: 4, title: 'Settings', icon: <MdSettings size={24} />, onClick: () => router.push('/settings') },
     { id: 5, title: 'Upgrade to Premium', icon: <MdSettings size={24} />, onClick: () => router.push('/upgrade-plan') },
-    { id: 6, title: 'Content Suggestions', icon: <AiOutlinePlus size={24} />, onClick: () => console.log('Content suggestions clicked') },
-    { id: 7, title: 'Priority Support', icon: <MdSettings size={24} />, onClick: () => router.push('/priority-support'), availableFor: 'premium' },
-    { id: 8, title: 'Advanced Analytics', icon: <IoMdAnalytics size={24} />, onClick: () => router.push('/advanced-analytics'), availableFor: 'premium' },
   ];
 
-  const premiumWidgets = availableWidgets.filter((widget) => widget.availableFor === 'premium');
+  const handleSkipTutorial = () => {
+    setShowTutorial(false);
+  };
 
   return (
-    <div>
-      <DashboardHeader user={user} subscription={subscription} />
-      <NavigationMenu />
-      <div className="dashboard-container">
-        {widgets.map((widget) => (
-          <DashboardCard key={widget.id} title={widget.title} icon={widget.icon} onClick={widget.onClick} />
-        ))}
-        {subscription && subscription.plan === 'premium' && (
-          <div>
-            <h2>Premium Features</h2>
-            {premiumWidgets.map((widget) => (
-              <DashboardCard key={widget.id} title={widget.title} icon={widget.icon} onClick={widget.onClick} />
-            ))}
+    <div className="dashboard-container">
+      {showTutorial && (
+        <div className="tutorial-overlay">
+          <div className="tutorial-content">
+            <h2>Welcome to the AI-Powered Content Optimizer!</h2>
+            <p>This is a tutorial to help you get started with the platform.</p>
+            <ul>
+              <li>Step 1: Create content using the "Create Content" widget.</li>
+              <li>Step 2: View analytics using the "View Analytics" widget.</li>
+              <li>Step 3: Manage your content calendar using the "Content Calendar" widget.</li>
+              <li>Step 4: Upgrade to premium to unlock advanced features.</li>
+            </ul>
+            <button onClick={handleSkipTutorial}>Skip Tutorial</button>
           </div>
-        )}
-        <button onClick={handleAddWidget}>Add Widget</button>
+        </div>
+      )}
+      <DashboardHeader />
+      <div className="dashboard-body">
+        <div className="widget-grid">
+          {widgets.map((widget) => (
+            <DashboardCard key={widget.id} title={widget.title} icon={widget.icon} onClick={widget.onClick} />
+          ))}
+          <button className="add-widget-button" onClick={handleAddWidget}>
+            <AiOutlinePlus size={24} />
+            Add Widget
+          </button>
+        </div>
+        <NavigationMenu />
       </div>
     </div>
   );

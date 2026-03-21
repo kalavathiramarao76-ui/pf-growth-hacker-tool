@@ -84,36 +84,61 @@ const ContentCalendarPage = () => {
           meta={[
             {
               name: 'keywords',
-              content: 'content calendar, content planning, content organization'
+              content: 'content calendar, content planning, content organization, content strategy, ai-powered content, digital marketing, content optimization, seo, search engine optimization'
+            },
+            {
+              name: 'robots',
+              content: 'index, follow'
+            },
+            {
+              name: 'og:title',
+              content: 'AI-Powered Content Calendar | Plan and Organize Your Content'
+            },
+            {
+              name: 'og:description',
+              content: 'Discover the ultimate AI-powered content calendar to plan, organize, and optimize your content strategy. Get started today and boost your online presence!'
+            },
+            {
+              name: 'og:url',
+              content: pathname
+            },
+            {
+              name: 'og:image',
+              content: '/images/content-calendar.png'
+            },
+            {
+              name: 'twitter:card',
+              content: 'summary_large_image'
+            },
+            {
+              name: 'twitter:title',
+              content: 'AI-Powered Content Calendar | Plan and Organize Your Content'
+            },
+            {
+              name: 'twitter:description',
+              content: 'Discover the ultimate AI-powered content calendar to plan, organize, and optimize your content strategy. Get started today and boost your online presence!'
+            },
+            {
+              name: 'twitter:image',
+              content: '/images/content-calendar.png'
             }
           ]}
         />
-        <div className="content-calendar-container">
-          <div className="calendar-header">
-            <h2>Content Calendar</h2>
-            <button className="create-event-button" onClick={() => handleEventCreate({ id: Math.random().toString(), title: 'New Event', startDate: new Date(), endDate: new Date() })}>Create Event</button>
-          </div>
-          <div className="calendar-container">
-            <Calendar
-              events={events}
-              onDateChange={handleDateChange}
-              onEventCreate={handleEventCreate}
-              onEventDelete={handleEventDelete}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-              onDrop={handleDrop}
-              onEventMouseOver={handleMouseOver}
-              onEventMouseOut={handleMouseOut}
-            />
-          </div>
-          <div className="calendar-integrations">
-            <GoogleCalendar />
-            <OutlookCalendar />
-          </div>
-          {hoveredEvent && (
-            <Tooltip event={hoveredEvent} />
-          )}
-        </div>
+        <Calendar 
+          events={events} 
+          selectedDate={selectedDate} 
+          onDateChange={handleDateChange} 
+          onEventCreate={handleEventCreate} 
+          onEventDelete={handleEventDelete} 
+          onDragStart={handleDragStart} 
+          onDragEnd={handleDragEnd} 
+          onDrop={handleDrop} 
+          onMouseOver={handleMouseOver} 
+          onMouseOut={handleMouseOut}
+        />
+        <GoogleCalendar />
+        <OutlookCalendar />
+        <Tooltip />
       </Layout>
     </DndProvider>
   );

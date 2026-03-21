@@ -85,28 +85,25 @@ const ContentAnalyzerPage = () => {
     }
   };
 
-  const handleRealTimeAnalysis = async (content: string) => {
-    try {
-      const response = await fetch('/api/real-time-analysis', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content }),
-      });
-      const data = await response.json();
-      setRealTimeAnalysis(data);
-    } catch (error) {
-      console.error(error);
+  const handleSaveAnalysisHistory = () => {
+    LocalStorage.set('analysisHistory', analysisHistory);
+  };
+
+  const handleLoadAnalysisHistory = () => {
+    const storedAnalysisHistory = LocalStorage.get('analysisHistory');
+    if (storedAnalysisHistory) {
+      setAnalysisHistory(storedAnalysisHistory);
     }
   };
 
-  const handleContentChange = (event: any) => {
-    setContent(event.target.value);
-    handleRealTimeAnalysis(event.target.value);
+  const handleClearAnalysisHistory = () => {
+    setAnalysisHistory([]);
+    LocalStorage.remove('analysisHistory');
   };
 
   return (
     <div>
-      <SEO title="Content Analyzer" />
+      <SEO title="AI-Powered Content Optimizer" />
       <PageHeader title="Content Analyzer" />
       <ContentAnalyzerForm
         content={content}
@@ -114,18 +111,35 @@ const ContentAnalyzerPage = () => {
         image={image}
         video={video}
         onAnalyze={handleAnalyze}
-        onContentChange={handleContentChange}
+        onTrackEngagement={handleTrackEngagement}
       />
-      {realTimeAnalysis && (
-        <OptimizationSuggestions suggestions={realTimeAnalysis.suggestions} />
-      )}
       {analysis && (
-        <OptimizationSuggestions suggestions={suggestions} />
+        <OptimizationSuggestions
+          analysis={analysis}
+          suggestions={suggestions}
+        />
       )}
-      <EngagementTracker engagement={engagement} onTrackEngagement={handleTrackEngagement} />
+      {engagement && (
+        <EngagementTracker engagement={engagement} />
+      )}
       {alternativeFormats && (
-        <AlternativeFormats formats={alternativeFormats} />
+        <AlternativeFormats alternativeFormats={alternativeFormats} />
       )}
+      <button onClick={handleSaveAnalysisHistory}>Save Analysis History</button>
+      <button onClick={handleLoadAnalysisHistory}>Load Analysis History</button>
+      <button onClick={handleClearAnalysisHistory}>Clear Analysis History</button>
+      <h2>Analysis History:</h2>
+      <ul>
+        {analysisHistory.map((analysis, index) => (
+          <li key={index}>
+            <h3>Analysis {index + 1}</h3>
+            <p>Content: {analysis.content}</p>
+            <p>Content Type: {analysis.contentType}</p>
+            <p>Analysis: {JSON.stringify(analysis.analysis)}</p>
+            <p>Suggestions: {JSON.stringify(analysis.suggestions)}</p>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };
