@@ -1,0 +1,33 @@
+{
+  "name": "ai-powered-content-optimizer",
+  "version": "1.0.0",
+  "description": "AI-Powered Content Optimizer",
+  "main": "next.config.mjs",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "keywords": [
+    "content optimization",
+    "ai marketing tools",
+    "growth hacking",
+    "digital marketing strategy",
+    "content creation"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "next": "14.2.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "tailwindcss": "^3.4.0",
+    "@types/react": "^18.0.26",
+    "@types/node": "^18.11.18",
+    "typescript": "^4.9.4"
+  },
+  "devDependencies": {
+    "@types/tailwindcss": "^3.1.8"
+  }
+}
