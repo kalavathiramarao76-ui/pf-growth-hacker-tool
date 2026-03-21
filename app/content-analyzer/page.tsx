@@ -99,14 +99,10 @@ const ContentAnalyzerPage = () => {
     }
   };
 
-  useEffect(() => {
-    const intervalId = setInterval(async () => {
-      if (content) {
-        await handleRealTimeAnalysis(content);
-      }
-    }, 1000);
-    return () => clearInterval(intervalId);
-  }, [content]);
+  const handleContentChange = (event: any) => {
+    setContent(event.target.value);
+    handleRealTimeAnalysis(event.target.value);
+  };
 
   return (
     <div>
@@ -117,29 +113,18 @@ const ContentAnalyzerPage = () => {
         contentType={contentType}
         image={image}
         video={video}
-        onChangeContent={(content) => setContent(content)}
-        onChangeContentType={(contentType) => setContentType(contentType)}
-        onChangeImage={(image) => setImage(image)}
-        onChangeVideo={(video) => setVideo(video)}
-        onAnalyze={() => handleAnalyze(content, contentType, image, video)}
+        onAnalyze={handleAnalyze}
+        onContentChange={handleContentChange}
       />
       {realTimeAnalysis && (
-        <div>
-          <h2>Real-time Analysis</h2>
-          <p>{realTimeAnalysis}</p>
-        </div>
+        <OptimizationSuggestions suggestions={realTimeAnalysis.suggestions} />
       )}
       {analysis && (
-        <OptimizationSuggestions
-          analysis={analysis}
-          suggestions={suggestions}
-        />
+        <OptimizationSuggestions suggestions={suggestions} />
       )}
-      {engagement && (
-        <EngagementTracker engagement={engagement} />
-      )}
+      <EngagementTracker engagement={engagement} onTrackEngagement={handleTrackEngagement} />
       {alternativeFormats && (
-        <AlternativeFormats alternativeFormats={alternativeFormats} />
+        <AlternativeFormats formats={alternativeFormats} />
       )}
     </div>
   );

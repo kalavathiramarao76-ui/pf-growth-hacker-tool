@@ -21,10 +21,16 @@ export default function DashboardPage() {
     { id: 5, title: 'Upgrade to Premium', icon: <MdSettings size={24} />, onClick: () => router.push('/upgrade-plan') },
   ]);
 
+  const [subscription, setSubscription] = useState(null);
+
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
+    }
+    const storedSubscription = localStorage.getItem('subscription');
+    if (storedSubscription) {
+      setSubscription(JSON.parse(storedSubscription));
     }
   }, []);
 
@@ -33,7 +39,11 @@ export default function DashboardPage() {
   };
 
   const handleViewAnalytics = () => {
-    router.push('/engagement-tracker');
+    if (subscription && subscription.plan === 'premium') {
+      router.push('/advanced-analytics');
+    } else {
+      router.push('/engagement-tracker');
+    }
   };
 
   const handleViewCalendar = () => {
@@ -67,59 +77,30 @@ export default function DashboardPage() {
     { id: 4, title: 'Settings', icon: <MdSettings size={24} />, onClick: () => router.push('/settings') },
     { id: 5, title: 'Upgrade to Premium', icon: <MdSettings size={24} />, onClick: () => router.push('/upgrade-plan') },
     { id: 6, title: 'Content Suggestions', icon: <AiOutlinePlus size={24} />, onClick: () => console.log('Content suggestions clicked') },
-    { id: 7, title: 'Engagement Tracker', icon: <IoMdAnalytics size={24} />, onClick: () => console.log('Engagement tracker clicked') },
+    { id: 7, title: 'Priority Support', icon: <MdSettings size={24} />, onClick: () => router.push('/priority-support'), availableFor: 'premium' },
+    { id: 8, title: 'Advanced Analytics', icon: <IoMdAnalytics size={24} />, onClick: () => router.push('/advanced-analytics'), availableFor: 'premium' },
   ];
 
-  const handleSaveWidgetOrder = () => {
-    localStorage.setItem('widgets', JSON.stringify(widgets));
-  };
-
-  const handleLoadWidgetOrder = () => {
-    const storedWidgets = localStorage.getItem('widgets');
-    if (storedWidgets) {
-      setWidgets(JSON.parse(storedWidgets));
-    }
-  };
-
-  useEffect(() => {
-    handleLoadWidgetOrder();
-  }, []);
+  const premiumWidgets = availableWidgets.filter((widget) => widget.availableFor === 'premium');
 
   return (
-    <div className="flex flex-col h-screen">
-      <DashboardHeader user={user} />
+    <div>
+      <DashboardHeader user={user} subscription={subscription} />
       <NavigationMenu />
-      <main className="flex-1 p-4 md:p-6 lg:p-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div className="col-span-1 md:col-span-2 lg:col-span-3 mb-4">
-            <h2 className="text-2xl font-bold mb-2">Welcome to AI-Powered Content Optimizer</h2>
-            <p className="text-lg">Optimize your content for better engagement and conversion rates.</p>
+      <div className="dashboard-container">
+        {widgets.map((widget) => (
+          <DashboardCard key={widget.id} title={widget.title} icon={widget.icon} onClick={widget.onClick} />
+        ))}
+        {subscription && subscription.plan === 'premium' && (
+          <div>
+            <h2>Premium Features</h2>
+            {premiumWidgets.map((widget) => (
+              <DashboardCard key={widget.id} title={widget.title} icon={widget.icon} onClick={widget.onClick} />
+            ))}
           </div>
-          <div className="col-span-1 md:col-span-1 lg:col-span-1 mb-4">
-            <h3 className="text-xl font-bold mb-2">Customizable Dashboard</h3>
-            <div className="flex flex-wrap gap-4">
-              {widgets.map((widget, index) => (
-                <DashboardCard key={widget.id} widget={widget} onRemove={() => handleRemoveWidget(widget.id)} />
-              ))}
-            </div>
-            <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onClick={handleAddWidget}>
-              Add Widget
-            </button>
-          </div>
-          <div className="col-span-1 md:col-span-1 lg:col-span-1 mb-4">
-            <h3 className="text-xl font-bold mb-2">Available Widgets</h3>
-            <div className="flex flex-wrap gap-4">
-              {availableWidgets.map((widget) => (
-                <DashboardCard key={widget.id} widget={widget} onAdd={() => setWidgets([...widgets, widget])} />
-              ))}
-            </div>
-          </div>
-          <div className="col-span-1 md:col-span-1 lg:col-span-1 mb-4">
-            <h3 className="text-xl font-bold mb-2">Widget Settings</h3>
-            <WidgetSettings widgets={widgets} onReorder={handleReorderWidgets} onSave={handleSaveWidgetOrder} />
-          </div>
-        </div>
-      </main>
+        )}
+        <button onClick={handleAddWidget}>Add Widget</button>
+      </div>
     </div>
   );
 }
