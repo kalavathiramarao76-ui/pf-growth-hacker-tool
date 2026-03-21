@@ -84,64 +84,83 @@ const ContentCalendarPage = () => {
           meta={[
             {
               name: 'keywords',
-              content: 'content calendar, content planning, content organization, AI-powered content optimization, content strategy, digital marketing, SEO, social media marketing',
+              content: 'content calendar, content planning, content organization, ai-powered content, content strategy, online presence'
             },
             {
               name: 'robots',
-              content: 'index, follow',
+              content: 'index, follow'
             },
             {
               name: 'og:title',
-              content: 'AI-Powered Content Calendar | Plan and Organize Your Content',
+              content: 'AI-Powered Content Calendar | Plan and Organize Your Content'
             },
             {
               name: 'og:description',
-              content: 'Discover the ultimate AI-powered content calendar to plan, organize, and optimize your content strategy. Get started today and boost your online presence!',
+              content: 'Discover the ultimate AI-powered content calendar to plan, organize, and optimize your content strategy. Get started today and boost your online presence!'
             },
             {
               name: 'og:image',
-              content: '/images/content-calendar-og-image.jpg',
+              content: '/images/content-calendar-og-image.jpg'
             },
             {
               name: 'twitter:card',
-              content: 'summary_large_image',
+              content: 'summary_large_image'
             },
             {
               name: 'twitter:title',
-              content: 'AI-Powered Content Calendar | Plan and Organize Your Content',
+              content: 'AI-Powered Content Calendar | Plan and Organize Your Content'
             },
             {
               name: 'twitter:description',
-              content: 'Discover the ultimate AI-powered content calendar to plan, organize, and optimize your content strategy. Get started today and boost your online presence!',
+              content: 'Discover the ultimate AI-powered content calendar to plan, organize, and optimize your content strategy. Get started today and boost your online presence!'
             },
             {
               name: 'twitter:image',
-              content: '/images/content-calendar-twitter-image.jpg',
-            },
+              content: '/images/content-calendar-twitter-image.jpg'
+            }
           ]}
+          imageOptimization={{
+            images: [
+              {
+                src: '/images/content-calendar-og-image.jpg',
+                alt: 'Content Calendar OG Image',
+                width: 1200,
+                height: 630
+              },
+              {
+                src: '/images/content-calendar-twitter-image.jpg',
+                alt: 'Content Calendar Twitter Image',
+                width: 1024,
+                height: 512
+              }
+            ]
+          }}
         />
-        <Calendar 
-          events={events} 
-          selectedDate={selectedDate} 
-          onDateChange={handleDateChange} 
-          onEventCreate={handleEventCreate} 
-          onEventDelete={handleEventDelete} 
-          onDragStart={handleDragStart} 
-          onDragEnd={handleDragEnd} 
-          onDrop={handleDrop} 
-          onMouseOver={handleMouseOver} 
-          onMouseOut={handleMouseOut}
-        />
-        <GoogleCalendar />
-        <OutlookCalendar />
-        <Tooltip />
-        <Image 
-          src="/images/content-calendar-image.jpg" 
-          alt="Content Calendar Image" 
-          width={800} 
-          height={600} 
-          priority={true}
-        />
+        <div className="content-calendar-page">
+          <Calendar 
+            events={events} 
+            selectedDate={selectedDate} 
+            onDateChange={handleDateChange} 
+            onEventCreate={handleEventCreate} 
+            onEventDelete={handleEventDelete} 
+            onDragStart={handleDragStart} 
+            onDragEnd={handleDragEnd} 
+            onDrop={handleDrop} 
+            onMouseOver={handleMouseOver} 
+            onMouseOut={handleMouseOut}
+          />
+          <GoogleCalendar />
+          <OutlookCalendar />
+          <Tooltip />
+          <Image 
+            src="/images/content-calendar-image.jpg" 
+            alt="Content Calendar Image" 
+            width={800} 
+            height={400} 
+            priority={true} 
+            loading="eager"
+          />
+        </div>
       </Layout>
     </DndProvider>
   );

@@ -77,14 +77,36 @@ const ContentAnalyzerPage = () => {
       const response = await fetch('/api/track-engagement', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content }),
       });
       const data = await response.json();
-      setEngagement(data.engagement);
+      setEngagement(data);
     } catch (error) {
       console.error(error);
     }
   };
+
+  const handleRealTimeAnalysis = async (content: string) => {
+    try {
+      const response = await fetch('/api/real-time-analysis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
+      });
+      const data = await response.json();
+      setRealTimeAnalysis(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    const intervalId = setInterval(async () => {
+      if (content) {
+        await handleRealTimeAnalysis(content);
+      }
+    }, 1000);
+    return () => clearInterval(intervalId);
+  }, [content]);
 
   return (
     <div>
@@ -95,12 +117,18 @@ const ContentAnalyzerPage = () => {
         contentType={contentType}
         image={image}
         video={video}
-        onAnalyze={handleAnalyze}
         onChangeContent={(content) => setContent(content)}
         onChangeContentType={(contentType) => setContentType(contentType)}
         onChangeImage={(image) => setImage(image)}
         onChangeVideo={(video) => setVideo(video)}
+        onAnalyze={() => handleAnalyze(content, contentType, image, video)}
       />
+      {realTimeAnalysis && (
+        <div>
+          <h2>Real-time Analysis</h2>
+          <p>{realTimeAnalysis}</p>
+        </div>
+      )}
       {analysis && (
         <OptimizationSuggestions
           analysis={analysis}
@@ -111,11 +139,7 @@ const ContentAnalyzerPage = () => {
         <EngagementTracker engagement={engagement} />
       )}
       {alternativeFormats && (
-        <AlternativeFormats
-          alternativeFormats={alternativeFormats}
-          content={content}
-          contentType={contentType}
-        />
+        <AlternativeFormats alternativeFormats={alternativeFormats} />
       )}
     </div>
   );
