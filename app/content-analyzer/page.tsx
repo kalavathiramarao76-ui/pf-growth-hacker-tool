@@ -19,6 +19,7 @@ const ContentAnalyzerPage = () => {
   const [image, setImage] = useState(null);
   const [video, setVideo] = useState(null);
   const [analysisHistory, setAnalysisHistory] = useState([]);
+  const [alternativeFormats, setAlternativeFormats] = useState(null);
 
   useEffect(() => {
     const storedContent = LocalStorage.get('content');
@@ -57,6 +58,13 @@ const ContentAnalyzerPage = () => {
       }];
       setAnalysisHistory(newAnalysisHistory);
       LocalStorage.set('analysisHistory', newAnalysisHistory);
+      const alternativeFormatsResponse = await fetch('/api/suggest-alternative-formats', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content, contentType }),
+      });
+      const alternativeFormatsData = await alternativeFormatsResponse.json();
+      setAlternativeFormats(alternativeFormatsData);
     } catch (error) {
       console.error(error);
     }
@@ -91,50 +99,40 @@ const ContentAnalyzerPage = () => {
   const handleLoadAnalysis = (analysis: any) => {
     setAnalysis(analysis.analysis);
     setSuggestions(analysis.suggestions);
-    setContent(analysis.content);
-    setContentType(analysis.contentType);
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-4 md:p-6 lg:p-8">
+    <div>
+      <SEO title="AI-Powered Content Optimizer" />
       <PageHeader title="Content Analyzer" />
       <ContentAnalyzerForm
         content={content}
-        onChange={(content) => setContent(content)}
-        onAnalyze={(content) => handleAnalyze(content, contentType, image, video)}
+        contentType={contentType}
+        image={image}
+        video={video}
+        onAnalyze={handleAnalyze}
         onImageChange={handleImageChange}
         onVideoChange={handleVideoChange}
         onContentTypeChange={handleContentTypeChange}
-        contentType={contentType}
       />
       {analysis && (
-        <div className="mt-8">
-          <h2 className="text-lg font-bold">Analysis</h2>
-          <p className="text-sm text-gray-600">Your content has been analyzed.</p>
+        <OptimizationSuggestions
+          analysis={analysis}
+          suggestions={suggestions}
+          onTrackEngagement={handleTrackEngagement}
+        />
+      )}
+      {alternativeFormats && (
+        <div>
+          <h2>Alternative Formats</h2>
+          <ul>
+            {alternativeFormats.map((format: any) => (
+              <li key={format.id}>{format.name}</li>
+            ))}
+          </ul>
         </div>
       )}
-      {suggestions && (
-        <div className="mt-8">
-          <h2 className="text-lg font-bold">Optimization Suggestions</h2>
-          <OptimizationSuggestions suggestions={suggestions} />
-        </div>
-      )}
-      {engagement && (
-        <div className="mt-8">
-          <h2 className="text-lg font-bold">Engagement Tracker</h2>
-          <EngagementTracker engagement={engagement} />
-        </div>
-      )}
-      <div className="mt-8">
-        <h2 className="text-lg font-bold">Analysis History</h2>
-        <ul>
-          {analysisHistory.map((analysis, index) => (
-            <li key={index} className="py-2">
-              <button className="text-sm text-blue-600 hover:text-blue-800" onClick={() => handleLoadAnalysis(analysis)}>Load Analysis {index + 1}</button>
-            </li>
-          ))}
-        </ul>
-      </div>
+      {engagement && <EngagementTracker engagement={engagement} />}
     </div>
   );
 };

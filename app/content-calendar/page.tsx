@@ -1,5 +1,3 @@
-use client;
-
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Calendar, CalendarEvent } from '../components/Calendar';
@@ -53,6 +51,19 @@ const ContentCalendarPage = () => {
     }
   };
 
+  const handleDrop = (event: CalendarEvent, newDate: Date) => {
+    if (draggedEvent) {
+      const updatedEvents = events.map((e) => {
+        if (e.id === draggedEvent.id) {
+          return { ...e, startDate: newDate };
+        }
+        return e;
+      });
+      setEvents(updatedEvents);
+      localStorage.setItem('events', JSON.stringify(updatedEvents));
+    }
+  };
+
   return (
     <Layout>
       <SEO title="Content Calendar" description="Plan and organize your content with our intuitive calendar" />
@@ -67,6 +78,7 @@ const ContentCalendarPage = () => {
             onEventDelete={handleEventDelete}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
+            onDrop={handleDrop}
             style={{
               border: '1px solid #ddd',
               borderRadius: '10px',

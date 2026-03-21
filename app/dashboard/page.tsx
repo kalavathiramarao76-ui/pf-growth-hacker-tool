@@ -80,7 +80,30 @@ export default function DashboardPage() {
             onClick={handleUpgradePlan}
             className="bg-orange-100 hover:bg-orange-200"
           >
-            Unlock additional features, priority support, and more. Upgrade to our premium plan today!
+            <h2 className="text-lg font-bold mb-2">Unlock the Full Potential</h2>
+            <p>Upgrade to our premium plan and get access to:</p>
+            <ul className="list-disc pl-4 mb-4">
+              <li>Priority support</li>
+              <li>Advanced analytics and insights</li>
+              <li>Unlimited content creation and optimization</li>
+            </ul>
+            <p className="text-lg font-bold">Pricing:</p>
+            <ul className="list-none pl-0 mb-4">
+              <li className="flex justify-between mb-2">
+                <span>Monthly</span>
+                <span className="font-bold">$9.99</span>
+              </li>
+              <li className="flex justify-between mb-2">
+                <span>Yearly</span>
+                <span className="font-bold">$99.99</span>
+              </li>
+            </ul>
+            <button
+              className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded"
+              onClick={handleUpgradePlan}
+            >
+              Upgrade Now
+            </button>
           </DashboardCard>
         </div>
       </main>
