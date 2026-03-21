@@ -20,6 +20,7 @@ const ContentAnalyzerPage = () => {
   const [video, setVideo] = useState(null);
   const [analysisHistory, setAnalysisHistory] = useState([]);
   const [alternativeFormats, setAlternativeFormats] = useState(null);
+  const [realTimeAnalysis, setRealTimeAnalysis] = useState(null);
 
   useEffect(() => {
     const storedContent = LocalStorage.get('content');
@@ -84,26 +85,28 @@ const ContentAnalyzerPage = () => {
     }
   };
 
-  const handleImageChange = (event: any) => {
-    setImage(event.target.files[0]);
+  const handleRealTimeAnalysis = async (content: string) => {
+    try {
+      const response = await fetch('/api/real-time-analysis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
+      });
+      const data = await response.json();
+      setRealTimeAnalysis(data);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  const handleVideoChange = (event: any) => {
-    setVideo(event.target.files[0]);
-  };
-
-  const handleContentTypeChange = (event: any) => {
-    setContentType(event.target.value);
-  };
-
-  const handleLoadAnalysis = (analysis: any) => {
-    setAnalysis(analysis.analysis);
-    setSuggestions(analysis.suggestions);
+  const handleContentChange = (event: any) => {
+    setContent(event.target.value);
+    handleRealTimeAnalysis(event.target.value);
   };
 
   return (
     <div>
-      <SEO title="AI-Powered Content Optimizer" />
+      <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
       <ContentAnalyzerForm
         content={content}
@@ -111,28 +114,38 @@ const ContentAnalyzerPage = () => {
         image={image}
         video={video}
         onAnalyze={handleAnalyze}
-        onImageChange={handleImageChange}
-        onVideoChange={handleVideoChange}
-        onContentTypeChange={handleContentTypeChange}
+        onContentChange={handleContentChange}
       />
+      {realTimeAnalysis && (
+        <div>
+          <h2>Real-time Analysis</h2>
+          <p>{realTimeAnalysis}</p>
+        </div>
+      )}
       {analysis && (
-        <OptimizationSuggestions
-          analysis={analysis}
-          suggestions={suggestions}
-          onTrackEngagement={handleTrackEngagement}
-        />
+        <div>
+          <h2>Analysis</h2>
+          <p>{analysis}</p>
+        </div>
+      )}
+      {suggestions && (
+        <div>
+          <h2>Optimization Suggestions</h2>
+          <OptimizationSuggestions suggestions={suggestions} />
+        </div>
+      )}
+      {engagement && (
+        <div>
+          <h2>Engagement Tracker</h2>
+          <EngagementTracker engagement={engagement} />
+        </div>
       )}
       {alternativeFormats && (
         <div>
           <h2>Alternative Formats</h2>
-          <ul>
-            {alternativeFormats.map((format: any) => (
-              <li key={format.id}>{format.name}</li>
-            ))}
-          </ul>
+          <p>{alternativeFormats}</p>
         </div>
       )}
-      {engagement && <EngagementTracker engagement={engagement} />}
     </div>
   );
 };

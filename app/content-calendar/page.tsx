@@ -6,12 +6,14 @@ import { SEO } from '../components/SEO';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { GoogleCalendar, OutlookCalendar } from '../components/CalendarIntegrations';
+import { Tooltip } from '../components/Tooltip';
 
 const ContentCalendarPage = () => {
   const pathname = usePathname();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [draggedEvent, setDraggedEvent] = useState<CalendarEvent | null>(null);
+  const [hoveredEvent, setHoveredEvent] = useState<CalendarEvent | null>(null);
 
   useEffect(() => {
     const storedEvents = localStorage.getItem('events');
@@ -64,6 +66,14 @@ const ContentCalendarPage = () => {
     }
   };
 
+  const handleMouseOver = (event: CalendarEvent) => {
+    setHoveredEvent(event);
+  };
+
+  const handleMouseOut = () => {
+    setHoveredEvent(null);
+  };
+
   return (
     <Layout>
       <SEO title="Content Calendar" description="Plan and organize your content with our intuitive calendar" />
@@ -79,21 +89,20 @@ const ContentCalendarPage = () => {
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
             onDrop={handleDrop}
+            onMouseOver={handleMouseOver}
+            onMouseOut={handleMouseOut}
             style={{
               border: '1px solid #ddd',
               borderRadius: '10px',
               padding: '20px',
-              boxShadow: '0 0 10px rgba(0,0,0,0.1)',
             }}
           />
+          {hoveredEvent && (
+            <Tooltip event={hoveredEvent} />
+          )}
         </DndProvider>
-        <div className="mt-6">
-          <h2 className="text-2xl font-bold mb-4">Calendar Integrations</h2>
-          <div className="flex flex-wrap justify-center">
-            <GoogleCalendar events={events} className="mr-4" />
-            <OutlookCalendar events={events} />
-          </div>
-        </div>
+        <GoogleCalendar />
+        <OutlookCalendar />
       </div>
     </Layout>
   );

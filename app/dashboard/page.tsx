@@ -87,17 +87,13 @@ export default function DashboardPage() {
               <li>Advanced analytics and insights</li>
               <li>Unlimited content creation and optimization</li>
             </ul>
-            <p className="text-lg font-bold">Pricing:</p>
-            <ul className="list-none pl-0 mb-4">
-              <li className="flex justify-between mb-2">
-                <span>Monthly</span>
-                <span className="font-bold">$9.99</span>
-              </li>
-              <li className="flex justify-between mb-2">
-                <span>Yearly</span>
-                <span className="font-bold">$99.99</span>
-              </li>
-            </ul>
+            <p className="text-lg font-bold">Pricing:
+              <ul className="list-disc pl-4 mb-4">
+                <li>Basic: $9.99/month (limited features)</li>
+                <li>Premium: $29.99/month (all features, priority support)</li>
+                <li>Enterprise: custom pricing (large teams, advanced features)</li>
+              </ul>
+            </p>
             <button
               className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded"
               onClick={handleUpgradePlan}
@@ -105,6 +101,39 @@ export default function DashboardPage() {
               Upgrade Now
             </button>
           </DashboardCard>
+        </div>
+        <div className="mt-4 text-center">
+          <h2 className="text-lg font-bold mb-2">Compare Plans</h2>
+          <table className="w-full border-collapse border border-gray-200">
+            <thead>
+              <tr>
+                <th className="border border-gray-200 p-2">Feature</th>
+                <th className="border border-gray-200 p-2">Basic</th>
+                <th className="border border-gray-200 p-2">Premium</th>
+                <th className="border border-gray-200 p-2">Enterprise</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="border border-gray-200 p-2">Content Creation</td>
+                <td className="border border-gray-200 p-2">Limited</td>
+                <td className="border border-gray-200 p-2">Unlimited</td>
+                <td className="border border-gray-200 p-2">Unlimited</td>
+              </tr>
+              <tr>
+                <td className="border border-gray-200 p-2">Analytics and Insights</td>
+                <td className="border border-gray-200 p-2">Basic</td>
+                <td className="border border-gray-200 p-2">Advanced</td>
+                <td className="border border-gray-200 p-2">Advanced</td>
+              </tr>
+              <tr>
+                <td className="border border-gray-200 p-2">Priority Support</td>
+                <td className="border border-gray-200 p-2">No</td>
+                <td className="border border-gray-200 p-2">Yes</td>
+                <td className="border border-gray-200 p-2">Yes</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </main>
     </div>
