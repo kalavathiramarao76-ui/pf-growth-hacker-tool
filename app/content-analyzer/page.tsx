@@ -12,9 +12,12 @@ import { EngagementTracker } from '../components/engagement-tracker';
 const ContentAnalyzerPage = () => {
   const router = useRouter();
   const [content, setContent] = useState('');
+  const [contentType, setContentType] = useState('text');
   const [analysis, setAnalysis] = useState(null);
   const [suggestions, setSuggestions] = useState(null);
   const [engagement, setEngagement] = useState(null);
+  const [image, setImage] = useState(null);
+  const [video, setVideo] = useState(null);
 
   useEffect(() => {
     const storedContent = LocalStorage.get('content');
@@ -23,12 +26,20 @@ const ContentAnalyzerPage = () => {
     }
   }, []);
 
-  const handleAnalyze = async (content: string) => {
+  const handleAnalyze = async (content: string, contentType: string, image: any, video: any) => {
     try {
+      const formData = new FormData();
+      formData.append('content', content);
+      formData.append('contentType', contentType);
+      if (image) {
+        formData.append('image', image);
+      }
+      if (video) {
+        formData.append('video', video);
+      }
       const response = await fetch('/api/analyze', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content }),
+        body: formData,
       });
       const data = await response.json();
       setAnalysis(data.analysis);
@@ -52,13 +63,29 @@ const ContentAnalyzerPage = () => {
     }
   };
 
+  const handleImageChange = (event: any) => {
+    setImage(event.target.files[0]);
+  };
+
+  const handleVideoChange = (event: any) => {
+    setVideo(event.target.files[0]);
+  };
+
+  const handleContentTypeChange = (event: any) => {
+    setContentType(event.target.value);
+  };
+
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-6 lg:p-8">
       <PageHeader title="Content Analyzer" />
       <ContentAnalyzerForm
         content={content}
         onChange={(content) => setContent(content)}
-        onAnalyze={handleAnalyze}
+        onAnalyze={(content) => handleAnalyze(content, contentType, image, video)}
+        onImageChange={handleImageChange}
+        onVideoChange={handleVideoChange}
+        onContentTypeChange={handleContentTypeChange}
+        contentType={contentType}
       />
       {analysis && (
         <div className="mt-8">

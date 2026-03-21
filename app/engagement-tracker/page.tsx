@@ -1,11 +1,12 @@
 use client;
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense, lazy } from 'react';
 import { useRouter } from 'next/navigation';
-import { LocalStorage } from '../utils/local-storage';
 import { EngagementTrackerData } from '../types/engagement-tracker';
-import EngagementTrackerChart from '../components/engagement-tracker-chart';
-import EngagementTrackerTable from '../components/engagement-tracker-table';
+import axios from 'axios';
+
+const EngagementTrackerChart = lazy(() => import('../components/engagement-tracker-chart'));
+const EngagementTrackerTable = lazy(() => import('../components/engagement-tracker-table'));
 
 const EngagementTrackerPage = () => {
   const router = useRouter();
@@ -13,23 +14,26 @@ const EngagementTrackerPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedData = LocalStorage.get('engagementData');
-    if (storedData) {
-      setEngagementData(storedData);
-      setLoading(false);
-    } else {
-      // Generate dummy data for demonstration purposes
-      const dummyData: EngagementTrackerData[] = [
-        { date: '2024-01-01', engagement: 100 },
-        { date: '2024-01-02', engagement: 120 },
-        { date: '2024-01-03', engagement: 150 },
-        { date: '2024-01-04', engagement: 180 },
-        { date: '2024-01-05', engagement: 200 },
-      ];
-      setEngagementData(dummyData);
-      LocalStorage.set('engagementData', dummyData);
-      setLoading(false);
-    }
+    const fetchEngagementData = async () => {
+      try {
+        const response = await axios.get('/api/engagement-data');
+        setEngagementData(response.data);
+      } catch (error) {
+        console.error(error);
+        // Generate dummy data for demonstration purposes
+        const dummyData: EngagementTrackerData[] = [
+          { date: '2024-01-01', engagement: 100 },
+          { date: '2024-01-02', engagement: 120 },
+          { date: '2024-01-03', engagement: 150 },
+          { date: '2024-01-04', engagement: 180 },
+          { date: '2024-01-05', engagement: 200 },
+        ];
+        setEngagementData(dummyData);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchEngagementData();
   }, []);
 
   const handleBackToDashboard = () => {
@@ -53,8 +57,12 @@ const EngagementTrackerPage = () => {
         </div>
       ) : (
         <div className="flex flex-col h-full">
-          <EngagementTrackerChart data={engagementData} />
-          <EngagementTrackerTable data={engagementData} />
+          <Suspense fallback={<div>Loading chart...</div>}>
+            <EngagementTrackerChart data={engagementData} />
+          </Suspense>
+          <Suspense fallback={<div>Loading table...</div>}>
+            <EngagementTrackerTable data={engagementData} />
+          </Suspense>
         </div>
       )}
     </div>
