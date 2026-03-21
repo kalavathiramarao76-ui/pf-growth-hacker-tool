@@ -67,12 +67,20 @@ const ContentCalendarPage = () => {
             onEventDelete={handleEventDelete}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
+            style={{
+              border: '1px solid #ddd',
+              borderRadius: '10px',
+              padding: '20px',
+              boxShadow: '0 0 10px rgba(0,0,0,0.1)',
+            }}
           />
         </DndProvider>
         <div className="mt-6">
           <h2 className="text-2xl font-bold mb-4">Calendar Integrations</h2>
-          <GoogleCalendar events={events} />
-          <OutlookCalendar events={events} />
+          <div className="flex flex-wrap justify-center">
+            <GoogleCalendar events={events} className="mr-4" />
+            <OutlookCalendar events={events} />
+          </div>
         </div>
       </div>
     </Layout>

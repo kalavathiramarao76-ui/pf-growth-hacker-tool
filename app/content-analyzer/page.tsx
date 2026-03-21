@@ -18,11 +18,16 @@ const ContentAnalyzerPage = () => {
   const [engagement, setEngagement] = useState(null);
   const [image, setImage] = useState(null);
   const [video, setVideo] = useState(null);
+  const [analysisHistory, setAnalysisHistory] = useState([]);
 
   useEffect(() => {
     const storedContent = LocalStorage.get('content');
+    const storedAnalysisHistory = LocalStorage.get('analysisHistory');
     if (storedContent) {
       setContent(storedContent);
+    }
+    if (storedAnalysisHistory) {
+      setAnalysisHistory(storedAnalysisHistory);
     }
   }, []);
 
@@ -44,6 +49,14 @@ const ContentAnalyzerPage = () => {
       const data = await response.json();
       setAnalysis(data.analysis);
       setSuggestions(data.suggestions);
+      const newAnalysisHistory = [...analysisHistory, {
+        content,
+        contentType,
+        analysis: data.analysis,
+        suggestions: data.suggestions,
+      }];
+      setAnalysisHistory(newAnalysisHistory);
+      LocalStorage.set('analysisHistory', newAnalysisHistory);
     } catch (error) {
       console.error(error);
     }
@@ -75,6 +88,13 @@ const ContentAnalyzerPage = () => {
     setContentType(event.target.value);
   };
 
+  const handleLoadAnalysis = (analysis: any) => {
+    setAnalysis(analysis.analysis);
+    setSuggestions(analysis.suggestions);
+    setContent(analysis.content);
+    setContentType(analysis.contentType);
+  };
+
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-6 lg:p-8">
       <PageHeader title="Content Analyzer" />
@@ -90,7 +110,7 @@ const ContentAnalyzerPage = () => {
       {analysis && (
         <div className="mt-8">
           <h2 className="text-lg font-bold">Analysis</h2>
-          <p className="text-gray-600">{analysis}</p>
+          <p className="text-sm text-gray-600">Your content has been analyzed.</p>
         </div>
       )}
       {suggestions && (
@@ -105,6 +125,16 @@ const ContentAnalyzerPage = () => {
           <EngagementTracker engagement={engagement} />
         </div>
       )}
+      <div className="mt-8">
+        <h2 className="text-lg font-bold">Analysis History</h2>
+        <ul>
+          {analysisHistory.map((analysis, index) => (
+            <li key={index} className="py-2">
+              <button className="text-sm text-blue-600 hover:text-blue-800" onClick={() => handleLoadAnalysis(analysis)}>Load Analysis {index + 1}</button>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 };

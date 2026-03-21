@@ -37,6 +37,10 @@ export default function DashboardPage() {
     router.push('/settings');
   };
 
+  const handleUpgradePlan = () => {
+    router.push('/upgrade-plan');
+  };
+
   return (
     <div className="flex flex-col h-screen">
       <DashboardHeader user={user} />
@@ -69,6 +73,14 @@ export default function DashboardPage() {
             onClick={handleViewSettings}
           >
             Configure your account and preferences.
+          </DashboardCard>
+          <DashboardCard
+            title="Upgrade to Premium"
+            icon={<MdSettings size={24} />}
+            onClick={handleUpgradePlan}
+            className="bg-orange-100 hover:bg-orange-200"
+          >
+            Unlock additional features, priority support, and more. Upgrade to our premium plan today!
           </DashboardCard>
         </div>
       </main>
