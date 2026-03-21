@@ -85,68 +85,59 @@ const ContentAnalyzerPage = () => {
     }
   };
 
-  const handleRealTimeAnalysis = async (content: string) => {
-    try {
-      const response = await fetch('/api/real-time-analysis', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content }),
-      });
-      const data = await response.json();
-      setRealTimeAnalysis(data);
-    } catch (error) {
-      console.error(error);
+  const handleSaveAnalysisHistory = () => {
+    LocalStorage.set('analysisHistory', analysisHistory);
+  };
+
+  const handleLoadAnalysisHistory = () => {
+    const storedAnalysisHistory = LocalStorage.get('analysisHistory');
+    if (storedAnalysisHistory) {
+      setAnalysisHistory(storedAnalysisHistory);
     }
   };
 
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (content) {
-        handleRealTimeAnalysis(content);
-      }
-    }, 500);
-    return () => clearTimeout(timeoutId);
-  }, [content]);
+  const handleClearAnalysisHistory = () => {
+    setAnalysisHistory([]);
+    LocalStorage.remove('analysisHistory');
+  };
 
   return (
     <div>
-      <SEO title="Content Analyzer" />
+      <SEO title="AI-Powered Content Optimizer" />
       <PageHeader title="Content Analyzer" />
       <ContentAnalyzerForm
         content={content}
         contentType={contentType}
         image={image}
         video={video}
-        onChangeContent={(newContent) => setContent(newContent)}
-        onChangeContentType={(newContentType) => setContentType(newContentType)}
-        onChangeImage={(newImage) => setImage(newImage)}
-        onChangeVideo={(newVideo) => setVideo(newVideo)}
-        onAnalyze={() => handleAnalyze(content, contentType, image, video)}
+        onAnalyze={handleAnalyze}
+        onTrackEngagement={handleTrackEngagement}
       />
-      {realTimeAnalysis && (
-        <div>
-          <h2>Real-time Analysis</h2>
-          <p>{realTimeAnalysis}</p>
-        </div>
-      )}
       {analysis && (
-        <div>
-          <h2>Analysis</h2>
-          <p>{analysis}</p>
-        </div>
-      )}
-      {suggestions && (
-        <div>
-          <h2>Optimization Suggestions</h2>
-          <OptimizationSuggestions suggestions={suggestions} />
-        </div>
+        <OptimizationSuggestions
+          analysis={analysis}
+          suggestions={suggestions}
+          alternativeFormats={alternativeFormats}
+        />
       )}
       {engagement && (
-        <div>
-          <h2>Engagement Tracker</h2>
-          <EngagementTracker engagement={engagement} />
-        </div>
+        <EngagementTracker engagement={engagement} />
       )}
+      <button onClick={handleSaveAnalysisHistory}>Save Analysis History</button>
+      <button onClick={handleLoadAnalysisHistory}>Load Analysis History</button>
+      <button onClick={handleClearAnalysisHistory}>Clear Analysis History</button>
+      <h2>Analysis History</h2>
+      <ul>
+        {analysisHistory.map((analysis, index) => (
+          <li key={index}>
+            <h3>Analysis {index + 1}</h3>
+            <p>Content: {analysis.content}</p>
+            <p>Content Type: {analysis.contentType}</p>
+            <p>Analysis: {JSON.stringify(analysis.analysis)}</p>
+            <p>Suggestions: {JSON.stringify(analysis.suggestions)}</p>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };

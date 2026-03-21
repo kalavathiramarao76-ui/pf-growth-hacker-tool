@@ -86,43 +86,26 @@ export default function DashboardPage() {
                 <p>Configure your account settings and customize your experience.</p>
               )}
               {widget.title === 'Upgrade to Premium' && (
-                <p>Unlock exclusive features and priority support to take your content to the next level.</p>
+                <div>
+                  <p>Unlock the full potential of our AI-Powered Content Optimizer with our premium plan.</p>
+                  <p>Benefits include:</p>
+                  <ul>
+                    <li>Advanced analytics and insights</li>
+                    <li>Priority customer support</li>
+                    <li>Access to exclusive features and tools</li>
+                  </ul>
+                  <p>Pricing:</p>
+                  <ul>
+                    <li>Monthly: $29.99</li>
+                    <li>Yearly: $299.99 (save 20% compared to monthly)</li>
+                  </ul>
+                  <button className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded" onClick={handleUpgradePlan}>
+                    Upgrade Now
+                  </button>
+                </div>
               )}
             </DashboardCard>
           ))}
-        </div>
-        <div className="mt-8">
-          <h2 className="text-2xl font-bold">Premium Features</h2>
-          <p>Upgrade to our premium plan to unlock exclusive features and priority support.</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <DashboardCard
-              title="Advanced Analytics"
-              icon={<IoMdAnalytics size={24} />}
-              onClick={() => router.push('/upgrade-plan')}
-            >
-              <p>Get in-depth insights into your content performance and audience engagement.</p>
-            </DashboardCard>
-            <DashboardCard
-              title="Priority Support"
-              icon={<MdSettings size={24} />}
-              onClick={() => router.push('/upgrade-plan')}
-            >
-              <p>Get dedicated support from our team to help you achieve your content goals.</p>
-            </DashboardCard>
-            <DashboardCard
-              title="Exclusive Content Templates"
-              icon={<AiOutlinePlus size={24} />}
-              onClick={() => router.push('/upgrade-plan')}
-            >
-              <p>Access a library of exclusive content templates to help you create high-quality content.</p>
-            </DashboardCard>
-          </div>
-          <button
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            onClick={handleUpgradePlan}
-          >
-            Upgrade to Premium
-          </button>
         </div>
       </main>
     </div>

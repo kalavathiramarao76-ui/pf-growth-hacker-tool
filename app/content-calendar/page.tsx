@@ -90,32 +90,25 @@ const ContentCalendarPage = () => {
               name: 'robots',
               content: 'index, follow',
             },
-            {
-              name: 'og:title',
-              content: 'Content Calendar',
-            },
           ]}
         />
-        <div className="content-calendar-container">
-          <Calendar
-            events={events}
-            onDateChange={handleDateChange}
-            onEventCreate={handleEventCreate}
-            onEventDelete={handleEventDelete}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-            onDrop={handleDrop}
-            onMouseOver={handleMouseOver}
-            onMouseOut={handleMouseOut}
-          />
-          <div className="calendar-integrations">
-            <GoogleCalendar />
-            <OutlookCalendar />
-          </div>
-          {hoveredEvent && (
-            <Tooltip event={hoveredEvent} />
-          )}
-        </div>
+        <Calendar
+          events={events}
+          onDateChange={handleDateChange}
+          onEventCreate={handleEventCreate}
+          onEventDelete={handleEventDelete}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          onDrop={handleDrop}
+          onMouseOver={handleMouseOver}
+          onMouseOut={handleMouseOut}
+          draggedEvent={draggedEvent}
+          hoveredEvent={hoveredEvent}
+        />
+        <GoogleCalendar />
+        <OutlookCalendar />
+        <Tooltip />
+        <Image src="/image.jpg" alt="image" />
       </Layout>
     </DndProvider>
   );
