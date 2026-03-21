@@ -8,6 +8,7 @@ import { PageHeader } from '../components/page-header';
 import { ContentAnalyzerForm } from '../components/content-analyzer-form';
 import { OptimizationSuggestions } from '../components/optimization-suggestions';
 import { EngagementTracker } from '../components/engagement-tracker';
+import { AlternativeFormats } from '../components/alternative-formats';
 
 const ContentAnalyzerPage = () => {
   const router = useRouter();
@@ -79,31 +80,15 @@ const ContentAnalyzerPage = () => {
         body: JSON.stringify({ content }),
       });
       const data = await response.json();
-      setEngagement(data);
+      setEngagement(data.engagement);
     } catch (error) {
       console.error(error);
     }
   };
 
-  const handleSaveAnalysisHistory = () => {
-    LocalStorage.set('analysisHistory', analysisHistory);
-  };
-
-  const handleLoadAnalysisHistory = () => {
-    const storedAnalysisHistory = LocalStorage.get('analysisHistory');
-    if (storedAnalysisHistory) {
-      setAnalysisHistory(storedAnalysisHistory);
-    }
-  };
-
-  const handleClearAnalysisHistory = () => {
-    setAnalysisHistory([]);
-    LocalStorage.remove('analysisHistory');
-  };
-
   return (
     <div>
-      <SEO title="AI-Powered Content Optimizer" />
+      <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
       <ContentAnalyzerForm
         content={content}
@@ -111,33 +96,27 @@ const ContentAnalyzerPage = () => {
         image={image}
         video={video}
         onAnalyze={handleAnalyze}
-        onTrackEngagement={handleTrackEngagement}
+        onChangeContent={(content) => setContent(content)}
+        onChangeContentType={(contentType) => setContentType(contentType)}
+        onChangeImage={(image) => setImage(image)}
+        onChangeVideo={(video) => setVideo(video)}
       />
       {analysis && (
         <OptimizationSuggestions
           analysis={analysis}
           suggestions={suggestions}
-          alternativeFormats={alternativeFormats}
         />
       )}
       {engagement && (
         <EngagementTracker engagement={engagement} />
       )}
-      <button onClick={handleSaveAnalysisHistory}>Save Analysis History</button>
-      <button onClick={handleLoadAnalysisHistory}>Load Analysis History</button>
-      <button onClick={handleClearAnalysisHistory}>Clear Analysis History</button>
-      <h2>Analysis History</h2>
-      <ul>
-        {analysisHistory.map((analysis, index) => (
-          <li key={index}>
-            <h3>Analysis {index + 1}</h3>
-            <p>Content: {analysis.content}</p>
-            <p>Content Type: {analysis.contentType}</p>
-            <p>Analysis: {JSON.stringify(analysis.analysis)}</p>
-            <p>Suggestions: {JSON.stringify(analysis.suggestions)}</p>
-          </li>
-        ))}
-      </ul>
+      {alternativeFormats && (
+        <AlternativeFormats
+          alternativeFormats={alternativeFormats}
+          content={content}
+          contentType={contentType}
+        />
+      )}
     </div>
   );
 };

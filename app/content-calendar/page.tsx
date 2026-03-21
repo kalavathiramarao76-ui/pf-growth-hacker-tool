@@ -79,36 +79,69 @@ const ContentCalendarPage = () => {
     <DndProvider backend={HTML5Backend}>
       <Layout>
         <SEO 
-          title="Content Calendar" 
-          description="Plan and organize your content with our intuitive calendar" 
+          title="AI-Powered Content Calendar | Plan and Organize Your Content" 
+          description="Discover the ultimate AI-powered content calendar to plan, organize, and optimize your content strategy. Get started today and boost your online presence!" 
           meta={[
             {
               name: 'keywords',
-              content: 'content calendar, content planning, content organization',
+              content: 'content calendar, content planning, content organization, AI-powered content optimization, content strategy, digital marketing, SEO, social media marketing',
             },
             {
               name: 'robots',
               content: 'index, follow',
             },
+            {
+              name: 'og:title',
+              content: 'AI-Powered Content Calendar | Plan and Organize Your Content',
+            },
+            {
+              name: 'og:description',
+              content: 'Discover the ultimate AI-powered content calendar to plan, organize, and optimize your content strategy. Get started today and boost your online presence!',
+            },
+            {
+              name: 'og:image',
+              content: '/images/content-calendar-og-image.jpg',
+            },
+            {
+              name: 'twitter:card',
+              content: 'summary_large_image',
+            },
+            {
+              name: 'twitter:title',
+              content: 'AI-Powered Content Calendar | Plan and Organize Your Content',
+            },
+            {
+              name: 'twitter:description',
+              content: 'Discover the ultimate AI-powered content calendar to plan, organize, and optimize your content strategy. Get started today and boost your online presence!',
+            },
+            {
+              name: 'twitter:image',
+              content: '/images/content-calendar-twitter-image.jpg',
+            },
           ]}
         />
-        <Calendar
-          events={events}
-          onDateChange={handleDateChange}
-          onEventCreate={handleEventCreate}
-          onEventDelete={handleEventDelete}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-          onDrop={handleDrop}
-          onMouseOver={handleMouseOver}
+        <Calendar 
+          events={events} 
+          selectedDate={selectedDate} 
+          onDateChange={handleDateChange} 
+          onEventCreate={handleEventCreate} 
+          onEventDelete={handleEventDelete} 
+          onDragStart={handleDragStart} 
+          onDragEnd={handleDragEnd} 
+          onDrop={handleDrop} 
+          onMouseOver={handleMouseOver} 
           onMouseOut={handleMouseOut}
-          draggedEvent={draggedEvent}
-          hoveredEvent={hoveredEvent}
         />
         <GoogleCalendar />
         <OutlookCalendar />
         <Tooltip />
-        <Image src="/image.jpg" alt="image" />
+        <Image 
+          src="/images/content-calendar-image.jpg" 
+          alt="Content Calendar Image" 
+          width={800} 
+          height={600} 
+          priority={true}
+        />
       </Layout>
     </DndProvider>
   );
