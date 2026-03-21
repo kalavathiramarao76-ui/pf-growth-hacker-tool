@@ -19,6 +19,8 @@ const ContentCalendarPage = () => {
   const [outlookCalendarEvents, setOutlookCalendarEvents] = useState<CalendarEvent[]>([]);
   const [isGoogleCalendarConnected, setIsGoogleCalendarConnected] = useState(false);
   const [isOutlookCalendarConnected, setIsOutlookCalendarConnected] = useState(false);
+  const [googleCalendarAccessToken, setGoogleCalendarAccessToken] = useState<string | null>(null);
+  const [outlookCalendarAccessToken, setOutlookCalendarAccessToken] = useState<string | null>(null);
 
   useEffect(() => {
     const storedEvents = localStorage.getItem('events');
@@ -36,7 +38,24 @@ const ContentCalendarPage = () => {
     if (storedOutlookCalendarConnected) {
       setIsOutlookCalendarConnected(JSON.parse(storedOutlookCalendarConnected));
     }
+    const storedGoogleCalendarAccessToken = localStorage.getItem('googleCalendarAccessToken');
+    if (storedGoogleCalendarAccessToken) {
+      setGoogleCalendarAccessToken(storedGoogleCalendarAccessToken);
+    }
+    const storedOutlookCalendarAccessToken = localStorage.getItem('outlookCalendarAccessToken');
+    if (storedOutlookCalendarAccessToken) {
+      setOutlookCalendarAccessToken(storedOutlookCalendarAccessToken);
+    }
   }, []);
+
+  useEffect(() => {
+    if (isGoogleCalendarConnected && googleCalendarAccessToken) {
+      fetchGoogleCalendarEvents();
+    }
+    if (isOutlookCalendarConnected && outlookCalendarAccessToken) {
+      fetchOutlookCalendarEvents();
+    }
+  }, [isGoogleCalendarConnected, googleCalendarAccessToken, isOutlookCalendarConnected, outlookCalendarAccessToken]);
 
   const handleDateChange = (date: Date) => {
     setSelectedDate(date);
@@ -45,11 +64,23 @@ const ContentCalendarPage = () => {
   const handleEventCreate = (event: CalendarEvent) => {
     setEvents((prevEvents) => [...prevEvents, event]);
     localStorage.setItem('events', JSON.stringify([...events, event]));
+    if (isGoogleCalendarConnected && googleCalendarAccessToken) {
+      createGoogleCalendarEvent(event);
+    }
+    if (isOutlookCalendarConnected && outlookCalendarAccessToken) {
+      createOutlookCalendarEvent(event);
+    }
   };
 
   const handleEventDelete = (eventId: string) => {
     setEvents((prevEvents) => prevEvents.filter((event) => event.id !== eventId));
     localStorage.setItem('events', JSON.stringify(events.filter((event) => event.id !== eventId)));
+    if (isGoogleCalendarConnected && googleCalendarAccessToken) {
+      deleteGoogleCalendarEvent(eventId);
+    }
+    if (isOutlookCalendarConnected && outlookCalendarAccessToken) {
+      deleteOutlookCalendarEvent(eventId);
+    }
   };
 
   const handleDragStart = (event: CalendarEvent) => {
@@ -66,6 +97,12 @@ const ContentCalendarPage = () => {
       });
       setEvents(updatedEvents);
       localStorage.setItem('events', JSON.stringify(updatedEvents));
+      if (isGoogleCalendarConnected && googleCalendarAccessToken) {
+        updateGoogleCalendarEvent(event, newDate);
+      }
+      if (isOutlookCalendarConnected && outlookCalendarAccessToken) {
+        updateOutlookCalendarEvent(event, newDate);
+      }
     }
   };
 
@@ -79,96 +116,229 @@ const ContentCalendarPage = () => {
       });
       setEvents(updatedEvents);
       localStorage.setItem('events', JSON.stringify(updatedEvents));
+      if (isGoogleCalendarConnected && googleCalendarAccessToken) {
+        updateGoogleCalendarEvent(event, newDate);
+      }
+      if (isOutlookCalendarConnected && outlookCalendarAccessToken) {
+        updateOutlookCalendarEvent(event, newDate);
+      }
     }
   };
 
-  const handleMouseOver = (event: CalendarEvent) => {
-    setHoveredEvent(event);
+  const connectGoogleCalendar = async () => {
+    const clientId = 'YOUR_GOOGLE_CALENDAR_CLIENT_ID';
+    const redirectUri = 'YOUR_REDIRECT_URI';
+    const scope = 'https://www.googleapis.com/auth/calendar';
+    const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=code`;
+    window.open(url, '_blank');
   };
 
-  const handleMouseOut = () => {
-    setHoveredEvent(null);
+  const connectOutlookCalendar = async () => {
+    const clientId = 'YOUR_OUTLOOK_CALENDAR_CLIENT_ID';
+    const redirectUri = 'YOUR_REDIRECT_URI';
+    const scope = 'https://outlook.office.com/.default';
+    const url = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=code`;
+    window.open(url, '_blank');
   };
 
-  const handleGoogleCalendarConnect = () => {
-    // Implement Google Calendar connection logic here
-    setIsGoogleCalendarConnected(true);
-    localStorage.setItem('isGoogleCalendarConnected', JSON.stringify(true));
-    // Fetch Google Calendar events and update state
-    const googleCalendarEvents = [
-      { id: 'google-event-1', title: 'Google Event 1', startDate: new Date('2024-01-01'), endDate: new Date('2024-01-02') },
-      { id: 'google-event-2', title: 'Google Event 2', startDate: new Date('2024-01-15'), endDate: new Date('2024-01-16') },
-    ];
-    setGoogleCalendarEvents(googleCalendarEvents);
+  const fetchGoogleCalendarEvents = async () => {
+    const url = 'https://www.googleapis.com/calendar/v3/users/me/events';
+    const headers = {
+      'Authorization': `Bearer ${googleCalendarAccessToken}`,
+      'Content-Type': 'application/json',
+    };
+    const response = await fetch(url, { headers });
+    const data = await response.json();
+    setGoogleCalendarEvents(data.items);
   };
 
-  const handleOutlookCalendarConnect = () => {
-    // Implement Outlook Calendar connection logic here
-    setIsOutlookCalendarConnected(true);
-    localStorage.setItem('isOutlookCalendarConnected', JSON.stringify(true));
-    // Fetch Outlook Calendar events and update state
-    const outlookCalendarEvents = [
-      { id: 'outlook-event-1', title: 'Outlook Event 1', startDate: new Date('2024-02-01'), endDate: new Date('2024-02-02') },
-      { id: 'outlook-event-2', title: 'Outlook Event 2', startDate: new Date('2024-02-15'), endDate: new Date('2024-02-16') },
-    ];
-    setOutlookCalendarEvents(outlookCalendarEvents);
+  const fetchOutlookCalendarEvents = async () => {
+    const url = 'https://outlook.office.com/api/v2.0/me/events';
+    const headers = {
+      'Authorization': `Bearer ${outlookCalendarAccessToken}`,
+      'Content-Type': 'application/json',
+    };
+    const response = await fetch(url, { headers });
+    const data = await response.json();
+    setOutlookCalendarEvents(data.value);
   };
 
-  const handleGoogleCalendarDisconnect = () => {
-    setIsGoogleCalendarConnected(false);
-    localStorage.setItem('isGoogleCalendarConnected', JSON.stringify(false));
-    setGoogleCalendarEvents([]);
+  const createGoogleCalendarEvent = async (event: CalendarEvent) => {
+    const url = 'https://www.googleapis.com/calendar/v3/users/me/events';
+    const headers = {
+      'Authorization': `Bearer ${googleCalendarAccessToken}`,
+      'Content-Type': 'application/json',
+    };
+    const body = {
+      'summary': event.title,
+      'description': event.description,
+      'start': {
+        'dateTime': event.startDate.toISOString(),
+      },
+      'end': {
+        'dateTime': event.endDate.toISOString(),
+      },
+    };
+    const response = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
+    const data = await response.json();
+    console.log(data);
   };
 
-  const handleOutlookCalendarDisconnect = () => {
-    setIsOutlookCalendarConnected(false);
-    localStorage.setItem('isOutlookCalendarConnected', JSON.stringify(false));
-    setOutlookCalendarEvents([]);
+  const createOutlookCalendarEvent = async (event: CalendarEvent) => {
+    const url = 'https://outlook.office.com/api/v2.0/me/events';
+    const headers = {
+      'Authorization': `Bearer ${outlookCalendarAccessToken}`,
+      'Content-Type': 'application/json',
+    };
+    const body = {
+      'Subject': event.title,
+      'Body': {
+        'Content': event.description,
+        'ContentType': 'HTML',
+      },
+      'Start': {
+        'DateTime': event.startDate.toISOString(),
+        'TimeZone': 'UTC',
+      },
+      'End': {
+        'DateTime': event.endDate.toISOString(),
+        'TimeZone': 'UTC',
+      },
+    };
+    const response = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
+    const data = await response.json();
+    console.log(data);
+  };
+
+  const deleteGoogleCalendarEvent = async (eventId: string) => {
+    const url = `https://www.googleapis.com/calendar/v3/users/me/events/${eventId}`;
+    const headers = {
+      'Authorization': `Bearer ${googleCalendarAccessToken}`,
+    };
+    const response = await fetch(url, { method: 'DELETE', headers });
+    const data = await response.json();
+    console.log(data);
+  };
+
+  const deleteOutlookCalendarEvent = async (eventId: string) => {
+    const url = `https://outlook.office.com/api/v2.0/me/events/${eventId}`;
+    const headers = {
+      'Authorization': `Bearer ${outlookCalendarAccessToken}`,
+    };
+    const response = await fetch(url, { method: 'DELETE', headers });
+    const data = await response.json();
+    console.log(data);
+  };
+
+  const updateGoogleCalendarEvent = async (event: CalendarEvent, newDate: Date) => {
+    const url = `https://www.googleapis.com/calendar/v3/users/me/events/${event.id}`;
+    const headers = {
+      'Authorization': `Bearer ${googleCalendarAccessToken}`,
+      'Content-Type': 'application/json',
+    };
+    const body = {
+      'start': {
+        'dateTime': newDate.toISOString(),
+      },
+    };
+    const response = await fetch(url, { method: 'PATCH', headers, body: JSON.stringify(body) });
+    const data = await response.json();
+    console.log(data);
+  };
+
+  const updateOutlookCalendarEvent = async (event: CalendarEvent, newDate: Date) => {
+    const url = `https://outlook.office.com/api/v2.0/me/events/${event.id}`;
+    const headers = {
+      'Authorization': `Bearer ${outlookCalendarAccessToken}`,
+      'Content-Type': 'application/json',
+    };
+    const body = {
+      'Start': {
+        'DateTime': newDate.toISOString(),
+        'TimeZone': 'UTC',
+      },
+    };
+    const response = await fetch(url, { method: 'PATCH', headers, body: JSON.stringify(body) });
+    const data = await response.json();
+    console.log(data);
+  };
+
+  const handleGoogleCalendarConnect = async () => {
+    connectGoogleCalendar();
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    if (code) {
+      const tokenUrl = 'https://oauth2.googleapis.com/token';
+      const headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      };
+      const body = {
+        'code': code,
+        'client_id': 'YOUR_GOOGLE_CALENDAR_CLIENT_ID',
+        'client_secret': 'YOUR_GOOGLE_CALENDAR_CLIENT_SECRET',
+        'redirect_uri': 'YOUR_REDIRECT_URI',
+        'grant_type': 'authorization_code',
+      };
+      const response = await fetch(tokenUrl, { method: 'POST', headers, body: new URLSearchParams(body).toString() });
+      const data = await response.json();
+      setGoogleCalendarAccessToken(data.access_token);
+      localStorage.setItem('googleCalendarAccessToken', data.access_token);
+      setIsGoogleCalendarConnected(true);
+      localStorage.setItem('isGoogleCalendarConnected', 'true');
+    }
+  };
+
+  const handleOutlookCalendarConnect = async () => {
+    connectOutlookCalendar();
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    if (code) {
+      const tokenUrl = 'https://login.microsoftonline.com/common/oauth2/v2.0/token';
+      const headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      };
+      const body = {
+        'code': code,
+        'client_id': 'YOUR_OUTLOOK_CALENDAR_CLIENT_ID',
+        'client_secret': 'YOUR_OUTLOOK_CALENDAR_CLIENT_SECRET',
+        'redirect_uri': 'YOUR_REDIRECT_URI',
+        'grant_type': 'authorization_code',
+      };
+      const response = await fetch(tokenUrl, { method: 'POST', headers, body: new URLSearchParams(body).toString() });
+      const data = await response.json();
+      setOutlookCalendarAccessToken(data.access_token);
+      localStorage.setItem('outlookCalendarAccessToken', data.access_token);
+      setIsOutlookCalendarConnected(true);
+      localStorage.setItem('isOutlookCalendarConnected', 'true');
+    }
   };
 
   return (
-    <DndProvider backend={HTML5Backend}>
-      <Layout>
-        <SEO 
-          title="AI-Powered Content Calendar | Plan and Organize Your Content" 
-          description="Discover the ultimate AI-powered content calendar to plan, organize, and optimize your content strategy. Get started today and boost your online presence!" 
-          meta={[
-            {
-              name: 'keywords',
-              content: 'content calendar, content planning, content organization',
-            },
-          ]}
+    <Layout>
+      <SEO title="Content Calendar" />
+      <DndProvider backend={HTML5Backend}>
+        <Calendar
+          events={events}
+          selectedDate={selectedDate}
+          onDateChange={handleDateChange}
+          onEventCreate={handleEventCreate}
+          onEventDelete={handleEventDelete}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          onDrop={handleDrop}
         />
-        <div className="calendar-container">
-          <Calendar
-            events={events}
-            selectedDate={selectedDate}
-            onDateChange={handleDateChange}
-            onEventCreate={handleEventCreate}
-            onEventDelete={handleEventDelete}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-            onDrop={handleDrop}
-            onMouseOver={handleMouseOver}
-            onMouseOut={handleMouseOut}
-          />
-          <div className="calendar-integrations">
-            <GoogleCalendar
-              isConnected={isGoogleCalendarConnected}
-              onConnect={handleGoogleCalendarConnect}
-              onDisconnect={handleGoogleCalendarDisconnect}
-              events={googleCalendarEvents}
-            />
-            <OutlookCalendar
-              isConnected={isOutlookCalendarConnected}
-              onConnect={handleOutlookCalendarConnect}
-              onDisconnect={handleOutlookCalendarDisconnect}
-              events={outlookCalendarEvents}
-            />
-          </div>
-        </div>
-      </Layout>
-    </DndProvider>
+        {isGoogleCalendarConnected ? (
+          <GoogleCalendar events={googleCalendarEvents} />
+        ) : (
+          <button onClick={handleGoogleCalendarConnect}>Connect Google Calendar</button>
+        )}
+        {isOutlookCalendarConnected ? (
+          <OutlookCalendar events={outlookCalendarEvents} />
+        ) : (
+          <button onClick={handleOutlookCalendarConnect}>Connect Outlook Calendar</button>
+        )}
+      </DndProvider>
+    </Layout>
   );
 };
 

@@ -22,15 +22,20 @@ const ContentAnalyzerPage = () => {
   const [analysisHistory, setAnalysisHistory] = useState([]);
   const [alternativeFormats, setAlternativeFormats] = useState(null);
   const [realTimeAnalysis, setRealTimeAnalysis] = useState(null);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     const storedContent = LocalStorage.get('content');
     const storedAnalysisHistory = LocalStorage.get('analysisHistory');
+    const storedUser = LocalStorage.get('user');
     if (storedContent) {
       setContent(storedContent);
     }
     if (storedAnalysisHistory) {
       setAnalysisHistory(storedAnalysisHistory);
+    }
+    if (storedUser) {
+      setUser(storedUser);
     }
   }, []);
 
@@ -59,7 +64,20 @@ const ContentAnalyzerPage = () => {
         suggestions: data.suggestions,
       }];
       setAnalysisHistory(newAnalysisHistory);
-      LocalStorage.set('analysisHistory', newAnalysisHistory);
+      if (user) {
+        const userId = user.id;
+        const analysisHistoryResponse = await fetch('/api/save-analysis-history', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, analysisHistory: newAnalysisHistory }),
+        });
+        const analysisHistoryData = await analysisHistoryResponse.json();
+        if (analysisHistoryData.success) {
+          LocalStorage.set('analysisHistory', newAnalysisHistory);
+        }
+      } else {
+        LocalStorage.set('analysisHistory', newAnalysisHistory);
+      }
       const alternativeFormatsResponse = await fetch('/api/suggest-alternative-formats', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -85,20 +103,24 @@ const ContentAnalyzerPage = () => {
     }
   };
 
-  const handleSaveAnalysisHistory = () => {
-    LocalStorage.set('analysisHistory', analysisHistory);
-  };
-
-  const handleLoadAnalysisHistory = () => {
-    const storedAnalysisHistory = LocalStorage.get('analysisHistory');
-    if (storedAnalysisHistory) {
-      setAnalysisHistory(storedAnalysisHistory);
+  const handleLoadAnalysisHistory = async () => {
+    try {
+      if (user) {
+        const userId = user.id;
+        const analysisHistoryResponse = await fetch('/api/load-analysis-history', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId }),
+        });
+        const analysisHistoryData = await analysisHistoryResponse.json();
+        if (analysisHistoryData.success) {
+          setAnalysisHistory(analysisHistoryData.analysisHistory);
+          LocalStorage.set('analysisHistory', analysisHistoryData.analysisHistory);
+        }
+      }
+    } catch (error) {
+      console.error(error);
     }
-  };
-
-  const handleClearAnalysisHistory = () => {
-    setAnalysisHistory([]);
-    LocalStorage.remove('analysisHistory');
   };
 
   return (
@@ -110,8 +132,7 @@ const ContentAnalyzerPage = () => {
         contentType={contentType}
         image={image}
         video={video}
-        onAnalyze={handleAnalyze}
-        onTrackEngagement={handleTrackEngagement}
+        handleAnalyze={handleAnalyze}
       />
       {analysis && (
         <OptimizationSuggestions
@@ -125,21 +146,24 @@ const ContentAnalyzerPage = () => {
       {alternativeFormats && (
         <AlternativeFormats alternativeFormats={alternativeFormats} />
       )}
-      <button onClick={handleSaveAnalysisHistory}>Save Analysis History</button>
-      <button onClick={handleLoadAnalysisHistory}>Load Analysis History</button>
-      <button onClick={handleClearAnalysisHistory}>Clear Analysis History</button>
-      <h2>Analysis History</h2>
-      <ul>
-        {analysisHistory.map((analysis, index) => (
-          <li key={index}>
-            <h3>Analysis {index + 1}</h3>
-            <p>Content: {analysis.content}</p>
-            <p>Content Type: {analysis.contentType}</p>
-            <p>Analysis: {analysis.analysis}</p>
-            <p>Suggestions: {analysis.suggestions}</p>
-          </li>
-        ))}
-      </ul>
+      {user && (
+        <button onClick={handleLoadAnalysisHistory}>Load Analysis History</button>
+      )}
+      {analysisHistory.length > 0 && (
+        <div>
+          <h2>Analysis History</h2>
+          <ul>
+            {analysisHistory.map((analysis, index) => (
+              <li key={index}>
+                <p>Content: {analysis.content}</p>
+                <p>Content Type: {analysis.contentType}</p>
+                <p>Analysis: {analysis.analysis}</p>
+                <p>Suggestions: {analysis.suggestions}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 };

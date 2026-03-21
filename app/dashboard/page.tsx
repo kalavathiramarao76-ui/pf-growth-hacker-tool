@@ -23,6 +23,7 @@ export default function DashboardPage() {
 
   const [subscription, setSubscription] = useState(null);
   const [showTutorial, setShowTutorial] = useState(false);
+  const [tutorialStep, setTutorialStep] = useState(1);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -76,48 +77,61 @@ export default function DashboardPage() {
     setWidgets(newWidgets);
   };
 
-  const availableWidgets = [
-    { id: 1, title: 'Create Content', icon: <AiOutlinePlus size={24} />, onClick: () => router.push('/content-analyzer') },
-    { id: 2, title: 'View Analytics', icon: <IoMdAnalytics size={24} />, onClick: () => router.push('/engagement-tracker') },
-    { id: 3, title: 'Content Calendar', icon: <FaRegCalendarAlt size={24} />, onClick: () => router.push('/content-calendar') },
-    { id: 4, title: 'Settings', icon: <MdSettings size={24} />, onClick: () => router.push('/settings') },
-    { id: 5, title: 'Upgrade to Premium', icon: <MdSettings size={24} />, onClick: () => router.push('/upgrade-plan') },
-  ];
+  const handleNextTutorialStep = () => {
+    setTutorialStep(tutorialStep + 1);
+    if (tutorialStep === 3) {
+      setShowTutorial(false);
+    }
+  };
+
+  const handleSkipTutorial = () => {
+    setShowTutorial(false);
+  };
 
   return (
-    <div>
-      <DashboardHeader />
-      <NavigationMenu />
-      <div className="container mx-auto p-4">
-        <div className="flex justify-center mb-4">
-          {subscription && subscription.plan === 'premium' ? (
-            <div className="text-lg text-green-500">You are a premium user. Enjoy advanced features!</div>
-          ) : (
-            <div className="text-lg text-orange-500">
-              Upgrade to premium to unlock advanced features, such as advanced analytics, priority support, and more.{' '}
-              <button
-                className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded"
-                onClick={handleUpgradePlan}
-              >
-                Upgrade Now
-              </button>
+    <div className="dashboard-container">
+      {showTutorial && (
+        <div className="tutorial-overlay">
+          {tutorialStep === 1 && (
+            <div className="tutorial-step">
+              <h2>Welcome to the AI-Powered Content Optimizer!</h2>
+              <p>This is your dashboard, where you can access all the features of the application.</p>
+              <button onClick={handleNextTutorialStep}>Next</button>
+            </div>
+          )}
+          {tutorialStep === 2 && (
+            <div className="tutorial-step">
+              <h2>Navigation Menu</h2>
+              <p>Use the navigation menu on the left to access different sections of the application.</p>
+              <button onClick={handleNextTutorialStep}>Next</button>
+              <button onClick={handleSkipTutorial}>Skip Tutorial</button>
+            </div>
+          )}
+          {tutorialStep === 3 && (
+            <div className="tutorial-step">
+              <h2>Getting Started</h2>
+              <p>Click on the "Create Content" button to start creating your first piece of content.</p>
+              <button onClick={handleSkipTutorial}>Finish Tutorial</button>
             </div>
           )}
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      )}
+      <DashboardHeader user={user} />
+      <div className="dashboard-content">
+        <div className="widget-container">
           {widgets.map((widget) => (
             <DashboardCard key={widget.id} title={widget.title} icon={widget.icon} onClick={widget.onClick} />
           ))}
-        </div>
-        <div className="flex justify-center mt-4">
-          <button
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            onClick={handleAddWidget}
-          >
+          <button className="add-widget-button" onClick={handleAddWidget}>
+            <AiOutlinePlus size={24} />
             Add Widget
           </button>
         </div>
+        <div className="settings-container">
+          <WidgetSettings widgets={widgets} onRemoveWidget={handleRemoveWidget} onReorderWidgets={handleReorderWidgets} />
+        </div>
       </div>
+      <NavigationMenu />
     </div>
   );
 }
