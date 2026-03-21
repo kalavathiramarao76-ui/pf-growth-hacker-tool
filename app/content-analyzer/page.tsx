@@ -79,7 +79,7 @@ const ContentAnalyzerPage = () => {
         body: JSON.stringify({ content }),
       });
       const data = await response.json();
-      setEngagement(data.engagement);
+      setEngagement(data);
     } catch (error) {
       console.error(error);
     }
@@ -99,10 +99,14 @@ const ContentAnalyzerPage = () => {
     }
   };
 
-  const handleContentChange = (event: any) => {
-    setContent(event.target.value);
-    handleRealTimeAnalysis(event.target.value);
-  };
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      if (content) {
+        handleRealTimeAnalysis(content);
+      }
+    }, 1000);
+    return () => clearInterval(intervalId);
+  }, [content]);
 
   return (
     <div>
@@ -113,37 +117,27 @@ const ContentAnalyzerPage = () => {
         contentType={contentType}
         image={image}
         video={video}
-        onAnalyze={handleAnalyze}
-        onContentChange={handleContentChange}
+        onAnalyze={(content, contentType, image, video) => handleAnalyze(content, contentType, image, video)}
+        onTrackEngagement={handleTrackEngagement}
+        onContentChange={(content) => setContent(content)}
+        onContentTypeChange={(contentType) => setContentType(contentType)}
+        onImageChange={(image) => setImage(image)}
+        onVideoChange={(video) => setVideo(video)}
       />
+      {analysis && (
+        <OptimizationSuggestions
+          analysis={analysis}
+          suggestions={suggestions}
+          alternativeFormats={alternativeFormats}
+        />
+      )}
+      {engagement && (
+        <EngagementTracker engagement={engagement} />
+      )}
       {realTimeAnalysis && (
         <div>
           <h2>Real-time Analysis</h2>
           <p>{realTimeAnalysis}</p>
-        </div>
-      )}
-      {analysis && (
-        <div>
-          <h2>Analysis</h2>
-          <p>{analysis}</p>
-        </div>
-      )}
-      {suggestions && (
-        <div>
-          <h2>Optimization Suggestions</h2>
-          <OptimizationSuggestions suggestions={suggestions} />
-        </div>
-      )}
-      {engagement && (
-        <div>
-          <h2>Engagement Tracker</h2>
-          <EngagementTracker engagement={engagement} />
-        </div>
-      )}
-      {alternativeFormats && (
-        <div>
-          <h2>Alternative Formats</h2>
-          <p>{alternativeFormats}</p>
         </div>
       )}
     </div>

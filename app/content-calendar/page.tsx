@@ -7,6 +7,7 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { GoogleCalendar, OutlookCalendar } from '../components/CalendarIntegrations';
 import { Tooltip } from '../components/Tooltip';
+import Image from 'next/image';
 
 const ContentCalendarPage = () => {
   const pathname = usePathname();
@@ -76,9 +77,58 @@ const ContentCalendarPage = () => {
 
   return (
     <Layout>
-      <SEO title="Content Calendar" description="Plan and organize your content with our intuitive calendar" />
+      <SEO 
+        title="Content Calendar" 
+        description="Plan and organize your content with our intuitive calendar" 
+        meta={[
+          {
+            name: 'keywords',
+            content: 'content calendar, content planning, content organization',
+          },
+          {
+            name: 'robots',
+            content: 'index, follow',
+          },
+          {
+            name: 'og:title',
+            content: 'Content Calendar',
+          },
+          {
+            name: 'og:description',
+            content: 'Plan and organize your content with our intuitive calendar',
+          },
+          {
+            name: 'og:image',
+            content: '/images/content-calendar-og-image.jpg',
+          },
+          {
+            name: 'twitter:card',
+            content: 'summary_large_image',
+          },
+          {
+            name: 'twitter:title',
+            content: 'Content Calendar',
+          },
+          {
+            name: 'twitter:description',
+            content: 'Plan and organize your content with our intuitive calendar',
+          },
+          {
+            name: 'twitter:image',
+            content: '/images/content-calendar-twitter-image.jpg',
+          },
+        ]}
+      />
       <div className="container mx-auto p-4 pt-6 md:p-6 lg:p-12 xl:p-24">
         <h1 className="text-3xl font-bold mb-4">Content Calendar</h1>
+        <Image 
+          src="/images/content-calendar-header-image.jpg" 
+          alt="Content Calendar Header Image" 
+          width={1200} 
+          height={400} 
+          priority={true} 
+          loading="eager"
+        />
         <DndProvider backend={HTML5Backend}>
           <Calendar
             events={events}
@@ -91,18 +141,8 @@ const ContentCalendarPage = () => {
             onDrop={handleDrop}
             onMouseOver={handleMouseOver}
             onMouseOut={handleMouseOut}
-            style={{
-              border: '1px solid #ddd',
-              borderRadius: '10px',
-              padding: '20px',
-            }}
           />
-          {hoveredEvent && (
-            <Tooltip event={hoveredEvent} />
-          )}
         </DndProvider>
-        <GoogleCalendar />
-        <OutlookCalendar />
       </div>
     </Layout>
   );
