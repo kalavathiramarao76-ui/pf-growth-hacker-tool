@@ -100,12 +100,12 @@ const ContentAnalyzerPage = () => {
   };
 
   useEffect(() => {
-    const intervalId = setInterval(() => {
+    const timeoutId = setTimeout(() => {
       if (content) {
         handleRealTimeAnalysis(content);
       }
-    }, 1000);
-    return () => clearInterval(intervalId);
+    }, 500);
+    return () => clearTimeout(timeoutId);
   }, [content]);
 
   return (
@@ -117,27 +117,34 @@ const ContentAnalyzerPage = () => {
         contentType={contentType}
         image={image}
         video={video}
-        onAnalyze={(content, contentType, image, video) => handleAnalyze(content, contentType, image, video)}
-        onTrackEngagement={handleTrackEngagement}
-        onContentChange={(content) => setContent(content)}
-        onContentTypeChange={(contentType) => setContentType(contentType)}
-        onImageChange={(image) => setImage(image)}
-        onVideoChange={(video) => setVideo(video)}
+        onChangeContent={(newContent) => setContent(newContent)}
+        onChangeContentType={(newContentType) => setContentType(newContentType)}
+        onChangeImage={(newImage) => setImage(newImage)}
+        onChangeVideo={(newVideo) => setVideo(newVideo)}
+        onAnalyze={() => handleAnalyze(content, contentType, image, video)}
       />
-      {analysis && (
-        <OptimizationSuggestions
-          analysis={analysis}
-          suggestions={suggestions}
-          alternativeFormats={alternativeFormats}
-        />
-      )}
-      {engagement && (
-        <EngagementTracker engagement={engagement} />
-      )}
       {realTimeAnalysis && (
         <div>
           <h2>Real-time Analysis</h2>
           <p>{realTimeAnalysis}</p>
+        </div>
+      )}
+      {analysis && (
+        <div>
+          <h2>Analysis</h2>
+          <p>{analysis}</p>
+        </div>
+      )}
+      {suggestions && (
+        <div>
+          <h2>Optimization Suggestions</h2>
+          <OptimizationSuggestions suggestions={suggestions} />
+        </div>
+      )}
+      {engagement && (
+        <div>
+          <h2>Engagement Tracker</h2>
+          <EngagementTracker engagement={engagement} />
         </div>
       )}
     </div>

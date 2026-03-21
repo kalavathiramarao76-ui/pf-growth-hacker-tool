@@ -77,30 +77,53 @@ export default function DashboardPage() {
                 <p>Analyze and optimize your marketing content for better engagement and conversion rates.</p>
               )}
               {widget.title === 'View Analytics' && (
-                <p>Track your progress and adjust your strategy accordingly.</p>
+                <p>Track your progress and make data-driven decisions to improve your content strategy.</p>
               )}
               {widget.title === 'Content Calendar' && (
-                <p>Plan and organize your content in advance.</p>
+                <p>Plan and schedule your content in advance to save time and increase productivity.</p>
               )}
               {widget.title === 'Settings' && (
-                <p>Configure your account and preferences.</p>
+                <p>Configure your account settings and customize your experience.</p>
               )}
               {widget.title === 'Upgrade to Premium' && (
-                <>
-                  <h2 className="text-lg font-bold mb-2">Unlock the Full Potential</h2>
-                  <p>Upgrade to our premium plan and get access to:</p>
-                  <ul className="list-disc pl-4 mb-4">
-                    <li>Priority support</li>
-                    <li>Advanced analytics and insights</li>
-                    <li>Unlimited content creation and optimization</li>
-                  </ul>
-                  <p className="text-lg font-bold">Pricing:</p>
-                </>
+                <p>Unlock exclusive features and priority support to take your content to the next level.</p>
               )}
             </DashboardCard>
           ))}
         </div>
-        <WidgetSettings widgets={widgets} onAddWidget={handleAddWidget} onRemoveWidget={handleRemoveWidget} onReorderWidgets={handleReorderWidgets} />
+        <div className="mt-8">
+          <h2 className="text-2xl font-bold">Premium Features</h2>
+          <p>Upgrade to our premium plan to unlock exclusive features and priority support.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <DashboardCard
+              title="Advanced Analytics"
+              icon={<IoMdAnalytics size={24} />}
+              onClick={() => router.push('/upgrade-plan')}
+            >
+              <p>Get in-depth insights into your content performance and audience engagement.</p>
+            </DashboardCard>
+            <DashboardCard
+              title="Priority Support"
+              icon={<MdSettings size={24} />}
+              onClick={() => router.push('/upgrade-plan')}
+            >
+              <p>Get dedicated support from our team to help you achieve your content goals.</p>
+            </DashboardCard>
+            <DashboardCard
+              title="Exclusive Content Templates"
+              icon={<AiOutlinePlus size={24} />}
+              onClick={() => router.push('/upgrade-plan')}
+            >
+              <p>Access a library of exclusive content templates to help you create high-quality content.</p>
+            </DashboardCard>
+          </div>
+          <button
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            onClick={handleUpgradePlan}
+          >
+            Upgrade to Premium
+          </button>
+        </div>
       </main>
     </div>
   );
