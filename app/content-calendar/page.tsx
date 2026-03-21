@@ -15,11 +15,26 @@ const ContentCalendarPage = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [draggedEvent, setDraggedEvent] = useState<CalendarEvent | null>(null);
   const [hoveredEvent, setHoveredEvent] = useState<CalendarEvent | null>(null);
+  const [googleCalendarEvents, setGoogleCalendarEvents] = useState<CalendarEvent[]>([]);
+  const [outlookCalendarEvents, setOutlookCalendarEvents] = useState<CalendarEvent[]>([]);
+  const [isGoogleCalendarConnected, setIsGoogleCalendarConnected] = useState(false);
+  const [isOutlookCalendarConnected, setIsOutlookCalendarConnected] = useState(false);
 
   useEffect(() => {
     const storedEvents = localStorage.getItem('events');
     if (storedEvents) {
       setEvents(JSON.parse(storedEvents));
+    }
+  }, []);
+
+  useEffect(() => {
+    const storedGoogleCalendarConnected = localStorage.getItem('isGoogleCalendarConnected');
+    if (storedGoogleCalendarConnected) {
+      setIsGoogleCalendarConnected(JSON.parse(storedGoogleCalendarConnected));
+    }
+    const storedOutlookCalendarConnected = localStorage.getItem('isOutlookCalendarConnected');
+    if (storedOutlookCalendarConnected) {
+      setIsOutlookCalendarConnected(JSON.parse(storedOutlookCalendarConnected));
     }
   }, []);
 
@@ -75,6 +90,42 @@ const ContentCalendarPage = () => {
     setHoveredEvent(null);
   };
 
+  const handleGoogleCalendarConnect = () => {
+    // Implement Google Calendar connection logic here
+    setIsGoogleCalendarConnected(true);
+    localStorage.setItem('isGoogleCalendarConnected', JSON.stringify(true));
+    // Fetch Google Calendar events and update state
+    const googleCalendarEvents = [
+      { id: 'google-event-1', title: 'Google Event 1', startDate: new Date('2024-01-01'), endDate: new Date('2024-01-02') },
+      { id: 'google-event-2', title: 'Google Event 2', startDate: new Date('2024-01-15'), endDate: new Date('2024-01-16') },
+    ];
+    setGoogleCalendarEvents(googleCalendarEvents);
+  };
+
+  const handleOutlookCalendarConnect = () => {
+    // Implement Outlook Calendar connection logic here
+    setIsOutlookCalendarConnected(true);
+    localStorage.setItem('isOutlookCalendarConnected', JSON.stringify(true));
+    // Fetch Outlook Calendar events and update state
+    const outlookCalendarEvents = [
+      { id: 'outlook-event-1', title: 'Outlook Event 1', startDate: new Date('2024-02-01'), endDate: new Date('2024-02-02') },
+      { id: 'outlook-event-2', title: 'Outlook Event 2', startDate: new Date('2024-02-15'), endDate: new Date('2024-02-16') },
+    ];
+    setOutlookCalendarEvents(outlookCalendarEvents);
+  };
+
+  const handleGoogleCalendarDisconnect = () => {
+    setIsGoogleCalendarConnected(false);
+    localStorage.setItem('isGoogleCalendarConnected', JSON.stringify(false));
+    setGoogleCalendarEvents([]);
+  };
+
+  const handleOutlookCalendarDisconnect = () => {
+    setIsOutlookCalendarConnected(false);
+    localStorage.setItem('isOutlookCalendarConnected', JSON.stringify(false));
+    setOutlookCalendarEvents([]);
+  };
+
   return (
     <DndProvider backend={HTML5Backend}>
       <Layout>
@@ -84,61 +135,38 @@ const ContentCalendarPage = () => {
           meta={[
             {
               name: 'keywords',
-              content: 'content calendar, content planning, content organization, content strategy, ai-powered content, digital marketing, content optimization, seo, search engine optimization'
+              content: 'content calendar, content planning, content organization',
             },
-            {
-              name: 'robots',
-              content: 'index, follow'
-            },
-            {
-              name: 'og:title',
-              content: 'AI-Powered Content Calendar | Plan and Organize Your Content'
-            },
-            {
-              name: 'og:description',
-              content: 'Discover the ultimate AI-powered content calendar to plan, organize, and optimize your content strategy. Get started today and boost your online presence!'
-            },
-            {
-              name: 'og:url',
-              content: pathname
-            },
-            {
-              name: 'og:image',
-              content: '/images/content-calendar.png'
-            },
-            {
-              name: 'twitter:card',
-              content: 'summary_large_image'
-            },
-            {
-              name: 'twitter:title',
-              content: 'AI-Powered Content Calendar | Plan and Organize Your Content'
-            },
-            {
-              name: 'twitter:description',
-              content: 'Discover the ultimate AI-powered content calendar to plan, organize, and optimize your content strategy. Get started today and boost your online presence!'
-            },
-            {
-              name: 'twitter:image',
-              content: '/images/content-calendar.png'
-            }
           ]}
         />
-        <Calendar 
-          events={events} 
-          selectedDate={selectedDate} 
-          onDateChange={handleDateChange} 
-          onEventCreate={handleEventCreate} 
-          onEventDelete={handleEventDelete} 
-          onDragStart={handleDragStart} 
-          onDragEnd={handleDragEnd} 
-          onDrop={handleDrop} 
-          onMouseOver={handleMouseOver} 
-          onMouseOut={handleMouseOut}
-        />
-        <GoogleCalendar />
-        <OutlookCalendar />
-        <Tooltip />
+        <div className="calendar-container">
+          <Calendar
+            events={events}
+            selectedDate={selectedDate}
+            onDateChange={handleDateChange}
+            onEventCreate={handleEventCreate}
+            onEventDelete={handleEventDelete}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            onDrop={handleDrop}
+            onMouseOver={handleMouseOver}
+            onMouseOut={handleMouseOut}
+          />
+          <div className="calendar-integrations">
+            <GoogleCalendar
+              isConnected={isGoogleCalendarConnected}
+              onConnect={handleGoogleCalendarConnect}
+              onDisconnect={handleGoogleCalendarDisconnect}
+              events={googleCalendarEvents}
+            />
+            <OutlookCalendar
+              isConnected={isOutlookCalendarConnected}
+              onConnect={handleOutlookCalendarConnect}
+              onDisconnect={handleOutlookCalendarDisconnect}
+              events={outlookCalendarEvents}
+            />
+          </div>
+        </div>
       </Layout>
     </DndProvider>
   );

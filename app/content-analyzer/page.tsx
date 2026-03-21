@@ -103,7 +103,7 @@ const ContentAnalyzerPage = () => {
 
   return (
     <div>
-      <SEO title="AI-Powered Content Optimizer" />
+      <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
       <ContentAnalyzerForm
         content={content}
@@ -128,15 +128,15 @@ const ContentAnalyzerPage = () => {
       <button onClick={handleSaveAnalysisHistory}>Save Analysis History</button>
       <button onClick={handleLoadAnalysisHistory}>Load Analysis History</button>
       <button onClick={handleClearAnalysisHistory}>Clear Analysis History</button>
-      <h2>Analysis History:</h2>
+      <h2>Analysis History</h2>
       <ul>
         {analysisHistory.map((analysis, index) => (
           <li key={index}>
             <h3>Analysis {index + 1}</h3>
             <p>Content: {analysis.content}</p>
             <p>Content Type: {analysis.contentType}</p>
-            <p>Analysis: {JSON.stringify(analysis.analysis)}</p>
-            <p>Suggestions: {JSON.stringify(analysis.suggestions)}</p>
+            <p>Analysis: {analysis.analysis}</p>
+            <p>Suggestions: {analysis.suggestions}</p>
           </li>
         ))}
       </ul>

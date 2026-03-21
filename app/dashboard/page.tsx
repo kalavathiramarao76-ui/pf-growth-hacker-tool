@@ -84,39 +84,39 @@ export default function DashboardPage() {
     { id: 5, title: 'Upgrade to Premium', icon: <MdSettings size={24} />, onClick: () => router.push('/upgrade-plan') },
   ];
 
-  const handleSkipTutorial = () => {
-    setShowTutorial(false);
-  };
-
   return (
-    <div className="dashboard-container">
-      {showTutorial && (
-        <div className="tutorial-overlay">
-          <div className="tutorial-content">
-            <h2>Welcome to the AI-Powered Content Optimizer!</h2>
-            <p>This is a tutorial to help you get started with the platform.</p>
-            <ul>
-              <li>Step 1: Create content using the "Create Content" widget.</li>
-              <li>Step 2: View analytics using the "View Analytics" widget.</li>
-              <li>Step 3: Manage your content calendar using the "Content Calendar" widget.</li>
-              <li>Step 4: Upgrade to premium to unlock advanced features.</li>
-            </ul>
-            <button onClick={handleSkipTutorial}>Skip Tutorial</button>
-          </div>
-        </div>
-      )}
+    <div>
       <DashboardHeader />
-      <div className="dashboard-body">
-        <div className="widget-grid">
+      <NavigationMenu />
+      <div className="container mx-auto p-4">
+        <div className="flex justify-center mb-4">
+          {subscription && subscription.plan === 'premium' ? (
+            <div className="text-lg text-green-500">You are a premium user. Enjoy advanced features!</div>
+          ) : (
+            <div className="text-lg text-orange-500">
+              Upgrade to premium to unlock advanced features, such as advanced analytics, priority support, and more.{' '}
+              <button
+                className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded"
+                onClick={handleUpgradePlan}
+              >
+                Upgrade Now
+              </button>
+            </div>
+          )}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {widgets.map((widget) => (
             <DashboardCard key={widget.id} title={widget.title} icon={widget.icon} onClick={widget.onClick} />
           ))}
-          <button className="add-widget-button" onClick={handleAddWidget}>
-            <AiOutlinePlus size={24} />
+        </div>
+        <div className="flex justify-center mt-4">
+          <button
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            onClick={handleAddWidget}
+          >
             Add Widget
           </button>
         </div>
-        <NavigationMenu />
       </div>
     </div>
   );
