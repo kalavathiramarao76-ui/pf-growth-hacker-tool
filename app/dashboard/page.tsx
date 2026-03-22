@@ -41,6 +41,22 @@ export default function DashboardPage() {
     widgets: []
   });
   const [personalizedRecommendations, setPersonalizedRecommendations] = useState([]);
+  const [customizableWidgets, setCustomizableWidgets] = useState([
+    { id: 1, title: 'Create Content', icon: <AiOutlinePlus size={24} />, onClick: () => router.push('/content-analyzer'), frequency: 0 },
+    { id: 2, title: 'View Analytics', icon: <IoMdAnalytics size={24} />, onClick: () => router.push('/engagement-tracker'), frequency: 0 },
+    { id: 3, title: 'Content Calendar', icon: <FaRegCalendarAlt size={24} />, onClick: () => router.push('/content-calendar'), frequency: 0 },
+    { id: 4, title: 'Settings', icon: <MdSettings size={24} />, onClick: () => router.push('/settings'), frequency: 0 },
+    { 
+      id: 5, 
+      title: 'Upgrade to Premium', 
+      icon: <MdSettings size={24} />, 
+      onClick: () => router.push('/upgrade-plan'), 
+      description: 'Get additional features, priority support, and more with our premium plan',
+      frequency: 0
+    },
+    { id: 6, title: 'New Widget', icon: <AiOutlinePlus size={24} />, onClick: () => console.log('New widget clicked'), frequency: 0 },
+    { id: 7, title: 'Another Widget', icon: <IoMdAnalytics size={24} />, onClick: () => console.log('Another widget clicked'), frequency: 0 },
+  ]);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -64,57 +80,65 @@ export default function DashboardPage() {
     if (storedWidgetLayout) {
       setWidgetLayout(JSON.parse(storedWidgetLayout));
     }
-    const storedPersonalizedRecommendations = localStorage.getItem('personalizedRecommendations');
-    if (storedPersonalizedRecommendations) {
-      setPersonalizedRecommendations(JSON.parse(storedPersonalizedRecommendations));
-    } else {
-      fetch('/api/personalized-recommendations', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          userId: storedUser ? JSON.parse(storedUser).id : null,
-          subscription: storedSubscription ? JSON.parse(storedSubscription) : null,
-          usageMetrics: {
-            // Add usage metrics here, e.g. page views, engagement, etc.
-          }
-        })
-      })
-      .then(response => response.json())
-      .then(data => {
-        setPersonalizedRecommendations(data);
-        localStorage.setItem('personalizedRecommendations', JSON.stringify(data));
-      })
-      .catch(error => console.error(error));
+    const storedCustomizableWidgets = localStorage.getItem('customizableWidgets');
+    if (storedCustomizableWidgets) {
+      setCustomizableWidgets(JSON.parse(storedCustomizableWidgets));
     }
   }, []);
 
-  const handleCreateContent = () => {
-    router.push('/content-analyzer');
+  const handleWidgetClick = (widget) => {
+    widget.frequency++;
+    setCustomizableWidgets(customizableWidgets.map((w) => w.id === widget.id ? widget : w));
+    localStorage.setItem('customizableWidgets', JSON.stringify(customizableWidgets));
+  };
+
+  const handleWidgetLayoutChange = (newLayout) => {
+    setWidgetLayout(newLayout);
+    localStorage.setItem('widgetLayout', JSON.stringify(newLayout));
+  };
+
+  const handleWidgetAdd = (widget) => {
+    const newLayout = { ...widgetLayout };
+    newLayout.widgets.push(widget);
+    handleWidgetLayoutChange(newLayout);
+  };
+
+  const handleWidgetRemove = (widgetId) => {
+    const newLayout = { ...widgetLayout };
+    newLayout.widgets = newLayout.widgets.filter((widget) => widget.id !== widgetId);
+    handleWidgetLayoutChange(newLayout);
+  };
+
+  const handleWidgetPriorityChange = (widgetId, newPriority) => {
+    const newLayout = { ...widgetLayout };
+    newLayout.widgets = newLayout.widgets.map((widget) => {
+      if (widget.id === widgetId) {
+        widget.priority = newPriority;
+      }
+      return widget;
+    });
+    handleWidgetLayoutChange(newLayout);
   };
 
   return (
     <div>
       <DashboardHeader />
       <NavigationMenu />
-      <div className="dashboard-content">
-        {personalizedRecommendations.length > 0 && (
-          <div className="personalized-recommendations">
-            <h2>Personalized Recommendations</h2>
-            {personalizedRecommendations.map(recommendation => (
-              <DashboardCard key={recommendation.id} title={recommendation.title} icon={recommendation.icon} onClick={recommendation.onClick} description={recommendation.description} />
-            ))}
-          </div>
-        )}
-        <div className="widgets">
-          {selectedWidgets.map(widget => (
-            <DashboardCard key={widget.id} title={widget.title} icon={widget.icon} onClick={widget.onClick} />
+      <div className="dashboard-container">
+        <div className="widget-layout">
+          {widgetLayout.widgets.map((widget, index) => (
+            <DashboardCard key={index} widget={widget} onClick={() => handleWidgetClick(widget)} />
           ))}
         </div>
-        {showTutorial && (
-          <WidgetSettings tutorialStep={tutorialStep} setTutorialStep={setTutorialStep} />
-        )}
+        <div className="widget-settings">
+          <WidgetSettings
+            availableWidgets={availableWidgets}
+            selectedWidgets={selectedWidgets}
+            onWidgetAdd={handleWidgetAdd}
+            onWidgetRemove={handleWidgetRemove}
+            onWidgetPriorityChange={handleWidgetPriorityChange}
+          />
+        </div>
       </div>
     </div>
   );

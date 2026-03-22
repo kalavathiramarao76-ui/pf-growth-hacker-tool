@@ -90,20 +90,17 @@ const ContentAnalyzerPage = () => {
         body: JSON.stringify({ content }),
       });
       const data = await response.json();
-      setRealTimeAnalysis(data.analysis);
+      setRealTimeAnalysis(data);
     } catch (error) {
       console.error(error);
     }
   };
 
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (content) {
-        handleRealTimeAnalysis(content);
-      }
-    }, 500);
-    return () => clearTimeout(timeoutId);
-  }, [content]);
+  const handleContentChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newContent = event.target.value;
+    setContent(newContent);
+    handleRealTimeAnalysis(newContent);
+  };
 
   return (
     <div>
@@ -114,39 +111,17 @@ const ContentAnalyzerPage = () => {
         contentType={contentType}
         image={image}
         video={video}
-        onChange={(content) => setContent(content)}
-        onAnalyze={(content, contentType, image, video) => handleAnalyze(content, contentType, image, video)}
+        onAnalyze={handleAnalyze}
+        onContentChange={handleContentChange}
       />
       {realTimeAnalysis && (
-        <div>
-          <h2>Real-time Analysis</h2>
-          <p>{realTimeAnalysis}</p>
-        </div>
+        <OptimizationSuggestions suggestions={realTimeAnalysis.suggestions} />
       )}
       {analysis && (
-        <div>
-          <h2>Analysis</h2>
-          <p>{analysis}</p>
-        </div>
+        <OptimizationSuggestions suggestions={suggestions} />
       )}
-      {suggestions && (
-        <div>
-          <h2>Suggestions</h2>
-          <OptimizationSuggestions suggestions={suggestions} />
-        </div>
-      )}
-      {engagement && (
-        <div>
-          <h2>Engagement</h2>
-          <EngagementTracker engagement={engagement} />
-        </div>
-      )}
-      {alternativeFormats && (
-        <div>
-          <h2>Alternative Formats</h2>
-          <AlternativeFormats formats={alternativeFormats} />
-        </div>
-      )}
+      <EngagementTracker engagement={engagement} />
+      <AlternativeFormats formats={alternativeFormats} />
     </div>
   );
 };
