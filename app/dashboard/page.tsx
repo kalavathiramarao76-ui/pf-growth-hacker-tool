@@ -18,7 +18,13 @@ export default function DashboardPage() {
     { id: 2, title: 'View Analytics', icon: <IoMdAnalytics size={24} />, onClick: () => router.push('/engagement-tracker') },
     { id: 3, title: 'Content Calendar', icon: <FaRegCalendarAlt size={24} />, onClick: () => router.push('/content-calendar') },
     { id: 4, title: 'Settings', icon: <MdSettings size={24} />, onClick: () => router.push('/settings') },
-    { id: 5, title: 'Upgrade to Premium', icon: <MdSettings size={24} />, onClick: () => router.push('/upgrade-plan') },
+    { 
+      id: 5, 
+      title: 'Upgrade to Premium', 
+      icon: <MdSettings size={24} />, 
+      onClick: () => router.push('/upgrade-plan'), 
+      description: 'Get additional features, priority support, and more with our premium plan' 
+    },
   ]);
 
   const [subscription, setSubscription] = useState(null);
@@ -74,48 +80,34 @@ export default function DashboardPage() {
     router.push('/upgrade-plan');
   };
 
-  const handleAddWidget = (widget) => {
-    setSelectedWidgets([...selectedWidgets, widget]);
-    localStorage.setItem('selectedWidgets', JSON.stringify([...selectedWidgets, widget]));
-  };
-
-  const handleRemoveWidget = (id) => {
-    setSelectedWidgets(selectedWidgets.filter((widget) => widget.id !== id));
-    localStorage.setItem('selectedWidgets', JSON.stringify(selectedWidgets.filter((widget) => widget.id !== id)));
-  };
-
-  const handleReorderWidgets = (newWidgets) => {
-    setSelectedWidgets(newWidgets);
-    localStorage.setItem('selectedWidgets', JSON.stringify(newWidgets));
-  };
-
-  const handleNextTutorialStep = () => {
-    setTutorialStep(tutorialStep + 1);
-    if (tutorialStep === 3) {
-      setShowTutorial(false);
-    }
-  };
-
   return (
     <div>
       <DashboardHeader />
-      <NavigationMenu />
-      <div className="dashboard-container">
-        <div className="widget-settings">
-          <WidgetSettings
-            availableWidgets={availableWidgets}
-            selectedWidgets={selectedWidgets}
-            onAddWidget={handleAddWidget}
-            onRemoveWidget={handleRemoveWidget}
-            onReorderWidgets={handleReorderWidgets}
-          />
-        </div>
-        <div className="dashboard-cards">
-          {selectedWidgets.map((widget) => (
-            <DashboardCard key={widget.id} title={widget.title} icon={widget.icon} onClick={widget.onClick} />
+      <div className="container">
+        <div className="row">
+          {widgets.map((widget) => (
+            <div key={widget.id} className="col-md-4">
+              <DashboardCard
+                title={widget.title}
+                icon={widget.icon}
+                onClick={widget.onClick}
+                description={widget.description}
+              />
+            </div>
           ))}
         </div>
       </div>
+      {subscription && subscription.plan !== 'premium' && (
+        <div className="upgrade-cta">
+          <p>Unlock the full potential of our AI-Powered Content Optimizer by upgrading to our premium plan.</p>
+          <button onClick={handleUpgradePlan}>Upgrade Now</button>
+          <ul>
+            <li>Get access to advanced analytics and insights</li>
+            <li>Enjoy priority support from our dedicated team</li>
+            <li>Unlock additional features and tools to optimize your content</li>
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
