@@ -78,7 +78,10 @@ const ContentAnalyzerPage = () => {
         const analysisHistoryResponse = await fetch('/api/save-analysis-history', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId, analysisHistory: newAnalysisHistory }),
+          body: JSON.stringify({
+            userId,
+            analysisHistory: newAnalysisHistory,
+          }),
         });
         const analysisHistoryData = await analysisHistoryResponse.json();
         if (analysisHistoryData.success) {
@@ -90,9 +93,30 @@ const ContentAnalyzerPage = () => {
     }
   };
 
+  const handleRealTimeAnalysis = async (content: string) => {
+    try {
+      const response = await fetch('/api/real-time-analysis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content,
+        }),
+      });
+      const data = await response.json();
+      setRealTimeAnalysis(data.analysis);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleContentChange = (event: any) => {
+    setContent(event.target.value);
+    handleRealTimeAnalysis(event.target.value);
+  };
+
   return (
     <div>
-      <SEO title="AI-Powered Content Optimizer" />
+      <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
       <ContentAnalyzerForm
         content={content}
@@ -101,21 +125,38 @@ const ContentAnalyzerPage = () => {
         video={video}
         audio={audio}
         pdf={pdf}
-        onAnalyze={(content, contentType, image, video, audio, pdf) => handleAnalyze(content, contentType, image, video, audio, pdf)}
-        onContentTypeChange={(contentType) => setContentType(contentType)}
-        onImageChange={(image) => setImage(image)}
-        onVideoChange={(video) => setVideo(video)}
-        onAudioChange={(audio) => setAudio(audio)}
-        onPdfChange={(pdf) => setPdf(pdf)}
+        onAnalyze={handleAnalyze}
+        onContentChange={handleContentChange}
       />
+      {realTimeAnalysis && (
+        <div>
+          <h2>Real-time Analysis</h2>
+          <p>{realTimeAnalysis}</p>
+        </div>
+      )}
       {analysis && (
-        <OptimizationSuggestions suggestions={suggestions} />
+        <div>
+          <h2>Analysis</h2>
+          <p>{analysis}</p>
+        </div>
+      )}
+      {suggestions && (
+        <div>
+          <h2>Suggestions</h2>
+          <OptimizationSuggestions suggestions={suggestions} />
+        </div>
       )}
       {engagement && (
-        <EngagementTracker engagement={engagement} />
+        <div>
+          <h2>Engagement</h2>
+          <EngagementTracker engagement={engagement} />
+        </div>
       )}
       {alternativeFormats && (
-        <AlternativeFormats formats={alternativeFormats} />
+        <div>
+          <h2>Alternative Formats</h2>
+          <AlternativeFormats formats={alternativeFormats} />
+        </div>
       )}
     </div>
   );

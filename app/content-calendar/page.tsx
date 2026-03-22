@@ -42,88 +42,169 @@ const ContentCalendarPage = () => {
   const [asanaWorkspaceId, setAsanaWorkspaceId] = useState<string | null>(null);
   const [notionPageId, setNotionPageId] = useState<string | null>(null);
 
-  useEffect(() => {
-    const storedEvents = localStorage.getItem('events');
-    if (storedEvents) {
-      setEvents(JSON.parse(storedEvents));
+  const handleTrelloIntegration = async () => {
+    if (trelloAccessToken) {
+      const response = await fetch(`https://api.trello.com/1/members/me/boards?token=${trelloAccessToken}&key=YOUR_TRELLO_API_KEY`);
+      const boards = await response.json();
+      setTrelloBoardId(boards[0].id);
     }
-  }, []);
+  };
+
+  const handleAsanaIntegration = async () => {
+    if (asanaAccessToken) {
+      const response = await fetch(`https://app.asana.com/api/1.0/workspaces?access_token=${asanaAccessToken}`);
+      const workspaces = await response.json();
+      setAsanaWorkspaceId(workspaces.data[0].id);
+    }
+  };
+
+  const handleNotionIntegration = async () => {
+    if (notionAccessToken) {
+      const response = await fetch(`https://api.notion.com/v1/users/me?token=${notionAccessToken}`);
+      const user = await response.json();
+      setNotionPageId(user.results[0].id);
+    }
+  };
+
+  const handleTrelloEventSync = async () => {
+    if (trelloAccessToken && trelloBoardId) {
+      const response = await fetch(`https://api.trello.com/1/boards/${trelloBoardId}/lists?token=${trelloAccessToken}&key=YOUR_TRELLO_API_KEY`);
+      const lists = await response.json();
+      const events: CalendarEvent[] = [];
+      lists.forEach((list) => {
+        list.cards.forEach((card) => {
+          events.push({
+            id: card.id,
+            title: card.name,
+            start: new Date(card.due),
+            end: new Date(card.due),
+          });
+        });
+      });
+      setTrelloEvents(events);
+    }
+  };
+
+  const handleAsanaEventSync = async () => {
+    if (asanaAccessToken && asanaWorkspaceId) {
+      const response = await fetch(`https://app.asana.com/api/1.0/tasks?workspace=${asanaWorkspaceId}&access_token=${asanaAccessToken}`);
+      const tasks = await response.json();
+      const events: CalendarEvent[] = [];
+      tasks.data.forEach((task) => {
+        events.push({
+          id: task.id,
+          title: task.name,
+          start: new Date(task.due_on),
+          end: new Date(task.due_on),
+        });
+      });
+      setAsanaEvents(events);
+    }
+  };
+
+  const handleNotionEventSync = async () => {
+    if (notionAccessToken && notionPageId) {
+      const response = await fetch(`https://api.notion.com/v1/pages/${notionPageId}?token=${notionAccessToken}`);
+      const page = await response.json();
+      const events: CalendarEvent[] = [];
+      page.results.forEach((result) => {
+        events.push({
+          id: result.id,
+          title: result.properties.title.title[0].text.content,
+          start: new Date(result.properties.date.date.start),
+          end: new Date(result.properties.date.date.end),
+        });
+      });
+      setNotionEvents(events);
+    }
+  };
 
   useEffect(() => {
-    const storedGoogleCalendarConnected = localStorage.getItem('isGoogleCalendarConnected');
-    if (storedGoogleCalendarConnected) {
-      setIsGoogleCalendarConnected(JSON.parse(storedGoogleCalendarConnected));
-    }
-    const storedOutlookCalendarConnected = localStorage.getItem('isOutlookCalendarConnected');
-    if (storedOutlookCalendarConnected) {
-      setIsOutlookCalendarConnected(JSON.parse(storedOutlookCalendarConnected));
-    }
-    const storedAppleCalendarConnected = localStorage.getItem('isAppleCalendarConnected');
-    if (storedAppleCalendarConnected) {
-      setIsAppleCalendarConnected(JSON.parse(storedAppleCalendarConnected));
-    }
-    const storedMicrosoftExchangeCalendarConnected = localStorage.getItem('isMicrosoftExchangeCalendarConnected');
-    if (storedMicrosoftExchangeCalendarConnected) {
-      setIsMicrosoftExchangeCalendarConnected(JSON.parse(storedMicrosoftExchangeCalendarConnected));
-    }
-  }, []);
+    handleTrelloIntegration();
+    handleAsanaIntegration();
+    handleNotionIntegration();
+  }, [trelloAccessToken, asanaAccessToken, notionAccessToken]);
+
+  useEffect(() => {
+    handleTrelloEventSync();
+    handleAsanaEventSync();
+    handleNotionEventSync();
+  }, [trelloAccessToken, trelloBoardId, asanaAccessToken, asanaWorkspaceId, notionAccessToken, notionPageId]);
 
   return (
     <Layout>
       <SEO title="Content Calendar" />
       <DndProvider backend={HTML5Backend}>
-        <DroppableCalendar
+        <Calendar
           events={events}
           selectedDate={selectedDate}
           onDateChange={(date) => setSelectedDate(date)}
-          onEventDrop={(event) => setEvents((prevEvents) => [...prevEvents, event])}
+          onEventDrop={(event) => setEvents((prevEvents) => prevEvents.map((prevEvent) => (prevEvent.id === event.id ? event : prevEvent)))}
         >
-          {isGoogleCalendarConnected && (
-            <GoogleCalendar
-              accessToken={googleCalendarAccessToken}
-              onEventsFetched={(events) => setGoogleCalendarEvents(events)}
-            />
-          )}
-          {isOutlookCalendarConnected && (
-            <OutlookCalendar
-              accessToken={outlookCalendarAccessToken}
-              onEventsFetched={(events) => setOutlookCalendarEvents(events)}
-            />
-          )}
-          {isAppleCalendarConnected && (
-            <AppleCalendar
-              accessToken={appleCalendarAccessToken}
-              onEventsFetched={(events) => setAppleCalendarEvents(events)}
-            />
-          )}
-          {isMicrosoftExchangeCalendarConnected && (
-            <MicrosoftExchangeCalendar
-              accessToken={microsoftExchangeCalendarAccessToken}
-              onEventsFetched={(events) => setMicrosoftExchangeCalendarEvents(events)}
-            />
-          )}
-          {isTrelloConnected && (
-            <TrelloIntegration
-              accessToken={trelloAccessToken}
-              boardId={trelloBoardId}
-              onEventsFetched={(events) => setTrelloEvents(events)}
-            />
-          )}
-          {isAsanaConnected && (
-            <AsanaIntegration
-              accessToken={asanaAccessToken}
-              workspaceId={asanaWorkspaceId}
-              onEventsFetched={(events) => setAsanaEvents(events)}
-            />
-          )}
-          {isNotionConnected && (
-            <NotionIntegration
-              accessToken={notionAccessToken}
-              pageId={notionPageId}
-              onEventsFetched={(events) => setNotionEvents(events)}
-            />
-          )}
-        </DroppableCalendar>
+          <DroppableCalendar />
+          {events.map((event) => (
+            <DraggableEvent key={event.id} event={event} />
+          ))}
+        </Calendar>
+        <GoogleCalendar
+          isConnected={isGoogleCalendarConnected}
+          onConnect={() => setIsGoogleCalendarConnected(true)}
+          onDisconnect={() => setIsGoogleCalendarConnected(false)}
+          accessToken={googleCalendarAccessToken}
+          events={googleCalendarEvents}
+          onEventSync={(events) => setGoogleCalendarEvents(events)}
+        />
+        <OutlookCalendar
+          isConnected={isOutlookCalendarConnected}
+          onConnect={() => setIsOutlookCalendarConnected(true)}
+          onDisconnect={() => setIsOutlookCalendarConnected(false)}
+          accessToken={outlookCalendarAccessToken}
+          events={outlookCalendarEvents}
+          onEventSync={(events) => setOutlookCalendarEvents(events)}
+        />
+        <AppleCalendar
+          isConnected={isAppleCalendarConnected}
+          onConnect={() => setIsAppleCalendarConnected(true)}
+          onDisconnect={() => setIsAppleCalendarConnected(false)}
+          accessToken={appleCalendarAccessToken}
+          events={appleCalendarEvents}
+          onEventSync={(events) => setAppleCalendarEvents(events)}
+        />
+        <MicrosoftExchangeCalendar
+          isConnected={isMicrosoftExchangeCalendarConnected}
+          onConnect={() => setIsMicrosoftExchangeCalendarConnected(true)}
+          onDisconnect={() => setIsMicrosoftExchangeCalendarConnected(false)}
+          accessToken={microsoftExchangeCalendarAccessToken}
+          events={microsoftExchangeCalendarEvents}
+          onEventSync={(events) => setMicrosoftExchangeCalendarEvents(events)}
+        />
+        <TrelloIntegration
+          isConnected={isTrelloConnected}
+          onConnect={() => setIsTrelloConnected(true)}
+          onDisconnect={() => setIsTrelloConnected(false)}
+          accessToken={trelloAccessToken}
+          boardId={trelloBoardId}
+          events={trelloEvents}
+          onEventSync={(events) => setTrelloEvents(events)}
+        />
+        <AsanaIntegration
+          isConnected={isAsanaConnected}
+          onConnect={() => setIsAsanaConnected(true)}
+          onDisconnect={() => setIsAsanaConnected(false)}
+          accessToken={asanaAccessToken}
+          workspaceId={asanaWorkspaceId}
+          events={asanaEvents}
+          onEventSync={(events) => setAsanaEvents(events)}
+        />
+        <NotionIntegration
+          isConnected={isNotionConnected}
+          onConnect={() => setIsNotionConnected(true)}
+          onDisconnect={() => setIsNotionConnected(false)}
+          accessToken={notionAccessToken}
+          pageId={notionPageId}
+          events={notionEvents}
+          onEventSync={(events) => setNotionEvents(events)}
+        />
       </DndProvider>
     </Layout>
   );
