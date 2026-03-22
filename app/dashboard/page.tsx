@@ -40,6 +40,7 @@ export default function DashboardPage() {
     rows: 2,
     widgets: []
   });
+  const [personalizedRecommendations, setPersonalizedRecommendations] = useState([]);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -63,71 +64,57 @@ export default function DashboardPage() {
     if (storedWidgetLayout) {
       setWidgetLayout(JSON.parse(storedWidgetLayout));
     }
+    const storedPersonalizedRecommendations = localStorage.getItem('personalizedRecommendations');
+    if (storedPersonalizedRecommendations) {
+      setPersonalizedRecommendations(JSON.parse(storedPersonalizedRecommendations));
+    } else {
+      fetch('/api/personalized-recommendations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          userId: storedUser ? JSON.parse(storedUser).id : null,
+          subscription: storedSubscription ? JSON.parse(storedSubscription) : null,
+          usageMetrics: {
+            // Add usage metrics here, e.g. page views, engagement, etc.
+          }
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        setPersonalizedRecommendations(data);
+        localStorage.setItem('personalizedRecommendations', JSON.stringify(data));
+      })
+      .catch(error => console.error(error));
+    }
   }, []);
 
   const handleCreateContent = () => {
     router.push('/content-analyzer');
   };
 
-  const handleViewAnalytics = () => {
-    if (subscription && subscription.plan === 'premium') {
-      router.push('/advanced-analytics');
-    } else {
-      router.push('/engagement-tracker');
-    }
-  };
-
-  const handleViewCalendar = () => {
-    router.push('/content-calendar');
-  };
-
-  const handleAddWidget = (widget) => {
-    const newWidgets = [...widgetLayout.widgets, widget];
-    setWidgetLayout({ ...widgetLayout, widgets: newWidgets });
-    localStorage.setItem('widgetLayout', JSON.stringify({ ...widgetLayout, widgets: newWidgets }));
-  };
-
-  const handleRemoveWidget = (widgetId) => {
-    const newWidgets = widgetLayout.widgets.filter(widget => widget.id !== widgetId);
-    setWidgetLayout({ ...widgetLayout, widgets: newWidgets });
-    localStorage.setItem('widgetLayout', JSON.stringify({ ...widgetLayout, widgets: newWidgets }));
-  };
-
-  const handleLayoutChange = (newLayout) => {
-    setWidgetLayout(newLayout);
-    localStorage.setItem('widgetLayout', JSON.stringify(newLayout));
-  };
-
   return (
     <div>
       <DashboardHeader />
       <NavigationMenu />
-      <div className="dashboard-container">
-        <div className="widget-layout">
-          {Array.from({ length: widgetLayout.rows }, (_, row) => (
-            <div key={row} className="row">
-              {Array.from({ length: widgetLayout.columns }, (_, col) => (
-                <div key={col} className="column">
-                  {widgetLayout.widgets.filter(widget => widget.row === row && widget.col === col).map(widget => (
-                    <DashboardCard key={widget.id} widget={widget} onRemove={() => handleRemoveWidget(widget.id)} />
-                  ))}
-                </div>
-              ))}
-            </div>
+      <div className="dashboard-content">
+        {personalizedRecommendations.length > 0 && (
+          <div className="personalized-recommendations">
+            <h2>Personalized Recommendations</h2>
+            {personalizedRecommendations.map(recommendation => (
+              <DashboardCard key={recommendation.id} title={recommendation.title} icon={recommendation.icon} onClick={recommendation.onClick} description={recommendation.description} />
+            ))}
+          </div>
+        )}
+        <div className="widgets">
+          {selectedWidgets.map(widget => (
+            <DashboardCard key={widget.id} title={widget.title} icon={widget.icon} onClick={widget.onClick} />
           ))}
         </div>
-        <div className="available-widgets">
-          {availableWidgets.map(widget => (
-            <DashboardCard key={widget.id} widget={widget} onAdd={() => handleAddWidget({ ...widget, row: 0, col: 0 })} />
-          ))}
-        </div>
-        <WidgetSettings
-          widgetLayout={widgetLayout}
-          onLayoutChange={handleLayoutChange}
-          availableWidgets={availableWidgets}
-          onAddWidget={handleAddWidget}
-          onRemoveWidget={handleRemoveWidget}
-        />
+        {showTutorial && (
+          <WidgetSettings tutorialStep={tutorialStep} setTutorialStep={setTutorialStep} />
+        )}
       </div>
     </div>
   );

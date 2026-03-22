@@ -90,16 +90,20 @@ const ContentAnalyzerPage = () => {
         body: JSON.stringify({ content }),
       });
       const data = await response.json();
-      setRealTimeAnalysis(data);
+      setRealTimeAnalysis(data.analysis);
     } catch (error) {
       console.error(error);
     }
   };
 
-  const handleContentChange = (event: any) => {
-    setContent(event.target.value);
-    handleRealTimeAnalysis(event.target.value);
-  };
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (content) {
+        handleRealTimeAnalysis(content);
+      }
+    }, 500);
+    return () => clearTimeout(timeoutId);
+  }, [content]);
 
   return (
     <div>
@@ -110,8 +114,8 @@ const ContentAnalyzerPage = () => {
         contentType={contentType}
         image={image}
         video={video}
-        onAnalyze={handleAnalyze}
-        onContentChange={handleContentChange}
+        onChange={(content) => setContent(content)}
+        onAnalyze={(content, contentType, image, video) => handleAnalyze(content, contentType, image, video)}
       />
       {realTimeAnalysis && (
         <div>
