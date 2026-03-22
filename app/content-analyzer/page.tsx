@@ -76,44 +76,30 @@ const ContentAnalyzerPage = () => {
         if (analysisHistoryData.success) {
           LocalStorage.set('analysisHistory', newAnalysisHistory);
         }
-      } else {
-        LocalStorage.set('analysisHistory', newAnalysisHistory);
       }
-      await fetchUserEngagementMetrics();
     } catch (error) {
       console.error(error);
     }
   };
 
-  const fetchUserEngagementMetrics = async () => {
+  const handleRealTimeAnalysis = async (content: string) => {
     try {
-      if (user) {
-        const userId = user.id;
-        const response = await fetch(`/api/user-engagement-metrics/${userId}`);
-        const data = await response.json();
-        setUserEngagementMetrics(data);
-        suggestAlternativeFormats(data);
-      }
+      const response = await fetch('/api/real-time-analysis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
+      });
+      const data = await response.json();
+      setRealTimeAnalysis(data.analysis);
     } catch (error) {
       console.error(error);
     }
   };
 
-  const suggestAlternativeFormats = (engagementMetrics: any) => {
-    if (engagementMetrics) {
-      const engagementScores = engagementMetrics.scores;
-      const suggestedFormats: string[] = [];
-      if (engagementScores.video > engagementScores.text) {
-        suggestedFormats.push('video');
-      }
-      if (engagementScores.image > engagementScores.text) {
-        suggestedFormats.push('image');
-      }
-      if (engagementScores.audio > engagementScores.text) {
-        suggestedFormats.push('audio');
-      }
-      setAlternativeFormats(suggestedFormats);
-    }
+  const handleContentChange = (event: any) => {
+    const newContent = event.target.value;
+    setContent(newContent);
+    handleRealTimeAnalysis(newContent);
   };
 
   return (
@@ -126,12 +112,13 @@ const ContentAnalyzerPage = () => {
         image={image}
         video={video}
         onAnalyze={handleAnalyze}
+        onContentChange={handleContentChange}
       />
+      {realTimeAnalysis && (
+        <OptimizationSuggestions suggestions={realTimeAnalysis} />
+      )}
       {analysis && (
-        <OptimizationSuggestions
-          analysis={analysis}
-          suggestions={suggestions}
-        />
+        <OptimizationSuggestions suggestions={suggestions} />
       )}
       {engagement && (
         <EngagementTracker engagement={engagement} />
