@@ -84,22 +84,22 @@ const ContentAnalyzerPage = () => {
 
   const handleRealTimeAnalysis = async (content: string) => {
     try {
-      const formData = new FormData();
-      formData.append('content', content);
       const response = await fetch('/api/real-time-analysis', {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
       });
       const data = await response.json();
-      setRealTimeAnalysis(data.analysis);
+      setRealTimeAnalysis(data);
     } catch (error) {
       console.error(error);
     }
   };
 
-  const handleContentChange = (content: string) => {
-    setContent(content);
-    handleRealTimeAnalysis(content);
+  const handleContentChange = (event: any) => {
+    const newContent = event.target.value;
+    setContent(newContent);
+    handleRealTimeAnalysis(newContent);
   };
 
   return (
@@ -115,35 +115,13 @@ const ContentAnalyzerPage = () => {
         onContentChange={handleContentChange}
       />
       {realTimeAnalysis && (
-        <div>
-          <h2>Real-time Analysis</h2>
-          <p>{realTimeAnalysis}</p>
-        </div>
+        <OptimizationSuggestions suggestions={realTimeAnalysis.suggestions} />
       )}
       {analysis && (
-        <div>
-          <h2>Analysis</h2>
-          <p>{analysis}</p>
-        </div>
+        <OptimizationSuggestions suggestions={suggestions} />
       )}
-      {suggestions && (
-        <div>
-          <h2>Optimization Suggestions</h2>
-          <OptimizationSuggestions suggestions={suggestions} />
-        </div>
-      )}
-      {engagement && (
-        <div>
-          <h2>Engagement Tracker</h2>
-          <EngagementTracker engagement={engagement} />
-        </div>
-      )}
-      {alternativeFormats && (
-        <div>
-          <h2>Alternative Formats</h2>
-          <AlternativeFormats formats={alternativeFormats} />
-        </div>
-      )}
+      <EngagementTracker engagement={engagement} />
+      <AlternativeFormats formats={alternativeFormats} />
     </div>
   );
 };

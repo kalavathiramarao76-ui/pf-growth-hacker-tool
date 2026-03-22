@@ -74,77 +74,86 @@ const ContentCalendarPage = () => {
     setDraggedEvent(null);
   };
 
-  const handleDrop = (date: Date) => {
-    if (draggedEvent) {
-      const newEvent = { ...draggedEvent, date };
-      setEvents((prevEvents) => [...prevEvents.filter((event) => event.id !== draggedEvent.id), newEvent]);
+  const handleDrop = (event: CalendarEvent, date: Date) => {
+    const newEvents = [...events];
+    const index = newEvents.findIndex((e) => e.id === event.id);
+    if (index !== -1) {
+      newEvents[index].startDate = date;
+      newEvents[index].endDate = new Date(date.getTime() + event.duration);
     }
+    setEvents(newEvents);
+  };
+
+  const handleConnectGoogleCalendar = () => {
+    // Connect to Google Calendar API
+    // ...
+    setIsGoogleCalendarConnected(true);
+    localStorage.setItem('isGoogleCalendarConnected', 'true');
+  };
+
+  const handleConnectOutlookCalendar = () => {
+    // Connect to Outlook Calendar API
+    // ...
+    setIsOutlookCalendarConnected(true);
+    localStorage.setItem('isOutlookCalendarConnected', 'true');
+  };
+
+  const handleConnectTrello = () => {
+    // Connect to Trello API
+    // ...
+    setIsTrelloConnected(true);
+    localStorage.setItem('isTrelloConnected', 'true');
+  };
+
+  const handleConnectAsana = () => {
+    // Connect to Asana API
+    // ...
+    setIsAsanaConnected(true);
+    localStorage.setItem('isAsanaConnected', 'true');
+  };
+
+  const handleConnectNotion = () => {
+    // Connect to Notion API
+    // ...
+    setIsNotionConnected(true);
+    localStorage.setItem('isNotionConnected', 'true');
   };
 
   return (
     <Layout>
       <SEO title="Content Calendar" />
       <DndProvider backend={HTML5Backend}>
-        <DroppableCalendar onDrop={handleDrop}>
-          <Calendar
-            events={events}
-            selectedDate={selectedDate}
-            onDateChange={(date) => setSelectedDate(date)}
-            onEventDragStart={handleDragStart}
-            onEventDragEnd={handleDragEnd}
-          >
-            {events.map((event) => (
-              <DraggableEvent key={event.id} event={event} />
-            ))}
-          </Calendar>
+        <DroppableCalendar
+          events={events}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          onDrop={handleDrop}
+        >
+          {events.map((event) => (
+            <DraggableEvent key={event.id} event={event} />
+          ))}
         </DroppableCalendar>
         <div>
-          <GoogleCalendar
-            isConnected={isGoogleCalendarConnected}
-            onConnect={() => {
-              // Connect to Google Calendar
-            }}
-            onDisconnect={() => {
-              setIsGoogleCalendarConnected(false);
-            }}
-          />
-          <OutlookCalendar
-            isConnected={isOutlookCalendarConnected}
-            onConnect={() => {
-              // Connect to Outlook Calendar
-            }}
-            onDisconnect={() => {
-              setIsOutlookCalendarConnected(false);
-            }}
-          />
-          <TrelloIntegration
-            isConnected={isTrelloConnected}
-            onConnect={() => {
-              // Connect to Trello
-            }}
-            onDisconnect={() => {
-              setIsTrelloConnected(false);
-            }}
-          />
-          <AsanaIntegration
-            isConnected={isAsanaConnected}
-            onConnect={() => {
-              // Connect to Asana
-            }}
-            onDisconnect={() => {
-              setIsAsanaConnected(false);
-            }}
-          />
-          <NotionIntegration
-            isConnected={isNotionConnected}
-            onConnect={() => {
-              // Connect to Notion
-            }}
-            onDisconnect={() => {
-              setIsNotionConnected(false);
-            }}
-          />
+          <h2>Connect Calendars</h2>
+          <button onClick={handleConnectGoogleCalendar}>
+            Connect Google Calendar
+          </button>
+          <button onClick={handleConnectOutlookCalendar}>
+            Connect Outlook Calendar
+          </button>
+          <button onClick={handleConnectTrello}>Connect Trello</button>
+          <button onClick={handleConnectAsana}>Connect Asana</button>
+          <button onClick={handleConnectNotion}>Connect Notion</button>
         </div>
+        {isGoogleCalendarConnected && (
+          <GoogleCalendar events={googleCalendarEvents} />
+        )}
+        {isOutlookCalendarConnected && (
+          <OutlookCalendar events={outlookCalendarEvents} />
+        )}
+        {isTrelloConnected && <TrelloIntegration events={trelloEvents} />}
+        {isAsanaConnected && <AsanaIntegration events={asanaEvents} />}
+        {isNotionConnected && <NotionIntegration events={notionEvents} />}
       </DndProvider>
     </Layout>
   );

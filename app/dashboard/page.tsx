@@ -58,42 +58,26 @@ export default function DashboardPage() {
   return (
     <div>
       <DashboardHeader />
+      <NavigationMenu />
       <div className="container mx-auto p-4 pt-6 md:p-6 lg:p-12 xl:p-24">
-        <div className="flex flex-col lg:flex-row justify-center items-center mb-12">
-          <h1 className="text-3xl font-bold mb-4 lg:mb-0">AI-Powered Content Optimizer</h1>
-          <button 
-            className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded ml-0 lg:ml-4"
-            onClick={() => router.push('/upgrade-plan')}
-          >
-            Upgrade to Premium
-          </button>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-12">
+        <div className="flex flex-wrap justify-center mb-4">
           {widgets.map((widget) => (
             <DashboardCard key={widget.id} title={widget.title} icon={widget.icon} onClick={widget.onClick} />
           ))}
         </div>
-        <div className="bg-gray-100 p-4 rounded mb-12">
-          <h2 className="text-2xl font-bold mb-4">Why Upgrade to Premium?</h2>
-          <ul>
-            <li>Get additional features to optimize your content</li>
-            <li>Priority support to help you succeed</li>
-            <li>More storage and bandwidth to grow your business</li>
-          </ul>
-          <p className="text-lg font-bold mb-4">Pricing:</p>
-          <ul>
-            <li>Monthly: $9.99</li>
-            <li>Yearly: $99.99 (save 20% compared to monthly)</li>
-          </ul>
-          <button 
-            className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded"
-            onClick={() => router.push('/upgrade-plan')}
-          >
-            Upgrade Now
-          </button>
+        <div className="text-center mb-4">
+          <h2 className="text-2xl font-bold">Unlock the Full Potential of Our AI-Powered Content Optimizer</h2>
+          <p className="text-lg">Upgrade to our premium plan and get access to additional features, priority support, and more.</p>
+          <button className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded" onClick={() => router.push('/upgrade-plan')}>Upgrade to Premium</button>
         </div>
-        <NavigationMenu />
-        <WidgetSettings />
+        <div className="text-center mb-4">
+          <h2 className="text-2xl font-bold">Premium Plan Benefits</h2>
+          <ul className="list-none mb-4">
+            <li className="text-lg">Additional features, including advanced analytics and content suggestions</li>
+            <li className="text-lg">Priority support from our team of experts</li>
+            <li className="text-lg">Increased storage and bandwidth for your content</li>
+          </ul>
+        </div>
       </div>
     </div>
   );
