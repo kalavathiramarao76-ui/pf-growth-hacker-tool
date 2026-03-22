@@ -44,134 +44,116 @@ const ContentCalendarPage = () => {
   const [trelloAccessToken, setTrelloAccessToken] = useState<string | null>(null);
   const [asanaAccessToken, setAsanaAccessToken] = useState<string | null>(null);
   const [notionAccessToken, setNotionAccessToken] = useState<string | null>(null);
-  const [trelloBoardId, setTrelloBoardId] = useState<string | null>(null);
-  const [asanaWorkspaceId, setAsanaWorkspaceId] = useState<string | null>(null);
-  const [notionPageId, setNotionPageId] = useState<string | null>(null);
+  const [view, setView] = useState<'day' | 'week' | 'month'>('month');
+  const [dragging, setDragging] = useState(false);
+
+  const handleDragStart = (event: CalendarEvent) => {
+    setDraggedEvent(event);
+    setDragging(true);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedEvent(null);
+    setDragging(false);
+  };
+
+  const handleDrop = (event: CalendarEvent, date: Date) => {
+    if (draggedEvent) {
+      const updatedEvents = events.map((e) => {
+        if (e.id === draggedEvent.id) {
+          return { ...e, startDate: date };
+        }
+        return e;
+      });
+      setEvents(updatedEvents);
+    }
+  };
+
+  const handleViewChange = (view: 'day' | 'week' | 'month') => {
+    setView(view);
+  };
 
   useEffect(() => {
-    const fetchGoogleWorkspaceCalendarEvents = async () => {
-      if (isGoogleWorkspaceCalendarConnected && googleWorkspaceCalendarAccessToken) {
-        const response = await fetch('/api/google-workspace-calendar-events', {
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${googleWorkspaceCalendarAccessToken}`,
-          },
-        });
-        const events = await response.json();
-        setGoogleWorkspaceCalendarEvents(events);
-      }
+    const fetchEvents = async () => {
+      // fetch events from API or database
+      const fetchedEvents = await fetch('/api/events');
+      const data = await fetchedEvents.json();
+      setEvents(data);
     };
-    fetchGoogleWorkspaceCalendarEvents();
-  }, [isGoogleWorkspaceCalendarConnected, googleWorkspaceCalendarAccessToken]);
-
-  useEffect(() => {
-    const fetchMicrosoftTeamsCalendarEvents = async () => {
-      if (isMicrosoftTeamsCalendarConnected && microsoftTeamsCalendarAccessToken) {
-        const response = await fetch('/api/microsoft-teams-calendar-events', {
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${microsoftTeamsCalendarAccessToken}`,
-          },
-        });
-        const events = await response.json();
-        setMicrosoftTeamsCalendarEvents(events);
-      }
-    };
-    fetchMicrosoftTeamsCalendarEvents();
-  }, [isMicrosoftTeamsCalendarConnected, microsoftTeamsCalendarAccessToken]);
+    fetchEvents();
+  }, []);
 
   return (
     <Layout>
       <SEO title="Content Calendar" />
       <DndProvider backend={HTML5Backend}>
-        <DroppableCalendar
-          events={events}
-          onEventDrop={(event) => setEvents((prevEvents) => [...prevEvents, event])}
-        >
-          <Calendar
+        <div className="content-calendar">
+          <div className="calendar-header">
+            <button onClick={() => handleViewChange('day')}>Day</button>
+            <button onClick={() => handleViewChange('week')}>Week</button>
+            <button onClick={() => handleViewChange('month')}>Month</button>
+          </div>
+          <DroppableCalendar
             events={events}
-            selectedDate={selectedDate}
-            onDateChange={(date) => setSelectedDate(date)}
-          />
-          <GoogleCalendar
-            isConnected={isGoogleCalendarConnected}
-            onConnect={() => setIsGoogleCalendarConnected(true)}
-            onDisconnect={() => setIsGoogleCalendarConnected(false)}
-            accessToken={googleCalendarAccessToken}
-            events={googleCalendarEvents}
-          />
-          <OutlookCalendar
-            isConnected={isOutlookCalendarConnected}
-            onConnect={() => setIsOutlookCalendarConnected(true)}
-            onDisconnect={() => setIsOutlookCalendarConnected(false)}
-            accessToken={outlookCalendarAccessToken}
-            events={outlookCalendarEvents}
-          />
-          <AppleCalendar
-            isConnected={isAppleCalendarConnected}
-            onConnect={() => setIsAppleCalendarConnected(true)}
-            onDisconnect={() => setIsAppleCalendarConnected(false)}
-            accessToken={appleCalendarAccessToken}
-            events={appleCalendarEvents}
-          />
-          <MicrosoftExchangeCalendar
-            isConnected={isMicrosoftExchangeCalendarConnected}
-            onConnect={() => setIsMicrosoftExchangeCalendarConnected(true)}
-            onDisconnect={() => setIsMicrosoftExchangeCalendarConnected(false)}
-            accessToken={microsoftExchangeCalendarAccessToken}
-            events={microsoftExchangeCalendarEvents}
-          />
-          <GoogleWorkspaceCalendar
-            isConnected={isGoogleWorkspaceCalendarConnected}
-            onConnect={() => setIsGoogleWorkspaceCalendarConnected(true)}
-            onDisconnect={() => setIsGoogleWorkspaceCalendarConnected(false)}
-            accessToken={googleWorkspaceCalendarAccessToken}
-            events={googleWorkspaceCalendarEvents}
-          />
-          <MicrosoftTeamsCalendar
-            isConnected={isMicrosoftTeamsCalendarConnected}
-            onConnect={() => setIsMicrosoftTeamsCalendarConnected(true)}
-            onDisconnect={() => setIsMicrosoftTeamsCalendarConnected(false)}
-            accessToken={microsoftTeamsCalendarAccessToken}
-            events={microsoftTeamsCalendarEvents}
-          />
-          <TrelloIntegration
-            isConnected={isTrelloConnected}
-            onConnect={() => setIsTrelloConnected(true)}
-            onDisconnect={() => setIsTrelloConnected(false)}
-            accessToken={trelloAccessToken}
-            boardId={trelloBoardId}
-            events={trelloEvents}
-          />
-          <AsanaIntegration
-            isConnected={isAsanaConnected}
-            onConnect={() => setIsAsanaConnected(true)}
-            onDisconnect={() => setIsAsanaConnected(false)}
-            accessToken={asanaAccessToken}
-            workspaceId={asanaWorkspaceId}
-            events={asanaEvents}
-          />
-          <NotionIntegration
-            isConnected={isNotionConnected}
-            onConnect={() => setIsNotionConnected(true)}
-            onDisconnect={() => setIsNotionConnected(false)}
-            accessToken={notionAccessToken}
-            pageId={notionPageId}
-            events={notionEvents}
-          />
-          <GoogleWorkspaceIntegration
-            isConnected={isGoogleWorkspaceCalendarConnected}
-            onConnect={() => setIsGoogleWorkspaceCalendarConnected(true)}
-            onDisconnect={() => setIsGoogleWorkspaceCalendarConnected(false)}
-            accessToken={googleWorkspaceCalendarAccessToken}
-          />
-          <MicrosoftTeamsIntegration
-            isConnected={isMicrosoftTeamsCalendarConnected}
-            onConnect={() => setIsMicrosoftTeamsCalendarConnected(true)}
-            onDisconnect={() => setIsMicrosoftTeamsCalendarConnected(false)}
-            accessToken={microsoftTeamsCalendarAccessToken}
-          />
-        </DroppableCalendar>
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            onDrop={handleDrop}
+            view={view}
+          >
+            {events.map((event) => (
+              <DraggableEvent key={event.id} event={event} />
+            ))}
+          </DroppableCalendar>
+          <div className="calendar-integrations">
+            <GoogleCalendar
+              isConnected={isGoogleCalendarConnected}
+              accessToken={googleCalendarAccessToken}
+              events={googleCalendarEvents}
+            />
+            <OutlookCalendar
+              isConnected={isOutlookCalendarConnected}
+              accessToken={outlookCalendarAccessToken}
+              events={outlookCalendarEvents}
+            />
+            <AppleCalendar
+              isConnected={isAppleCalendarConnected}
+              accessToken={appleCalendarAccessToken}
+              events={appleCalendarEvents}
+            />
+            <MicrosoftExchangeCalendar
+              isConnected={isMicrosoftExchangeCalendarConnected}
+              accessToken={microsoftExchangeCalendarAccessToken}
+              events={microsoftExchangeCalendarEvents}
+            />
+            <GoogleWorkspaceCalendar
+              isConnected={isGoogleWorkspaceCalendarConnected}
+              accessToken={googleWorkspaceCalendarAccessToken}
+              events={googleWorkspaceCalendarEvents}
+            />
+            <MicrosoftTeamsCalendar
+              isConnected={isMicrosoftTeamsCalendarConnected}
+              accessToken={microsoftTeamsCalendarAccessToken}
+              events={microsoftTeamsCalendarEvents}
+            />
+          </div>
+          <div className="project-management-integrations">
+            <TrelloIntegration
+              isConnected={isTrelloConnected}
+              accessToken={trelloAccessToken}
+              events={trelloEvents}
+            />
+            <AsanaIntegration
+              isConnected={isAsanaConnected}
+              accessToken={asanaAccessToken}
+              events={asanaEvents}
+            />
+            <NotionIntegration
+              isConnected={isNotionConnected}
+              accessToken={notionAccessToken}
+              events={notionEvents}
+            />
+          </div>
+        </div>
       </DndProvider>
     </Layout>
   );

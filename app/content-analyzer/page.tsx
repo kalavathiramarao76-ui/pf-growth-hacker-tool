@@ -74,7 +74,8 @@ const ContentAnalyzerPage = () => {
             body: formData,
           });
           const data = await response.json();
-          setRealTimeAnalysis(data.analysis);
+          const advancedAnalysis = await advancedContentAnalysis(data.analysis);
+          setRealTimeAnalysis(advancedAnalysis);
         } catch (error) {
           console.error(error);
         }
@@ -83,69 +84,84 @@ const ContentAnalyzerPage = () => {
     }
   }, [content, contentType, image, video, audio, pdf, podcast, socialMediaPost]);
 
-  const handleAnalyze = async (content: string, contentType: string, image: any, video: any, audio: any, pdf: any, podcast: any, socialMediaPost: any) => {
-    try {
-      const formData = new FormData();
-      formData.append('content', content);
-      formData.append('contentType', contentType);
-      if (image) {
-        formData.append('image', image);
-      }
-      if (video) {
-        formData.append('video', video);
-      }
-      if (audio) {
-        formData.append('audio', audio);
-      }
-      if (pdf) {
-        formData.append('pdf', pdf);
-      }
-      if (podcast) {
-        formData.append('podcast', podcast);
-      }
-      if (socialMediaPost) {
-        formData.append('socialMediaPost', socialMediaPost);
-      }
-      const response = await fetch('/api/analyze', {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await response.json();
-      setAnalysis(data.analysis);
-      setSuggestions(data.suggestions);
-      setEngagement(data.engagement);
-      setAlternativeFormats(data.alternativeFormats);
-    } catch (error) {
-      console.error(error);
+  const advancedContentAnalysis = async (analysis) => {
+    const advancedAnalysis = {
+      ...analysis,
+      readabilityScore: calculateReadabilityScore(analysis.text),
+      sentimentAnalysis: await sentimentAnalysisApi(analysis.text),
+      entityRecognition: await entityRecognitionApi(analysis.text),
+      keywordExtraction: await keywordExtractionApi(analysis.text),
+      suggestions: generateSuggestions(analysis.text, analysis.readabilityScore, analysis.sentimentAnalysis, analysis.entityRecognition, analysis.keywordExtraction),
+    };
+    return advancedAnalysis;
+  };
+
+  const calculateReadabilityScore = (text) => {
+    // Implement readability score calculation algorithm
+    // For example, using Flesch-Kincaid readability test
+    const words = text.split(' ');
+    const sentences = text.split('. ');
+    const score = 206.835 - 1.015 * (words.length / sentences.length) - 84.6 * (words.length / text.length);
+    return score;
+  };
+
+  const sentimentAnalysisApi = async (text) => {
+    // Implement sentiment analysis API call
+    // For example, using Natural Language Processing (NLP) API
+    const response = await fetch('/api/sentiment-analysis', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ text }),
+    });
+    const data = await response.json();
+    return data.sentiment;
+  };
+
+  const entityRecognitionApi = async (text) => {
+    // Implement entity recognition API call
+    // For example, using NLP API
+    const response = await fetch('/api/entity-recognition', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ text }),
+    });
+    const data = await response.json();
+    return data.entities;
+  };
+
+  const keywordExtractionApi = async (text) => {
+    // Implement keyword extraction API call
+    // For example, using NLP API
+    const response = await fetch('/api/keyword-extraction', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ text }),
+    });
+    const data = await response.json();
+    return data.keywords;
+  };
+
+  const generateSuggestions = (text, readabilityScore, sentimentAnalysis, entityRecognition, keywordExtraction) => {
+    const suggestions = [];
+    if (readabilityScore < 60) {
+      suggestions.push('Improve readability by simplifying sentence structure and vocabulary.');
     }
-  };
-
-  const handleContentTypeChange = (event: any) => {
-    setContentType(event.target.value);
-  };
-
-  const handleImageChange = (event: any) => {
-    setImage(event.target.files[0]);
-  };
-
-  const handleVideoChange = (event: any) => {
-    setVideo(event.target.files[0]);
-  };
-
-  const handleAudioChange = (event: any) => {
-    setAudio(event.target.files[0]);
-  };
-
-  const handlePdfChange = (event: any) => {
-    setPdf(event.target.files[0]);
-  };
-
-  const handlePodcastChange = (event: any) => {
-    setPodcast(event.target.files[0]);
-  };
-
-  const handleSocialMediaPostChange = (event: any) => {
-    setSocialMediaPost(event.target.value);
+    if (sentimentAnalysis === 'negative') {
+      suggestions.push('Improve tone by using more positive language.');
+    }
+    if (entityRecognition.length > 5) {
+      suggestions.push('Improve clarity by reducing the number of entities mentioned.');
+    }
+    if (keywordExtraction.length < 3) {
+      suggestions.push('Improve keyword density by including more relevant keywords.');
+    }
+    return suggestions;
   };
 
   return (
@@ -161,18 +177,25 @@ const ContentAnalyzerPage = () => {
         pdf={pdf}
         podcast={podcast}
         socialMediaPost={socialMediaPost}
-        onAnalyze={handleAnalyze}
-        onContentTypeChange={handleContentTypeChange}
-        onImageChange={handleImageChange}
-        onVideoChange={handleVideoChange}
-        onAudioChange={handleAudioChange}
-        onPdfChange={handlePdfChange}
-        onPodcastChange={handlePodcastChange}
-        onSocialMediaPostChange={handleSocialMediaPostChange}
+        onChange={(content, contentType, image, video, audio, pdf, podcast, socialMediaPost) => {
+          setContent(content);
+          setContentType(contentType);
+          setImage(image);
+          setVideo(video);
+          setAudio(audio);
+          setPdf(pdf);
+          setPodcast(podcast);
+          setSocialMediaPost(socialMediaPost);
+        }}
       />
-      {analysis && <OptimizationSuggestions suggestions={analysis.suggestions} />}
-      {engagement && <EngagementTracker engagement={engagement} />}
-      {alternativeFormats && <AlternativeFormats formats={alternativeFormats} />}
+      {realTimeAnalysis && (
+        <OptimizationSuggestions
+          analysis={realTimeAnalysis}
+          suggestions={realTimeAnalysis.suggestions}
+        />
+      )}
+      <EngagementTracker engagement={engagement} />
+      <AlternativeFormats alternativeFormats={alternativeFormats} />
     </div>
   );
 };

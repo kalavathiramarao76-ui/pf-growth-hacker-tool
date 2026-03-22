@@ -64,41 +64,35 @@ export default function DashboardPage() {
     { id: 4, title: 'Settings', icon: <MdSettings size={24} />, onClick: () => router.push('/settings'), frequency: 0 },
   ]);
 
-  const categorizedWidgets = {
-    'Content Creation': [
-      { id: 1, title: 'Create Content', icon: <AiOutlinePlus size={24} />, onClick: () => router.push('/content-analyzer') },
-      { id: 6, title: 'New Widget', icon: <AiOutlinePlus size={24} />, onClick: () => console.log('New widget clicked') },
-    ],
-    'Analytics and Insights': [
-      { id: 2, title: 'View Analytics', icon: <IoMdAnalytics size={24} />, onClick: () => router.push('/engagement-tracker') },
-      { id: 7, title: 'Another Widget', icon: <IoMdAnalytics size={24} />, onClick: () => console.log('Another widget clicked') },
-    ],
-    'Content Planning': [
-      { id: 3, title: 'Content Calendar', icon: <FaRegCalendarAlt size={24} />, onClick: () => router.push('/content-calendar') },
-    ],
-    'Settings and Upgrades': [
-      { id: 4, title: 'Settings', icon: <MdSettings size={24} />, onClick: () => router.push('/settings') },
-      { id: 5, title: 'Upgrade to Premium', icon: <MdSettings size={24} />, onClick: () => router.push('/upgrade-plan'), description: 'Get additional features, priority support, and more with our premium plan' },
-    ],
-  };
-
   return (
-    <div className="dashboard-container">
+    <DndProvider>
       <DashboardHeader />
       <NavigationMenu />
-      <div className="widget-categories">
-        {Object.keys(categorizedWidgets).map(category => (
-          <div key={category} className="widget-category">
-            <h2>{category}</h2>
-            <div className="widget-grid">
-              {categorizedWidgets[category].map(widget => (
-                <DashboardCard key={widget.id} widget={widget} />
-              ))}
+      <div className="container mx-auto p-4 pt-6 md:p-6 lg:p-12 xl:p-24">
+        <div className="flex flex-wrap justify-center mb-4">
+          {widgets.map((widget) => (
+            <DashboardCard key={widget.id} widget={widget} />
+          ))}
+          <div className="w-full md:w-1/2 xl:w-1/3 p-6">
+            <div className="bg-white rounded shadow-md p-4">
+              <h2 className="text-lg font-bold mb-2">Upgrade to Premium</h2>
+              <p className="text-gray-600 mb-4">Get additional features, priority support, and more with our premium plan</p>
+              <ul className="list-disc list-inside mb-4">
+                <li>Advanced analytics and insights</li>
+                <li>Priority support and dedicated account manager</li>
+                <li>Additional customization options and integrations</li>
+                <li>Increased storage and bandwidth</li>
+              </ul>
+              <button
+                className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded"
+                onClick={() => router.push('/upgrade-plan')}
+              >
+                Upgrade Now
+              </button>
             </div>
           </div>
-        ))}
+        </div>
       </div>
-      <WidgetSettings />
-    </div>
+    </DndProvider>
   );
 }
