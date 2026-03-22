@@ -84,26 +84,23 @@ const ContentAnalyzerPage = () => {
 
   const handleRealTimeAnalysis = async (content: string) => {
     try {
+      const formData = new FormData();
+      formData.append('content', content);
       const response = await fetch('/api/real-time-analysis', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content }),
+        body: formData,
       });
       const data = await response.json();
-      setRealTimeAnalysis(data);
+      setRealTimeAnalysis(data.analysis);
     } catch (error) {
       console.error(error);
     }
   };
 
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (content) {
-        handleRealTimeAnalysis(content);
-      }
-    }, 500);
-    return () => clearTimeout(timeoutId);
-  }, [content]);
+  const handleContentChange = (content: string) => {
+    setContent(content);
+    handleRealTimeAnalysis(content);
+  };
 
   return (
     <div>
@@ -114,20 +111,38 @@ const ContentAnalyzerPage = () => {
         contentType={contentType}
         image={image}
         video={video}
-        onChange={(content) => setContent(content)}
-        onAnalyze={(content, contentType, image, video) => handleAnalyze(content, contentType, image, video)}
+        onAnalyze={handleAnalyze}
+        onContentChange={handleContentChange}
       />
       {realTimeAnalysis && (
-        <OptimizationSuggestions suggestions={realTimeAnalysis.suggestions} />
+        <div>
+          <h2>Real-time Analysis</h2>
+          <p>{realTimeAnalysis}</p>
+        </div>
       )}
       {analysis && (
-        <OptimizationSuggestions suggestions={suggestions} />
+        <div>
+          <h2>Analysis</h2>
+          <p>{analysis}</p>
+        </div>
+      )}
+      {suggestions && (
+        <div>
+          <h2>Optimization Suggestions</h2>
+          <OptimizationSuggestions suggestions={suggestions} />
+        </div>
       )}
       {engagement && (
-        <EngagementTracker engagement={engagement} />
+        <div>
+          <h2>Engagement Tracker</h2>
+          <EngagementTracker engagement={engagement} />
+        </div>
       )}
       {alternativeFormats && (
-        <AlternativeFormats formats={alternativeFormats} />
+        <div>
+          <h2>Alternative Formats</h2>
+          <AlternativeFormats formats={alternativeFormats} />
+        </div>
       )}
     </div>
   );

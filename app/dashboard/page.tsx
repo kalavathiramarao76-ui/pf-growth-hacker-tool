@@ -55,86 +55,45 @@ export default function DashboardPage() {
     },
   ]);
 
-  const handleWidgetAdd = (widget) => {
-    const newWidgets = [...widgetLayout.widgets, widget];
-    setWidgetLayout({ ...widgetLayout, widgets: newWidgets });
-  };
-
-  const handleWidgetRemove = (widgetId) => {
-    const newWidgets = widgetLayout.widgets.filter((widget) => widget.id !== widgetId);
-    setWidgetLayout({ ...widgetLayout, widgets: newWidgets });
-  };
-
-  const handleWidgetMove = (widgetId, newColumn, newRow) => {
-    const newWidgets = widgetLayout.widgets.map((widget) => {
-      if (widget.id === widgetId) {
-        return { ...widget, column: newColumn, row: newRow };
-      }
-      return widget;
-    });
-    setWidgetLayout({ ...widgetLayout, widgets: newWidgets });
-  };
-
-  const handleLayoutChange = (newColumns, newRows) => {
-    setWidgetLayout({ columns: newColumns, rows: newRows, widgets: widgetLayout.widgets });
-  };
-
-  useEffect(() => {
-    const storedWidgetLayout = localStorage.getItem('widgetLayout');
-    if (storedWidgetLayout) {
-      setWidgetLayout(JSON.parse(storedWidgetLayout));
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem('widgetLayout', JSON.stringify(widgetLayout));
-  }, [widgetLayout]);
-
   return (
     <div>
       <DashboardHeader />
-      <NavigationMenu />
-      <div className="widget-layout-container">
-        {widgetLayout.columns > 0 && widgetLayout.rows > 0 && (
-          <div className="widget-layout" style={{ gridTemplateColumns: `repeat(${widgetLayout.columns}, 1fr)` }}>
-            {widgetLayout.widgets.map((widget, index) => (
-              <div key={widget.id} className="widget" style={{ gridColumn: widget.column, gridRow: widget.row }}>
-                <DashboardCard
-                  title={widget.title}
-                  icon={widget.icon}
-                  onClick={widget.onClick}
-                  description={widget.description}
-                  onRemove={() => handleWidgetRemove(widget.id)}
-                  onMove={(newColumn, newRow) => handleWidgetMove(widget.id, newColumn, newRow)}
-                />
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-      <div className="available-widgets-container">
-        <h2>Available Widgets</h2>
-        <div className="available-widgets">
-          {availableWidgets.map((widget) => (
-            <div key={widget.id} className="available-widget">
-              <DashboardCard
-                title={widget.title}
-                icon={widget.icon}
-                onClick={widget.onClick}
-                onAdd={() => handleWidgetAdd(widget)}
-              />
-            </div>
+      <div className="container mx-auto p-4 pt-6 md:p-6 lg:p-12 xl:p-24">
+        <div className="flex flex-col lg:flex-row justify-center items-center mb-12">
+          <h1 className="text-3xl font-bold mb-4 lg:mb-0">AI-Powered Content Optimizer</h1>
+          <button 
+            className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded ml-0 lg:ml-4"
+            onClick={() => router.push('/upgrade-plan')}
+          >
+            Upgrade to Premium
+          </button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-12">
+          {widgets.map((widget) => (
+            <DashboardCard key={widget.id} title={widget.title} icon={widget.icon} onClick={widget.onClick} />
           ))}
         </div>
-      </div>
-      <div className="layout-settings-container">
-        <h2>Layout Settings</h2>
-        <div className="layout-settings">
-          <label>Columns:</label>
-          <input type="number" value={widgetLayout.columns} onChange={(e) => handleLayoutChange(parseInt(e.target.value), widgetLayout.rows)} />
-          <label>Rows:</label>
-          <input type="number" value={widgetLayout.rows} onChange={(e) => handleLayoutChange(widgetLayout.columns, parseInt(e.target.value))} />
+        <div className="bg-gray-100 p-4 rounded mb-12">
+          <h2 className="text-2xl font-bold mb-4">Why Upgrade to Premium?</h2>
+          <ul>
+            <li>Get additional features to optimize your content</li>
+            <li>Priority support to help you succeed</li>
+            <li>More storage and bandwidth to grow your business</li>
+          </ul>
+          <p className="text-lg font-bold mb-4">Pricing:</p>
+          <ul>
+            <li>Monthly: $9.99</li>
+            <li>Yearly: $99.99 (save 20% compared to monthly)</li>
+          </ul>
+          <button 
+            className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded"
+            onClick={() => router.push('/upgrade-plan')}
+          >
+            Upgrade Now
+          </button>
         </div>
+        <NavigationMenu />
+        <WidgetSettings />
       </div>
     </div>
   );
