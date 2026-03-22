@@ -55,35 +55,85 @@ export default function DashboardPage() {
     },
   ]);
 
+  const handleWidgetAdd = (widget) => {
+    const newWidgets = [...widgetLayout.widgets, widget];
+    setWidgetLayout({ ...widgetLayout, widgets: newWidgets });
+  };
+
+  const handleWidgetRemove = (widgetId) => {
+    const newWidgets = widgetLayout.widgets.filter((widget) => widget.id !== widgetId);
+    setWidgetLayout({ ...widgetLayout, widgets: newWidgets });
+  };
+
+  const handleWidgetMove = (widgetId, newColumn, newRow) => {
+    const newWidgets = widgetLayout.widgets.map((widget) => {
+      if (widget.id === widgetId) {
+        return { ...widget, column: newColumn, row: newRow };
+      }
+      return widget;
+    });
+    setWidgetLayout({ ...widgetLayout, widgets: newWidgets });
+  };
+
+  const handleLayoutChange = (newColumns, newRows) => {
+    setWidgetLayout({ columns: newColumns, rows: newRows, widgets: widgetLayout.widgets });
+  };
+
+  useEffect(() => {
+    const storedWidgetLayout = localStorage.getItem('widgetLayout');
+    if (storedWidgetLayout) {
+      setWidgetLayout(JSON.parse(storedWidgetLayout));
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('widgetLayout', JSON.stringify(widgetLayout));
+  }, [widgetLayout]);
+
   return (
     <div>
       <DashboardHeader />
       <NavigationMenu />
-      <div className="container mx-auto p-4">
-        <div className="flex flex-col md:flex-row justify-center mb-4">
-          {widgets.map((widget) => (
-            <DashboardCard key={widget.id} title={widget.title} icon={widget.icon} onClick={widget.onClick} description={widget.description} />
-          ))}
-        </div>
-        <div className="text-center mb-4">
-          <h2 className="text-2xl font-bold">Upgrade to Premium</h2>
-          <p>Get additional features, priority support, and more with our premium plan</p>
-          <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onClick={() => router.push('/upgrade-plan')}>Upgrade Now</button>
-          <div className="mt-4">
-            <h3 className="text-xl font-bold">Premium Plan Benefits</h3>
-            <ul>
-              <li>Additional features</li>
-              <li>Priority support</li>
-              <li>More storage</li>
-            </ul>
-            <h3 className="text-xl font-bold">Pricing</h3>
-            <p>$9.99/month or $99.99/year</p>
+      <div className="widget-layout-container">
+        {widgetLayout.columns > 0 && widgetLayout.rows > 0 && (
+          <div className="widget-layout" style={{ gridTemplateColumns: `repeat(${widgetLayout.columns}, 1fr)` }}>
+            {widgetLayout.widgets.map((widget, index) => (
+              <div key={widget.id} className="widget" style={{ gridColumn: widget.column, gridRow: widget.row }}>
+                <DashboardCard
+                  title={widget.title}
+                  icon={widget.icon}
+                  onClick={widget.onClick}
+                  description={widget.description}
+                  onRemove={() => handleWidgetRemove(widget.id)}
+                  onMove={(newColumn, newRow) => handleWidgetMove(widget.id, newColumn, newRow)}
+                />
+              </div>
+            ))}
           </div>
-        </div>
-        <div className="flex flex-col md:flex-row justify-center">
+        )}
+      </div>
+      <div className="available-widgets-container">
+        <h2>Available Widgets</h2>
+        <div className="available-widgets">
           {availableWidgets.map((widget) => (
-            <DashboardCard key={widget.id} title={widget.title} icon={widget.icon} onClick={widget.onClick} />
+            <div key={widget.id} className="available-widget">
+              <DashboardCard
+                title={widget.title}
+                icon={widget.icon}
+                onClick={widget.onClick}
+                onAdd={() => handleWidgetAdd(widget)}
+              />
+            </div>
           ))}
+        </div>
+      </div>
+      <div className="layout-settings-container">
+        <h2>Layout Settings</h2>
+        <div className="layout-settings">
+          <label>Columns:</label>
+          <input type="number" value={widgetLayout.columns} onChange={(e) => handleLayoutChange(parseInt(e.target.value), widgetLayout.rows)} />
+          <label>Rows:</label>
+          <input type="number" value={widgetLayout.rows} onChange={(e) => handleLayoutChange(widgetLayout.columns, parseInt(e.target.value))} />
         </div>
       </div>
     </div>
