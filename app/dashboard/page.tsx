@@ -35,6 +35,11 @@ export default function DashboardPage() {
     { id: 7, title: 'Another Widget', icon: <IoMdAnalytics size={24} />, onClick: () => console.log('Another widget clicked') },
   ]);
   const [selectedWidgets, setSelectedWidgets] = useState(widgets);
+  const [widgetLayout, setWidgetLayout] = useState({
+    columns: 3,
+    rows: 2,
+    widgets: []
+  });
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -54,6 +59,10 @@ export default function DashboardPage() {
     if (storedSelectedWidgets) {
       setSelectedWidgets(JSON.parse(storedSelectedWidgets));
     }
+    const storedWidgetLayout = localStorage.getItem('widgetLayout');
+    if (storedWidgetLayout) {
+      setWidgetLayout(JSON.parse(storedWidgetLayout));
+    }
   }, []);
 
   const handleCreateContent = () => {
@@ -72,42 +81,54 @@ export default function DashboardPage() {
     router.push('/content-calendar');
   };
 
-  const handleViewSettings = () => {
-    router.push('/settings');
+  const handleAddWidget = (widget) => {
+    const newWidgets = [...widgetLayout.widgets, widget];
+    setWidgetLayout({ ...widgetLayout, widgets: newWidgets });
+    localStorage.setItem('widgetLayout', JSON.stringify({ ...widgetLayout, widgets: newWidgets }));
   };
 
-  const handleUpgradePlan = () => {
-    router.push('/upgrade-plan');
+  const handleRemoveWidget = (widgetId) => {
+    const newWidgets = widgetLayout.widgets.filter(widget => widget.id !== widgetId);
+    setWidgetLayout({ ...widgetLayout, widgets: newWidgets });
+    localStorage.setItem('widgetLayout', JSON.stringify({ ...widgetLayout, widgets: newWidgets }));
+  };
+
+  const handleLayoutChange = (newLayout) => {
+    setWidgetLayout(newLayout);
+    localStorage.setItem('widgetLayout', JSON.stringify(newLayout));
   };
 
   return (
     <div>
       <DashboardHeader />
-      <div className="container">
-        <div className="row">
-          {widgets.map((widget) => (
-            <div key={widget.id} className="col-md-4">
-              <DashboardCard
-                title={widget.title}
-                icon={widget.icon}
-                onClick={widget.onClick}
-                description={widget.description}
-              />
+      <NavigationMenu />
+      <div className="dashboard-container">
+        <div className="widget-layout">
+          {Array.from({ length: widgetLayout.rows }, (_, row) => (
+            <div key={row} className="row">
+              {Array.from({ length: widgetLayout.columns }, (_, col) => (
+                <div key={col} className="column">
+                  {widgetLayout.widgets.filter(widget => widget.row === row && widget.col === col).map(widget => (
+                    <DashboardCard key={widget.id} widget={widget} onRemove={() => handleRemoveWidget(widget.id)} />
+                  ))}
+                </div>
+              ))}
             </div>
           ))}
         </div>
-      </div>
-      {subscription && subscription.plan !== 'premium' && (
-        <div className="upgrade-cta">
-          <p>Unlock the full potential of our AI-Powered Content Optimizer by upgrading to our premium plan.</p>
-          <button onClick={handleUpgradePlan}>Upgrade Now</button>
-          <ul>
-            <li>Get access to advanced analytics and insights</li>
-            <li>Enjoy priority support from our dedicated team</li>
-            <li>Unlock additional features and tools to optimize your content</li>
-          </ul>
+        <div className="available-widgets">
+          {availableWidgets.map(widget => (
+            <DashboardCard key={widget.id} widget={widget} onAdd={() => handleAddWidget({ ...widget, row: 0, col: 0 })} />
+          ))}
         </div>
-      )}
+        <WidgetSettings
+          widgetLayout={widgetLayout}
+          onLayoutChange={handleLayoutChange}
+          availableWidgets={availableWidgets}
+          onAddWidget={handleAddWidget}
+          onRemoveWidget={handleRemoveWidget}
+        />
+      </div>
     </div>
   );
 }

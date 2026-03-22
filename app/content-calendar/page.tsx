@@ -31,6 +31,9 @@ const ContentCalendarPage = () => {
   const [trelloAccessToken, setTrelloAccessToken] = useState<string | null>(null);
   const [asanaAccessToken, setAsanaAccessToken] = useState<string | null>(null);
   const [notionAccessToken, setNotionAccessToken] = useState<string | null>(null);
+  const [trelloBoardId, setTrelloBoardId] = useState<string | null>(null);
+  const [asanaWorkspaceId, setAsanaWorkspaceId] = useState<string | null>(null);
+  const [notionPageId, setNotionPageId] = useState<string | null>(null);
 
   useEffect(() => {
     const storedEvents = localStorage.getItem('events');
@@ -60,57 +63,123 @@ const ContentCalendarPage = () => {
     if (storedNotionConnected) {
       setIsNotionConnected(JSON.parse(storedNotionConnected));
     }
+    const storedTrelloBoardId = localStorage.getItem('trelloBoardId');
+    if (storedTrelloBoardId) {
+      setTrelloBoardId(storedTrelloBoardId);
+    }
+    const storedAsanaWorkspaceId = localStorage.getItem('asanaWorkspaceId');
+    if (storedAsanaWorkspaceId) {
+      setAsanaWorkspaceId(storedAsanaWorkspaceId);
+    }
+    const storedNotionPageId = localStorage.getItem('notionPageId');
+    if (storedNotionPageId) {
+      setNotionPageId(storedNotionPageId);
+    }
   }, []);
 
-  const handleDragStart = (event: CalendarEvent) => {
-    setDraggedEvent(event);
-  };
-
-  const handleDragEnd = () => {
-    setDraggedEvent(null);
-  };
-
-  const handleDrop = (event: CalendarEvent) => {
-    if (draggedEvent) {
-      const updatedEvents = events.map((e) => {
-        if (e.id === draggedEvent.id) {
-          return { ...e, date: event.date };
-        }
-        return e;
+  const handleTrelloConnect = async () => {
+    if (!trelloAccessToken) {
+      const response = await fetch('/api/trello-auth');
+      const data = await response.json();
+      window.location.href = data.url;
+    } else {
+      const response = await fetch('/api/trello-board', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${trelloAccessToken}`,
+        },
       });
-      setEvents(updatedEvents);
-      localStorage.setItem('events', JSON.stringify(updatedEvents));
+      const data = await response.json();
+      setTrelloBoardId(data.id);
+      localStorage.setItem('trelloBoardId', data.id);
     }
   };
 
-  const handleGoogleCalendarConnect = () => {
-    // Implement Google Calendar connection logic
-    setIsGoogleCalendarConnected(true);
-    localStorage.setItem('isGoogleCalendarConnected', 'true');
+  const handleAsanaConnect = async () => {
+    if (!asanaAccessToken) {
+      const response = await fetch('/api/asana-auth');
+      const data = await response.json();
+      window.location.href = data.url;
+    } else {
+      const response = await fetch('/api/asana-workspace', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${asanaAccessToken}`,
+        },
+      });
+      const data = await response.json();
+      setAsanaWorkspaceId(data.id);
+      localStorage.setItem('asanaWorkspaceId', data.id);
+    }
   };
 
-  const handleOutlookCalendarConnect = () => {
-    // Implement Outlook Calendar connection logic
-    setIsOutlookCalendarConnected(true);
-    localStorage.setItem('isOutlookCalendarConnected', 'true');
+  const handleNotionConnect = async () => {
+    if (!notionAccessToken) {
+      const response = await fetch('/api/notion-auth');
+      const data = await response.json();
+      window.location.href = data.url;
+    } else {
+      const response = await fetch('/api/notion-page', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${notionAccessToken}`,
+        },
+      });
+      const data = await response.json();
+      setNotionPageId(data.id);
+      localStorage.setItem('notionPageId', data.id);
+    }
   };
 
-  const handleTrelloConnect = () => {
-    // Implement Trello connection logic
-    setIsTrelloConnected(true);
-    localStorage.setItem('isTrelloConnected', 'true');
+  const handleTrelloSync = async () => {
+    if (trelloAccessToken && trelloBoardId) {
+      const response = await fetch('/api/trello-sync', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${trelloAccessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          boardId: trelloBoardId,
+        }),
+      });
+      const data = await response.json();
+      setTrelloEvents(data.events);
+    }
   };
 
-  const handleAsanaConnect = () => {
-    // Implement Asana connection logic
-    setIsAsanaConnected(true);
-    localStorage.setItem('isAsanaConnected', 'true');
+  const handleAsanaSync = async () => {
+    if (asanaAccessToken && asanaWorkspaceId) {
+      const response = await fetch('/api/asana-sync', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${asanaAccessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          workspaceId: asanaWorkspaceId,
+        }),
+      });
+      const data = await response.json();
+      setAsanaEvents(data.events);
+    }
   };
 
-  const handleNotionConnect = () => {
-    // Implement Notion connection logic
-    setIsNotionConnected(true);
-    localStorage.setItem('isNotionConnected', 'true');
+  const handleNotionSync = async () => {
+    if (notionAccessToken && notionPageId) {
+      const response = await fetch('/api/notion-sync', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${notionAccessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          pageId: notionPageId,
+        }),
+      });
+      const data = await response.json();
+      setNotionEvents(data.events);
+    }
   };
 
   return (
@@ -120,62 +189,48 @@ const ContentCalendarPage = () => {
         <Calendar
           events={events}
           selectedDate={selectedDate}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-          onDrop={handleDrop}
+          onDateChange={(date) => setSelectedDate(date)}
+          onEventDrop={(event) => setEvents((prevEvents) => [...prevEvents, event])}
         />
-      </DndProvider>
-      <div>
-        <h2>Calendar Integrations</h2>
-        <button onClick={handleGoogleCalendarConnect}>
-          Connect Google Calendar
-        </button>
-        {isGoogleCalendarConnected && (
+        <div>
+          <h2>Integrations</h2>
           <GoogleCalendar
-            accessToken={googleCalendarAccessToken}
-            events={googleCalendarEvents}
+            isConnected={isGoogleCalendarConnected}
+            onConnect={() => {
+              // handle google calendar connect
+            }}
           />
-        )}
-        <button onClick={handleOutlookCalendarConnect}>
-          Connect Outlook Calendar
-        </button>
-        {isOutlookCalendarConnected && (
           <OutlookCalendar
-            accessToken={outlookCalendarAccessToken}
-            events={outlookCalendarEvents}
+            isConnected={isOutlookCalendarConnected}
+            onConnect={() => {
+              // handle outlook calendar connect
+            }}
           />
-        )}
-      </div>
-      <div>
-        <h2>Project Management Integrations</h2>
-        <button onClick={handleTrelloConnect}>
-          Connect Trello
-        </button>
-        {isTrelloConnected && (
           <TrelloIntegration
-            accessToken={trelloAccessToken}
-            events={trelloEvents}
+            isConnected={isTrelloConnected}
+            onConnect={handleTrelloConnect}
+            onSync={handleTrelloSync}
           />
-        )}
-        <button onClick={handleAsanaConnect}>
-          Connect Asana
-        </button>
-        {isAsanaConnected && (
           <AsanaIntegration
-            accessToken={asanaAccessToken}
-            events={asanaEvents}
+            isConnected={isAsanaConnected}
+            onConnect={handleAsanaConnect}
+            onSync={handleAsanaSync}
           />
-        )}
-        <button onClick={handleNotionConnect}>
-          Connect Notion
-        </button>
-        {isNotionConnected && (
           <NotionIntegration
-            accessToken={notionAccessToken}
-            events={notionEvents}
+            isConnected={isNotionConnected}
+            onConnect={handleNotionConnect}
+            onSync={handleNotionSync}
           />
-        )}
-      </div>
+        </div>
+        <div>
+          <h2>Events</h2>
+          <ul>
+            {events.map((event) => (
+              <li key={event.id}>{event.title}</li>
+            ))}
+          </ul>
+        </div>
+      </DndProvider>
     </Layout>
   );
 };
