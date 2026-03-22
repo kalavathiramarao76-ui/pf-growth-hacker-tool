@@ -44,114 +44,128 @@ const ContentCalendarPage = () => {
   const [trelloAccessToken, setTrelloAccessToken] = useState<string | null>(null);
   const [asanaAccessToken, setAsanaAccessToken] = useState<string | null>(null);
   const [notionAccessToken, setNotionAccessToken] = useState<string | null>(null);
-  const [view, setView] = useState<'day' | 'week' | 'month'>('month');
-  const [dragging, setDragging] = useState(false);
 
-  const handleDragStart = (event: CalendarEvent) => {
+  const handleDateChange = (date: Date) => {
+    setSelectedDate(date);
+  };
+
+  const handleEventDrag = (event: CalendarEvent) => {
     setDraggedEvent(event);
-    setDragging(true);
   };
 
-  const handleDragEnd = () => {
+  const handleEventDrop = (event: CalendarEvent) => {
     setDraggedEvent(null);
-    setDragging(false);
   };
 
-  const handleDrop = (event: CalendarEvent, date: Date) => {
-    if (draggedEvent) {
-      const updatedEvents = events.map((e) => {
-        if (e.id === draggedEvent.id) {
-          return { ...e, startDate: date };
-        }
-        return e;
-      });
-      setEvents(updatedEvents);
-    }
+  const handleEventHover = (event: CalendarEvent) => {
+    setHoveredEvent(event);
   };
 
-  const handleViewChange = (view: 'day' | 'week' | 'month') => {
-    setView(view);
+  const handleEventUnhover = () => {
+    setHoveredEvent(null);
   };
-
-  useEffect(() => {
-    const fetchEvents = async () => {
-      // fetch events from API or database
-      const fetchedEvents = await fetch('/api/events');
-      const data = await fetchedEvents.json();
-      setEvents(data);
-    };
-    fetchEvents();
-  }, []);
 
   return (
     <Layout>
       <SEO title="Content Calendar" />
       <DndProvider backend={HTML5Backend}>
-        <div className="content-calendar">
+        <div className="calendar-container">
           <div className="calendar-header">
-            <button onClick={() => handleViewChange('day')}>Day</button>
-            <button onClick={() => handleViewChange('week')}>Week</button>
-            <button onClick={() => handleViewChange('month')}>Month</button>
+            <h2>Content Calendar</h2>
+            <div className="calendar-navigation">
+              <button onClick={() => handleDateChange(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1))}>
+                <Image src="/icons/chevron-left.svg" alt="Previous month" width={24} height={24} />
+              </button>
+              <span>
+                {selectedDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
+              </span>
+              <button onClick={() => handleDateChange(new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 1))}>
+                <Image src="/icons/chevron-right.svg" alt="Next month" width={24} height={24} />
+              </button>
+            </div>
           </div>
           <DroppableCalendar
+            date={selectedDate}
             events={events}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-            onDrop={handleDrop}
-            view={view}
+            onEventDrag={handleEventDrag}
+            onEventDrop={handleEventDrop}
+            onEventHover={handleEventHover}
+            onEventUnhover={handleEventUnhover}
           >
             {events.map((event) => (
               <DraggableEvent key={event.id} event={event} />
             ))}
           </DroppableCalendar>
-          <div className="calendar-integrations">
-            <GoogleCalendar
-              isConnected={isGoogleCalendarConnected}
-              accessToken={googleCalendarAccessToken}
-              events={googleCalendarEvents}
-            />
-            <OutlookCalendar
-              isConnected={isOutlookCalendarConnected}
-              accessToken={outlookCalendarAccessToken}
-              events={outlookCalendarEvents}
-            />
-            <AppleCalendar
-              isConnected={isAppleCalendarConnected}
-              accessToken={appleCalendarAccessToken}
-              events={appleCalendarEvents}
-            />
-            <MicrosoftExchangeCalendar
-              isConnected={isMicrosoftExchangeCalendarConnected}
-              accessToken={microsoftExchangeCalendarAccessToken}
-              events={microsoftExchangeCalendarEvents}
-            />
-            <GoogleWorkspaceCalendar
-              isConnected={isGoogleWorkspaceCalendarConnected}
-              accessToken={googleWorkspaceCalendarAccessToken}
-              events={googleWorkspaceCalendarEvents}
-            />
-            <MicrosoftTeamsCalendar
-              isConnected={isMicrosoftTeamsCalendarConnected}
-              accessToken={microsoftTeamsCalendarAccessToken}
-              events={microsoftTeamsCalendarEvents}
-            />
-          </div>
-          <div className="project-management-integrations">
-            <TrelloIntegration
-              isConnected={isTrelloConnected}
-              accessToken={trelloAccessToken}
-              events={trelloEvents}
-            />
-            <AsanaIntegration
-              isConnected={isAsanaConnected}
-              accessToken={asanaAccessToken}
-              events={asanaEvents}
-            />
-            <NotionIntegration
-              isConnected={isNotionConnected}
-              accessToken={notionAccessToken}
-              events={notionEvents}
-            />
+          <div className="calendar-sidebar">
+            <h3>Calendar Integrations</h3>
+            <ul>
+              <li>
+                <GoogleCalendar
+                  isConnected={isGoogleCalendarConnected}
+                  onConnect={() => setIsGoogleCalendarConnected(true)}
+                  onDisconnect={() => setIsGoogleCalendarConnected(false)}
+                />
+              </li>
+              <li>
+                <OutlookCalendar
+                  isConnected={isOutlookCalendarConnected}
+                  onConnect={() => setIsOutlookCalendarConnected(true)}
+                  onDisconnect={() => setIsOutlookCalendarConnected(false)}
+                />
+              </li>
+              <li>
+                <AppleCalendar
+                  isConnected={isAppleCalendarConnected}
+                  onConnect={() => setIsAppleCalendarConnected(true)}
+                  onDisconnect={() => setIsAppleCalendarConnected(false)}
+                />
+              </li>
+              <li>
+                <MicrosoftExchangeCalendar
+                  isConnected={isMicrosoftExchangeCalendarConnected}
+                  onConnect={() => setIsMicrosoftExchangeCalendarConnected(true)}
+                  onDisconnect={() => setIsMicrosoftExchangeCalendarConnected(false)}
+                />
+              </li>
+              <li>
+                <GoogleWorkspaceCalendar
+                  isConnected={isGoogleWorkspaceCalendarConnected}
+                  onConnect={() => setIsGoogleWorkspaceCalendarConnected(true)}
+                  onDisconnect={() => setIsGoogleWorkspaceCalendarConnected(false)}
+                />
+              </li>
+              <li>
+                <MicrosoftTeamsCalendar
+                  isConnected={isMicrosoftTeamsCalendarConnected}
+                  onConnect={() => setIsMicrosoftTeamsCalendarConnected(true)}
+                  onDisconnect={() => setIsMicrosoftTeamsCalendarConnected(false)}
+                />
+              </li>
+            </ul>
+            <h3>Project Management Integrations</h3>
+            <ul>
+              <li>
+                <TrelloIntegration
+                  isConnected={isTrelloConnected}
+                  onConnect={() => setIsTrelloConnected(true)}
+                  onDisconnect={() => setIsTrelloConnected(false)}
+                />
+              </li>
+              <li>
+                <AsanaIntegration
+                  isConnected={isAsanaConnected}
+                  onConnect={() => setIsAsanaConnected(true)}
+                  onDisconnect={() => setIsAsanaConnected(false)}
+                />
+              </li>
+              <li>
+                <NotionIntegration
+                  isConnected={isNotionConnected}
+                  onConnect={() => setIsNotionConnected(true)}
+                  onDisconnect={() => setIsNotionConnected(false)}
+                />
+              </li>
+            </ul>
           </div>
         </div>
       </DndProvider>

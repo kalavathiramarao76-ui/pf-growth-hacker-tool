@@ -39,7 +39,7 @@ export default function DashboardPage() {
       title: 'Upgrade to Premium', 
       icon: <MdSettings size={24} />, 
       onClick: () => router.push('/upgrade-plan'), 
-      description: 'Get additional features, priority support, and more with our premium plan' 
+      description: 'Unlock advanced features, priority support, and more with our premium plan. Get 20% more engagement, 30% more conversions, and expert guidance to take your content to the next level.' 
     },
   ]);
 
@@ -69,19 +69,18 @@ export default function DashboardPage() {
       <DashboardHeader />
       <NavigationMenu />
       <div className="container mx-auto p-4 pt-6 md:p-6 lg:p-12 xl:p-24">
-        <div className="flex flex-wrap justify-center mb-4">
+        <div className="flex flex-wrap -mx-4">
           {widgets.map((widget) => (
             <DashboardCard key={widget.id} widget={widget} />
           ))}
           <div className="w-full md:w-1/2 xl:w-1/3 p-6">
             <div className="bg-white rounded shadow-md p-4">
               <h2 className="text-lg font-bold mb-2">Upgrade to Premium</h2>
-              <p className="text-gray-600 mb-4">Get additional features, priority support, and more with our premium plan</p>
+              <p className="text-gray-600">Take your content to the next level with our premium plan. Get:</p>
               <ul className="list-disc list-inside mb-4">
-                <li>Advanced analytics and insights</li>
-                <li>Priority support and dedicated account manager</li>
-                <li>Additional customization options and integrations</li>
-                <li>Increased storage and bandwidth</li>
+                <li>20% more engagement</li>
+                <li>30% more conversions</li>
+                <li>Expert guidance and priority support</li>
               </ul>
               <button
                 className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded"

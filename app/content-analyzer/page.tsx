@@ -10,6 +10,60 @@ import { OptimizationSuggestions } from '../components/optimization-suggestions'
 import { EngagementTracker } from '../components/engagement-tracker';
 import { AlternativeFormats } from '../components/alternative-formats';
 
+const advancedContentAnalysis = async (analysis: any) => {
+  const advancedAnalysis = {
+    ...analysis,
+    readabilityScore: calculateReadabilityScore(analysis.text),
+    sentimentAnalysis: await performSentimentAnalysis(analysis.text),
+    entityRecognition: await performEntityRecognition(analysis.text),
+    topicModeling: await performTopicModeling(analysis.text),
+  };
+  return advancedAnalysis;
+};
+
+const calculateReadabilityScore = (text: string) => {
+  const words = text.split(' ');
+  const sentences = text.split('.').filter((sentence) => sentence !== '');
+  const readabilityScore = 206.835 - 1.015 * (words.length / sentences.length) - 84.6 * (sentences.length / words.length);
+  return readabilityScore;
+};
+
+const performSentimentAnalysis = async (text: string) => {
+  const response = await fetch('/api/sentiment-analysis', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ text }),
+  });
+  const sentimentAnalysis = await response.json();
+  return sentimentAnalysis;
+};
+
+const performEntityRecognition = async (text: string) => {
+  const response = await fetch('/api/entity-recognition', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ text }),
+  });
+  const entityRecognition = await response.json();
+  return entityRecognition;
+};
+
+const performTopicModeling = async (text: string) => {
+  const response = await fetch('/api/topic-modeling', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ text }),
+  });
+  const topicModeling = await response.json();
+  return topicModeling;
+};
+
 const ContentAnalyzerPage = () => {
   const router = useRouter();
   const [content, setContent] = useState('');
@@ -76,6 +130,8 @@ const ContentAnalyzerPage = () => {
           const data = await response.json();
           const advancedAnalysis = await advancedContentAnalysis(data.analysis);
           setRealTimeAnalysis(advancedAnalysis);
+          setAnalysis(data.analysis);
+          setSuggestions(data.suggestions);
         } catch (error) {
           console.error(error);
         }
@@ -83,86 +139,6 @@ const ContentAnalyzerPage = () => {
       analyzeContent();
     }
   }, [content, contentType, image, video, audio, pdf, podcast, socialMediaPost]);
-
-  const advancedContentAnalysis = async (analysis) => {
-    const advancedAnalysis = {
-      ...analysis,
-      readabilityScore: calculateReadabilityScore(analysis.text),
-      sentimentAnalysis: await sentimentAnalysisApi(analysis.text),
-      entityRecognition: await entityRecognitionApi(analysis.text),
-      keywordExtraction: await keywordExtractionApi(analysis.text),
-      suggestions: generateSuggestions(analysis.text, analysis.readabilityScore, analysis.sentimentAnalysis, analysis.entityRecognition, analysis.keywordExtraction),
-    };
-    return advancedAnalysis;
-  };
-
-  const calculateReadabilityScore = (text) => {
-    // Implement readability score calculation algorithm
-    // For example, using Flesch-Kincaid readability test
-    const words = text.split(' ');
-    const sentences = text.split('. ');
-    const score = 206.835 - 1.015 * (words.length / sentences.length) - 84.6 * (words.length / text.length);
-    return score;
-  };
-
-  const sentimentAnalysisApi = async (text) => {
-    // Implement sentiment analysis API call
-    // For example, using Natural Language Processing (NLP) API
-    const response = await fetch('/api/sentiment-analysis', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ text }),
-    });
-    const data = await response.json();
-    return data.sentiment;
-  };
-
-  const entityRecognitionApi = async (text) => {
-    // Implement entity recognition API call
-    // For example, using NLP API
-    const response = await fetch('/api/entity-recognition', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ text }),
-    });
-    const data = await response.json();
-    return data.entities;
-  };
-
-  const keywordExtractionApi = async (text) => {
-    // Implement keyword extraction API call
-    // For example, using NLP API
-    const response = await fetch('/api/keyword-extraction', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ text }),
-    });
-    const data = await response.json();
-    return data.keywords;
-  };
-
-  const generateSuggestions = (text, readabilityScore, sentimentAnalysis, entityRecognition, keywordExtraction) => {
-    const suggestions = [];
-    if (readabilityScore < 60) {
-      suggestions.push('Improve readability by simplifying sentence structure and vocabulary.');
-    }
-    if (sentimentAnalysis === 'negative') {
-      suggestions.push('Improve tone by using more positive language.');
-    }
-    if (entityRecognition.length > 5) {
-      suggestions.push('Improve clarity by reducing the number of entities mentioned.');
-    }
-    if (keywordExtraction.length < 3) {
-      suggestions.push('Improve keyword density by including more relevant keywords.');
-    }
-    return suggestions;
-  };
 
   return (
     <div>
@@ -177,25 +153,24 @@ const ContentAnalyzerPage = () => {
         pdf={pdf}
         podcast={podcast}
         socialMediaPost={socialMediaPost}
-        onChange={(content, contentType, image, video, audio, pdf, podcast, socialMediaPost) => {
-          setContent(content);
-          setContentType(contentType);
-          setImage(image);
-          setVideo(video);
-          setAudio(audio);
-          setPdf(pdf);
-          setPodcast(podcast);
-          setSocialMediaPost(socialMediaPost);
-        }}
+        onChangeContent={(newContent) => setContent(newContent)}
+        onChangeContentType={(newContentType) => setContentType(newContentType)}
+        onChangeImage={(newImage) => setImage(newImage)}
+        onChangeVideo={(newVideo) => setVideo(newVideo)}
+        onChangeAudio={(newAudio) => setAudio(newAudio)}
+        onChangePdf={(newPdf) => setPdf(newPdf)}
+        onChangePodcast={(newPodcast) => setPodcast(newPodcast)}
+        onChangeSocialMediaPost={(newSocialMediaPost) => setSocialMediaPost(newSocialMediaPost)}
       />
-      {realTimeAnalysis && (
-        <OptimizationSuggestions
-          analysis={realTimeAnalysis}
-          suggestions={realTimeAnalysis.suggestions}
-        />
+      {analysis && (
+        <OptimizationSuggestions suggestions={suggestions} analysis={analysis} />
       )}
-      <EngagementTracker engagement={engagement} />
-      <AlternativeFormats alternativeFormats={alternativeFormats} />
+      {engagement && (
+        <EngagementTracker engagement={engagement} />
+      )}
+      {alternativeFormats && (
+        <AlternativeFormats formats={alternativeFormats} />
+      )}
     </div>
   );
 };
