@@ -90,16 +90,15 @@ const ContentAnalyzerPage = () => {
         body: JSON.stringify({ content }),
       });
       const data = await response.json();
-      setRealTimeAnalysis(data);
+      setRealTimeAnalysis(data.analysis);
     } catch (error) {
       console.error(error);
     }
   };
 
   const handleContentChange = (event: any) => {
-    const newContent = event.target.value;
-    setContent(newContent);
-    handleRealTimeAnalysis(newContent);
+    setContent(event.target.value);
+    handleRealTimeAnalysis(event.target.value);
   };
 
   return (
@@ -115,13 +114,35 @@ const ContentAnalyzerPage = () => {
         onContentChange={handleContentChange}
       />
       {realTimeAnalysis && (
-        <OptimizationSuggestions suggestions={realTimeAnalysis.suggestions} />
+        <div>
+          <h2>Real-time Analysis</h2>
+          <p>{realTimeAnalysis}</p>
+        </div>
       )}
       {analysis && (
-        <OptimizationSuggestions suggestions={suggestions} />
+        <div>
+          <h2>Analysis</h2>
+          <p>{analysis}</p>
+        </div>
       )}
-      <EngagementTracker engagement={engagement} />
-      <AlternativeFormats formats={alternativeFormats} />
+      {suggestions && (
+        <div>
+          <h2>Optimization Suggestions</h2>
+          <OptimizationSuggestions suggestions={suggestions} />
+        </div>
+      )}
+      {engagement && (
+        <div>
+          <h2>Engagement Metrics</h2>
+          <EngagementTracker engagement={engagement} />
+        </div>
+      )}
+      {alternativeFormats && (
+        <div>
+          <h2>Alternative Formats</h2>
+          <AlternativeFormats formats={alternativeFormats} />
+        </div>
+      )}
     </div>
   );
 };

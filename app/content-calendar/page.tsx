@@ -74,87 +74,72 @@ const ContentCalendarPage = () => {
     setDraggedEvent(null);
   };
 
-  const handleDrop = (event: CalendarEvent, date: Date) => {
-    const newEvents = [...events];
-    const index = newEvents.findIndex((e) => e.id === event.id);
-    if (index !== -1) {
-      newEvents[index].startDate = date;
-      newEvents[index].endDate = new Date(date.getTime() + event.duration);
+  const handleDrop = (date: Date) => {
+    if (draggedEvent) {
+      const newEvent = { ...draggedEvent, date };
+      setEvents((prevEvents) => prevEvents.map((event) => (event.id === draggedEvent.id ? newEvent : event)));
+      setDraggedEvent(null);
     }
-    setEvents(newEvents);
-  };
-
-  const handleConnectGoogleCalendar = () => {
-    // Connect to Google Calendar API
-    // ...
-    setIsGoogleCalendarConnected(true);
-    localStorage.setItem('isGoogleCalendarConnected', 'true');
-  };
-
-  const handleConnectOutlookCalendar = () => {
-    // Connect to Outlook Calendar API
-    // ...
-    setIsOutlookCalendarConnected(true);
-    localStorage.setItem('isOutlookCalendarConnected', 'true');
-  };
-
-  const handleConnectTrello = () => {
-    // Connect to Trello API
-    // ...
-    setIsTrelloConnected(true);
-    localStorage.setItem('isTrelloConnected', 'true');
-  };
-
-  const handleConnectAsana = () => {
-    // Connect to Asana API
-    // ...
-    setIsAsanaConnected(true);
-    localStorage.setItem('isAsanaConnected', 'true');
-  };
-
-  const handleConnectNotion = () => {
-    // Connect to Notion API
-    // ...
-    setIsNotionConnected(true);
-    localStorage.setItem('isNotionConnected', 'true');
   };
 
   return (
     <Layout>
       <SEO title="Content Calendar" />
       <DndProvider backend={HTML5Backend}>
-        <DroppableCalendar
-          events={events}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-          onDrop={handleDrop}
-        >
+        <DroppableCalendar onDrop={handleDrop}>
           {events.map((event) => (
-            <DraggableEvent key={event.id} event={event} />
+            <DraggableEvent
+              key={event.id}
+              event={event}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+            />
           ))}
         </DroppableCalendar>
-        <div>
-          <h2>Connect Calendars</h2>
-          <button onClick={handleConnectGoogleCalendar}>
-            Connect Google Calendar
-          </button>
-          <button onClick={handleConnectOutlookCalendar}>
-            Connect Outlook Calendar
-          </button>
-          <button onClick={handleConnectTrello}>Connect Trello</button>
-          <button onClick={handleConnectAsana}>Connect Asana</button>
-          <button onClick={handleConnectNotion}>Connect Notion</button>
-        </div>
-        {isGoogleCalendarConnected && (
-          <GoogleCalendar events={googleCalendarEvents} />
-        )}
-        {isOutlookCalendarConnected && (
-          <OutlookCalendar events={outlookCalendarEvents} />
-        )}
-        {isTrelloConnected && <TrelloIntegration events={trelloEvents} />}
-        {isAsanaConnected && <AsanaIntegration events={asanaEvents} />}
-        {isNotionConnected && <NotionIntegration events={notionEvents} />}
       </DndProvider>
+      <GoogleCalendar
+        isConnected={isGoogleCalendarConnected}
+        accessToken={googleCalendarAccessToken}
+        events={googleCalendarEvents}
+        onConnect={() => {
+          // handle Google Calendar connection
+        }}
+      />
+      <OutlookCalendar
+        isConnected={isOutlookCalendarConnected}
+        accessToken={outlookCalendarAccessToken}
+        events={outlookCalendarEvents}
+        onConnect={() => {
+          // handle Outlook Calendar connection
+        }}
+      />
+      <TrelloIntegration
+        isConnected={isTrelloConnected}
+        accessToken={trelloAccessToken}
+        boardId={trelloBoardId}
+        events={trelloEvents}
+        onConnect={() => {
+          // handle Trello connection
+        }}
+      />
+      <AsanaIntegration
+        isConnected={isAsanaConnected}
+        accessToken={asanaAccessToken}
+        workspaceId={asanaWorkspaceId}
+        events={asanaEvents}
+        onConnect={() => {
+          // handle Asana connection
+        }}
+      />
+      <NotionIntegration
+        isConnected={isNotionConnected}
+        accessToken={notionAccessToken}
+        pageId={notionPageId}
+        events={notionEvents}
+        onConnect={() => {
+          // handle Notion connection
+        }}
+      />
     </Layout>
   );
 };
