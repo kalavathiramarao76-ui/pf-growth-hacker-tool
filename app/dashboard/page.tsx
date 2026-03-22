@@ -51,93 +51,39 @@ export default function DashboardPage() {
       title: 'Upgrade to Premium', 
       icon: <MdSettings size={24} />, 
       onClick: () => router.push('/upgrade-plan'), 
-      description: 'Get additional features, priority support, and more with our premium plan',
-      frequency: 0
+      description: 'Get additional features, priority support, and more with our premium plan' 
     },
-    { id: 6, title: 'New Widget', icon: <AiOutlinePlus size={24} />, onClick: () => console.log('New widget clicked'), frequency: 0 },
-    { id: 7, title: 'Another Widget', icon: <IoMdAnalytics size={24} />, onClick: () => console.log('Another widget clicked'), frequency: 0 },
   ]);
-
-  useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    const storedSubscription = localStorage.getItem('subscription');
-    if (storedSubscription) {
-      setSubscription(JSON.parse(storedSubscription));
-    }
-    const storedTutorial = localStorage.getItem('tutorial');
-    if (!storedTutorial) {
-      setShowTutorial(true);
-      localStorage.setItem('tutorial', 'true');
-    }
-    const storedSelectedWidgets = localStorage.getItem('selectedWidgets');
-    if (storedSelectedWidgets) {
-      setSelectedWidgets(JSON.parse(storedSelectedWidgets));
-    }
-    const storedWidgetLayout = localStorage.getItem('widgetLayout');
-    if (storedWidgetLayout) {
-      setWidgetLayout(JSON.parse(storedWidgetLayout));
-    }
-    const storedCustomizableWidgets = localStorage.getItem('customizableWidgets');
-    if (storedCustomizableWidgets) {
-      setCustomizableWidgets(JSON.parse(storedCustomizableWidgets));
-    }
-  }, []);
-
-  const handleWidgetClick = (widget) => {
-    widget.frequency++;
-    setCustomizableWidgets(customizableWidgets.map((w) => w.id === widget.id ? widget : w));
-    localStorage.setItem('customizableWidgets', JSON.stringify(customizableWidgets));
-  };
-
-  const handleWidgetLayoutChange = (newLayout) => {
-    setWidgetLayout(newLayout);
-    localStorage.setItem('widgetLayout', JSON.stringify(newLayout));
-  };
-
-  const handleWidgetAdd = (widget) => {
-    const newLayout = { ...widgetLayout };
-    newLayout.widgets.push(widget);
-    handleWidgetLayoutChange(newLayout);
-  };
-
-  const handleWidgetRemove = (widgetId) => {
-    const newLayout = { ...widgetLayout };
-    newLayout.widgets = newLayout.widgets.filter((widget) => widget.id !== widgetId);
-    handleWidgetLayoutChange(newLayout);
-  };
-
-  const handleWidgetPriorityChange = (widgetId, newPriority) => {
-    const newLayout = { ...widgetLayout };
-    newLayout.widgets = newLayout.widgets.map((widget) => {
-      if (widget.id === widgetId) {
-        widget.priority = newPriority;
-      }
-      return widget;
-    });
-    handleWidgetLayoutChange(newLayout);
-  };
 
   return (
     <div>
       <DashboardHeader />
       <NavigationMenu />
-      <div className="dashboard-container">
-        <div className="widget-layout">
-          {widgetLayout.widgets.map((widget, index) => (
-            <DashboardCard key={index} widget={widget} onClick={() => handleWidgetClick(widget)} />
+      <div className="container mx-auto p-4">
+        <div className="flex flex-col md:flex-row justify-center mb-4">
+          {widgets.map((widget) => (
+            <DashboardCard key={widget.id} title={widget.title} icon={widget.icon} onClick={widget.onClick} description={widget.description} />
           ))}
         </div>
-        <div className="widget-settings">
-          <WidgetSettings
-            availableWidgets={availableWidgets}
-            selectedWidgets={selectedWidgets}
-            onWidgetAdd={handleWidgetAdd}
-            onWidgetRemove={handleWidgetRemove}
-            onWidgetPriorityChange={handleWidgetPriorityChange}
-          />
+        <div className="text-center mb-4">
+          <h2 className="text-2xl font-bold">Upgrade to Premium</h2>
+          <p>Get additional features, priority support, and more with our premium plan</p>
+          <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onClick={() => router.push('/upgrade-plan')}>Upgrade Now</button>
+          <div className="mt-4">
+            <h3 className="text-xl font-bold">Premium Plan Benefits</h3>
+            <ul>
+              <li>Additional features</li>
+              <li>Priority support</li>
+              <li>More storage</li>
+            </ul>
+            <h3 className="text-xl font-bold">Pricing</h3>
+            <p>$9.99/month or $99.99/year</p>
+          </div>
+        </div>
+        <div className="flex flex-col md:flex-row justify-center">
+          {availableWidgets.map((widget) => (
+            <DashboardCard key={widget.id} title={widget.title} icon={widget.icon} onClick={widget.onClick} />
+          ))}
         </div>
       </div>
     </div>

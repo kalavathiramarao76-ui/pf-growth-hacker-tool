@@ -90,13 +90,13 @@ const ContentAnalyzerPage = () => {
         body: JSON.stringify({ content }),
       });
       const data = await response.json();
-      setRealTimeAnalysis(data);
+      setRealTimeAnalysis(data.analysis);
     } catch (error) {
       console.error(error);
     }
   };
 
-  const handleContentChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleContentChange = (event: any) => {
     const newContent = event.target.value;
     setContent(newContent);
     handleRealTimeAnalysis(newContent);
@@ -118,10 +118,14 @@ const ContentAnalyzerPage = () => {
         <OptimizationSuggestions suggestions={realTimeAnalysis.suggestions} />
       )}
       {analysis && (
-        <OptimizationSuggestions suggestions={suggestions} />
+        <OptimizationSuggestions suggestions={analysis.suggestions} />
       )}
-      <EngagementTracker engagement={engagement} />
-      <AlternativeFormats formats={alternativeFormats} />
+      {engagement && (
+        <EngagementTracker engagement={engagement} />
+      )}
+      {alternativeFormats && (
+        <AlternativeFormats formats={alternativeFormats} />
+      )}
     </div>
   );
 };
