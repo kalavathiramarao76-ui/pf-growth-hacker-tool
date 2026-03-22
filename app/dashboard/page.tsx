@@ -62,89 +62,40 @@ export default function DashboardPage() {
     { id: 2, title: 'View Analytics', icon: <IoMdAnalytics size={24} />, onClick: () => router.push('/engagement-tracker'), frequency: 0 },
     { id: 3, title: 'Content Calendar', icon: <FaRegCalendarAlt size={24} />, onClick: () => router.push('/content-calendar'), frequency: 0 },
     { id: 4, title: 'Settings', icon: <MdSettings size={24} />, onClick: () => router.push('/settings'), frequency: 0 },
-    { 
-      id: 5, 
-      title: 'Upgrade to Premium', 
-      icon: <MdSettings size={24} />, 
-      onClick: () => router.push('/upgrade-plan'), 
-      description: 'Get additional features, priority support, and more with our premium plan',
-      frequency: 0
-    },
   ]);
 
-  const handleDragEnd = (result: any) => {
-    if (!result.destination) return;
-    const { source, destination } = result;
-    const newWidgets = [...widgetLayout.widgets];
-    const [removed] = newWidgets.splice(source.index, 1);
-    newWidgets.splice(destination.index, 0, removed);
-    setWidgetLayout({
-      ...widgetLayout,
-      widgets: newWidgets
-    });
-  };
-
-  useEffect(() => {
-    const storedWidgetLayout = localStorage.getItem('widgetLayout');
-    if (storedWidgetLayout) {
-      setWidgetLayout(JSON.parse(storedWidgetLayout));
-    } else {
-      const defaultWidgets = customizableWidgets.map((widget) => ({ ...widget }));
-      setWidgetLayout({
-        columns: 3,
-        rows: 2,
-        widgets: defaultWidgets
-      });
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem('widgetLayout', JSON.stringify(widgetLayout));
-  }, [widgetLayout]);
-
-  const handleAddWidget = (widget: Widget) => {
-    setWidgetLayout({
-      ...widgetLayout,
-      widgets: [...widgetLayout.widgets, widget]
-    });
-  };
-
-  const handleRemoveWidget = (widgetId: number) => {
-    setWidgetLayout({
-      ...widgetLayout,
-      widgets: widgetLayout.widgets.filter((widget) => widget.id !== widgetId)
-    });
-  };
-
   return (
-    <DndProvider onDragEnd={handleDragEnd}>
+    <DndProvider>
       <DashboardHeader />
       <NavigationMenu />
-      <div className="dashboard-container">
-        <div className="widget-grid">
-          {widgetLayout.widgets.map((widget, index) => (
-            <DashboardCard
-              key={widget.id}
-              title={widget.title}
-              icon={widget.icon}
-              onClick={widget.onClick}
-              index={index}
-              removable={true}
-              onRemove={() => handleRemoveWidget(widget.id)}
-            />
+      <div className="container mx-auto p-4 pt-6 md:p-6 lg:p-12 xl:p-24">
+        <div className="flex flex-col md:flex-row justify-center items-center mb-4">
+          <h1 className="text-3xl font-bold mb-4 md:mb-0">AI-Powered Content Optimizer</h1>
+          <button 
+            className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded ml-4"
+            onClick={() => router.push('/upgrade-plan')}
+          >
+            Upgrade to Premium
+          </button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {widgets.map((widget) => (
+            <DashboardCard key={widget.id} widget={widget} />
           ))}
         </div>
-        <div className="available-widgets">
-          <h2>Available Widgets</h2>
-          {availableWidgets.map((widget) => (
-            <DashboardCard
-              key={widget.id}
-              title={widget.title}
-              icon={widget.icon}
-              onClick={() => handleAddWidget(widget)}
-              removable={false}
-            />
-          ))}
+        <div className="mt-4">
+          <h2 className="text-2xl font-bold mb-4">Why Upgrade to Premium?</h2>
+          <ul>
+            <li>Get additional features to boost your content optimization</li>
+            <li>Priority support to help you with any questions or issues</li>
+            <li>Exclusive access to new features and updates</li>
+          </ul>
+          <button 
+            className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded"
+            onClick={() => router.push('/upgrade-plan')}
+          >
+            Upgrade Now
+          </button>
         </div>
       </div>
     </DndProvider>

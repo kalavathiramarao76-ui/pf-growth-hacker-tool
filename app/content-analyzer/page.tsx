@@ -42,6 +42,39 @@ const ContentAnalyzerPage = () => {
     }
   }, []);
 
+  useEffect(() => {
+    if (content) {
+      const analyzeContent = async () => {
+        try {
+          const formData = new FormData();
+          formData.append('content', content);
+          formData.append('contentType', contentType);
+          if (image) {
+            formData.append('image', image);
+          }
+          if (video) {
+            formData.append('video', video);
+          }
+          if (audio) {
+            formData.append('audio', audio);
+          }
+          if (pdf) {
+            formData.append('pdf', pdf);
+          }
+          const response = await fetch('/api/analyze', {
+            method: 'POST',
+            body: formData,
+          });
+          const data = await response.json();
+          setRealTimeAnalysis(data.analysis);
+        } catch (error) {
+          console.error(error);
+        }
+      };
+      analyzeContent();
+    }
+  }, [content, contentType, image, video, audio, pdf]);
+
   const handleAnalyze = async (content: string, contentType: string, image: any, video: any, audio: any, pdf: any) => {
     try {
       const formData = new FormData();
@@ -93,27 +126,6 @@ const ContentAnalyzerPage = () => {
     }
   };
 
-  const handleRealTimeAnalysis = async (content: string) => {
-    try {
-      const response = await fetch('/api/real-time-analysis', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          content,
-        }),
-      });
-      const data = await response.json();
-      setRealTimeAnalysis(data.analysis);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const handleContentChange = (event: any) => {
-    setContent(event.target.value);
-    handleRealTimeAnalysis(event.target.value);
-  };
-
   return (
     <div>
       <SEO title="Content Analyzer" />
@@ -126,37 +138,24 @@ const ContentAnalyzerPage = () => {
         audio={audio}
         pdf={pdf}
         onAnalyze={handleAnalyze}
-        onContentChange={handleContentChange}
+        onChangeContent={(newContent) => setContent(newContent)}
+        onChangeContentType={(newContentType) => setContentType(newContentType)}
+        onChangeImage={(newImage) => setImage(newImage)}
+        onChangeVideo={(newVideo) => setVideo(newVideo)}
+        onChangeAudio={(newAudio) => setAudio(newAudio)}
+        onChangePdf={(newPdf) => setPdf(newPdf)}
       />
       {realTimeAnalysis && (
-        <div>
-          <h2>Real-time Analysis</h2>
-          <p>{realTimeAnalysis}</p>
-        </div>
+        <OptimizationSuggestions suggestions={realTimeAnalysis} />
       )}
       {analysis && (
-        <div>
-          <h2>Analysis</h2>
-          <p>{analysis}</p>
-        </div>
-      )}
-      {suggestions && (
-        <div>
-          <h2>Suggestions</h2>
-          <OptimizationSuggestions suggestions={suggestions} />
-        </div>
+        <OptimizationSuggestions suggestions={analysis} />
       )}
       {engagement && (
-        <div>
-          <h2>Engagement</h2>
-          <EngagementTracker engagement={engagement} />
-        </div>
+        <EngagementTracker engagement={engagement} />
       )}
       {alternativeFormats && (
-        <div>
-          <h2>Alternative Formats</h2>
-          <AlternativeFormats formats={alternativeFormats} />
-        </div>
+        <AlternativeFormats formats={alternativeFormats} />
       )}
     </div>
   );
