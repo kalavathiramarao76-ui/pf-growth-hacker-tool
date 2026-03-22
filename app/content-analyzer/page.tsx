@@ -19,6 +19,8 @@ const ContentAnalyzerPage = () => {
   const [engagement, setEngagement] = useState(null);
   const [image, setImage] = useState(null);
   const [video, setVideo] = useState(null);
+  const [audio, setAudio] = useState(null);
+  const [pdf, setPdf] = useState(null);
   const [analysisHistory, setAnalysisHistory] = useState([]);
   const [alternativeFormats, setAlternativeFormats] = useState(null);
   const [realTimeAnalysis, setRealTimeAnalysis] = useState(null);
@@ -40,7 +42,7 @@ const ContentAnalyzerPage = () => {
     }
   }, []);
 
-  const handleAnalyze = async (content: string, contentType: string, image: any, video: any) => {
+  const handleAnalyze = async (content: string, contentType: string, image: any, video: any, audio: any, pdf: any) => {
     try {
       const formData = new FormData();
       formData.append('content', content);
@@ -50,6 +52,12 @@ const ContentAnalyzerPage = () => {
       }
       if (video) {
         formData.append('video', video);
+      }
+      if (audio) {
+        formData.append('audio', audio);
+      }
+      if (pdf) {
+        formData.append('pdf', pdf);
       }
       const response = await fetch('/api/analyze', {
         method: 'POST',
@@ -82,66 +90,32 @@ const ContentAnalyzerPage = () => {
     }
   };
 
-  const handleRealTimeAnalysis = async (content: string) => {
-    try {
-      const response = await fetch('/api/real-time-analysis', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content }),
-      });
-      const data = await response.json();
-      setRealTimeAnalysis(data.analysis);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const handleContentChange = (event: any) => {
-    setContent(event.target.value);
-    handleRealTimeAnalysis(event.target.value);
-  };
-
   return (
     <div>
-      <SEO title="Content Analyzer" />
+      <SEO title="AI-Powered Content Optimizer" />
       <PageHeader title="Content Analyzer" />
       <ContentAnalyzerForm
         content={content}
         contentType={contentType}
         image={image}
         video={video}
-        onAnalyze={handleAnalyze}
-        onContentChange={handleContentChange}
+        audio={audio}
+        pdf={pdf}
+        onAnalyze={(content, contentType, image, video, audio, pdf) => handleAnalyze(content, contentType, image, video, audio, pdf)}
+        onContentTypeChange={(contentType) => setContentType(contentType)}
+        onImageChange={(image) => setImage(image)}
+        onVideoChange={(video) => setVideo(video)}
+        onAudioChange={(audio) => setAudio(audio)}
+        onPdfChange={(pdf) => setPdf(pdf)}
       />
-      {realTimeAnalysis && (
-        <div>
-          <h2>Real-time Analysis</h2>
-          <p>{realTimeAnalysis}</p>
-        </div>
-      )}
       {analysis && (
-        <div>
-          <h2>Analysis</h2>
-          <p>{analysis}</p>
-        </div>
-      )}
-      {suggestions && (
-        <div>
-          <h2>Optimization Suggestions</h2>
-          <OptimizationSuggestions suggestions={suggestions} />
-        </div>
+        <OptimizationSuggestions suggestions={suggestions} />
       )}
       {engagement && (
-        <div>
-          <h2>Engagement Metrics</h2>
-          <EngagementTracker engagement={engagement} />
-        </div>
+        <EngagementTracker engagement={engagement} />
       )}
       {alternativeFormats && (
-        <div>
-          <h2>Alternative Formats</h2>
-          <AlternativeFormats formats={alternativeFormats} />
-        </div>
+        <AlternativeFormats formats={alternativeFormats} />
       )}
     </div>
   );

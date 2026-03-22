@@ -55,36 +55,44 @@ export default function DashboardPage() {
     },
   ]);
 
+  const categorizedWidgets = {
+    'Content Creation': [
+      { id: 1, title: 'Create Content', icon: <AiOutlinePlus size={24} />, onClick: () => router.push('/content-analyzer') },
+    ],
+    'Analytics and Insights': [
+      { id: 2, title: 'View Analytics', icon: <IoMdAnalytics size={24} />, onClick: () => router.push('/engagement-tracker') },
+    ],
+    'Content Planning': [
+      { id: 3, title: 'Content Calendar', icon: <FaRegCalendarAlt size={24} />, onClick: () => router.push('/content-calendar') },
+    ],
+    'Settings and Upgrades': [
+      { id: 4, title: 'Settings', icon: <MdSettings size={24} />, onClick: () => router.push('/settings') },
+      { 
+        id: 5, 
+        title: 'Upgrade to Premium', 
+        icon: <MdSettings size={24} />, 
+        onClick: () => router.push('/upgrade-plan'), 
+        description: 'Get additional features, priority support, and more with our premium plan' 
+      },
+    ],
+  };
+
   return (
-    <div>
+    <div className="dashboard-container">
       <DashboardHeader />
-      <div className="container mx-auto p-4 pt-6 md:p-6 lg:p-12 xl:p-24">
-        <div className="flex flex-col lg:flex-row justify-center items-center mb-12">
-          <div className="text-center lg:text-left lg:mr-12 mb-6 lg:mb-0">
-            <h1 className="text-3xl font-bold mb-4">AI-Powered Content Optimizer</h1>
-            <p className="text-lg">Unlock the full potential of your content with our AI-powered optimization tools.</p>
-          </div>
-          <div className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded">
-            <Link href="/upgrade-plan">
-              <a>Upgrade to Premium</a>
-            </Link>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {widgets.map((widget) => (
-            <DashboardCard key={widget.id} title={widget.title} icon={widget.icon} onClick={widget.onClick} />
-          ))}
-        </div>
-        <div className="mt-12">
-          <h2 className="text-2xl font-bold mb-4">Available Widgets</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {availableWidgets.map((widget) => (
-              <DashboardCard key={widget.id} title={widget.title} icon={widget.icon} onClick={widget.onClick} />
-            ))}
-          </div>
-        </div>
-      </div>
       <NavigationMenu />
+      <div className="widget-categories">
+        {Object.keys(categorizedWidgets).map(category => (
+          <div key={category} className="widget-category">
+            <h2>{category}</h2>
+            <div className="widget-grid">
+              {categorizedWidgets[category].map(widget => (
+                <DashboardCard key={widget.id} widget={widget} />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
       <WidgetSettings />
     </div>
   );
