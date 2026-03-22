@@ -21,6 +21,8 @@ const ContentAnalyzerPage = () => {
   const [video, setVideo] = useState(null);
   const [audio, setAudio] = useState(null);
   const [pdf, setPdf] = useState(null);
+  const [podcast, setPodcast] = useState(null);
+  const [socialMediaPost, setSocialMediaPost] = useState(null);
   const [analysisHistory, setAnalysisHistory] = useState([]);
   const [alternativeFormats, setAlternativeFormats] = useState(null);
   const [realTimeAnalysis, setRealTimeAnalysis] = useState(null);
@@ -61,6 +63,12 @@ const ContentAnalyzerPage = () => {
           if (pdf) {
             formData.append('pdf', pdf);
           }
+          if (podcast) {
+            formData.append('podcast', podcast);
+          }
+          if (socialMediaPost) {
+            formData.append('socialMediaPost', socialMediaPost);
+          }
           const response = await fetch('/api/analyze', {
             method: 'POST',
             body: formData,
@@ -73,9 +81,9 @@ const ContentAnalyzerPage = () => {
       };
       analyzeContent();
     }
-  }, [content, contentType, image, video, audio, pdf]);
+  }, [content, contentType, image, video, audio, pdf, podcast, socialMediaPost]);
 
-  const handleAnalyze = async (content: string, contentType: string, image: any, video: any, audio: any, pdf: any) => {
+  const handleAnalyze = async (content: string, contentType: string, image: any, video: any, audio: any, pdf: any, podcast: any, socialMediaPost: any) => {
     try {
       const formData = new FormData();
       formData.append('content', content);
@@ -92,6 +100,12 @@ const ContentAnalyzerPage = () => {
       if (pdf) {
         formData.append('pdf', pdf);
       }
+      if (podcast) {
+        formData.append('podcast', podcast);
+      }
+      if (socialMediaPost) {
+        formData.append('socialMediaPost', socialMediaPost);
+      }
       const response = await fetch('/api/analyze', {
         method: 'POST',
         body: formData,
@@ -99,31 +113,39 @@ const ContentAnalyzerPage = () => {
       const data = await response.json();
       setAnalysis(data.analysis);
       setSuggestions(data.suggestions);
-      const newAnalysisHistory = [...analysisHistory, {
-        content,
-        contentType,
-        analysis: data.analysis,
-        suggestions: data.suggestions,
-      }];
-      setAnalysisHistory(newAnalysisHistory);
-      if (user) {
-        const userId = user.id;
-        const analysisHistoryResponse = await fetch('/api/save-analysis-history', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId,
-            analysisHistory: newAnalysisHistory,
-          }),
-        });
-        const analysisHistoryData = await analysisHistoryResponse.json();
-        if (analysisHistoryData.success) {
-          LocalStorage.set('analysisHistory', newAnalysisHistory);
-        }
-      }
+      setEngagement(data.engagement);
+      setAlternativeFormats(data.alternativeFormats);
     } catch (error) {
       console.error(error);
     }
+  };
+
+  const handleContentTypeChange = (event: any) => {
+    setContentType(event.target.value);
+  };
+
+  const handleImageChange = (event: any) => {
+    setImage(event.target.files[0]);
+  };
+
+  const handleVideoChange = (event: any) => {
+    setVideo(event.target.files[0]);
+  };
+
+  const handleAudioChange = (event: any) => {
+    setAudio(event.target.files[0]);
+  };
+
+  const handlePdfChange = (event: any) => {
+    setPdf(event.target.files[0]);
+  };
+
+  const handlePodcastChange = (event: any) => {
+    setPodcast(event.target.files[0]);
+  };
+
+  const handleSocialMediaPostChange = (event: any) => {
+    setSocialMediaPost(event.target.value);
   };
 
   return (
@@ -137,26 +159,20 @@ const ContentAnalyzerPage = () => {
         video={video}
         audio={audio}
         pdf={pdf}
+        podcast={podcast}
+        socialMediaPost={socialMediaPost}
         onAnalyze={handleAnalyze}
-        onChangeContent={(newContent) => setContent(newContent)}
-        onChangeContentType={(newContentType) => setContentType(newContentType)}
-        onChangeImage={(newImage) => setImage(newImage)}
-        onChangeVideo={(newVideo) => setVideo(newVideo)}
-        onChangeAudio={(newAudio) => setAudio(newAudio)}
-        onChangePdf={(newPdf) => setPdf(newPdf)}
+        onContentTypeChange={handleContentTypeChange}
+        onImageChange={handleImageChange}
+        onVideoChange={handleVideoChange}
+        onAudioChange={handleAudioChange}
+        onPdfChange={handlePdfChange}
+        onPodcastChange={handlePodcastChange}
+        onSocialMediaPostChange={handleSocialMediaPostChange}
       />
-      {realTimeAnalysis && (
-        <OptimizationSuggestions suggestions={realTimeAnalysis} />
-      )}
-      {analysis && (
-        <OptimizationSuggestions suggestions={analysis} />
-      )}
-      {engagement && (
-        <EngagementTracker engagement={engagement} />
-      )}
-      {alternativeFormats && (
-        <AlternativeFormats formats={alternativeFormats} />
-      )}
+      {analysis && <OptimizationSuggestions suggestions={analysis.suggestions} />}
+      {engagement && <EngagementTracker engagement={engagement} />}
+      {alternativeFormats && <AlternativeFormats formats={alternativeFormats} />}
     </div>
   );
 };
