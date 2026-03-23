@@ -79,7 +79,42 @@ const performSentimentAnalysis = async (text: string) => {
     body: JSON.stringify({ text }),
   });
   const sentimentAnalysis = await response.json();
-  return sentimentAnalysis;
+  const vaderSentiment = await vaderSentimentAnalysis(text);
+  const textBlobSentiment = await textBlobSentimentAnalysis(text);
+  const combinedSentiment = combineSentiments(sentimentAnalysis, vaderSentiment, textBlobSentiment);
+  return combinedSentiment;
+};
+
+const vaderSentimentAnalysis = async (text: string) => {
+  const response = await fetch('/api/vader-sentiment-analysis', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ text }),
+  });
+  return await response.json();
+};
+
+const textBlobSentimentAnalysis = async (text: string) => {
+  const response = await fetch('/api/textblob-sentiment-analysis', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ text }),
+  });
+  return await response.json();
+};
+
+const combineSentiments = (sentiment1: any, sentiment2: any, sentiment3: any) => {
+  const combinedSentiment = {
+    compound: (sentiment1.compound + sentiment2.compound + sentiment3.compound) / 3,
+    pos: (sentiment1.pos + sentiment2.pos + sentiment3.pos) / 3,
+    neu: (sentiment1.neu + sentiment2.neu + sentiment3.neu) / 3,
+    neg: (sentiment1.neg + sentiment2.neg + sentiment3.neg) / 3,
+  };
+  return combinedSentiment;
 };
 
 const ContentAnalyzerPage = () => {
@@ -98,7 +133,7 @@ const ContentAnalyzerPage = () => {
     <div>
       <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
-      <ContentAnalyzerForm onAnalyze={handleAnalyze} loading={loading} />
+      <ContentAnalyzerForm onAnalyze={handleAnalyze} />
       {analysis && (
         <div>
           <OptimizationSuggestions analysis={analysis} />
@@ -106,6 +141,7 @@ const ContentAnalyzerPage = () => {
           <AlternativeFormats analysis={analysis} />
         </div>
       )}
+      {loading && <p>Loading...</p>}
     </div>
   );
 };
