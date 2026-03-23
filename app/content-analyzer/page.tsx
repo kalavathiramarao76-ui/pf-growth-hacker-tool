@@ -11,6 +11,7 @@ import { AlternativeFormats } from '../components/alternative-formats';
 import * as natural from 'natural';
 import { v1 as uuidv1 } from 'uuid';
 import axios from 'axios';
+import { spaCy } from '@spacyjs/spacy';
 
 const advancedContentAnalysis = async (analysis: any) => {
   const advancedAnalysis = {
@@ -73,42 +74,25 @@ const countSyllables = (word: string) => {
 };
 
 const performSentimentAnalysis = async (text: string) => {
-  const response = await axios.post('https://api.nlpcloud.io/v1/sentiment', {
-    text: text,
-    lang: 'en',
-  }, {
-    headers: {
-      'Authorization': 'Bearer YOUR_NLP_CLOUD_API_KEY',
-      'Content-Type': 'application/json',
-    },
-  });
-  return response.data.sentiment;
+  const nlp = await spaCy.load('en_core_web_sm');
+  const doc = nlp(text);
+  const sentiment = doc._.sentiment;
+  return sentiment;
 };
 
 const performEntityRecognition = async (text: string) => {
-  const response = await axios.post('https://api.nlpcloud.io/v1/ner', {
-    text: text,
-    lang: 'en',
-  }, {
-    headers: {
-      'Authorization': 'Bearer YOUR_NLP_CLOUD_API_KEY',
-      'Content-Type': 'application/json',
-    },
-  });
-  return response.data.entities;
+  const nlp = await spaCy.load('en_core_web_sm');
+  const doc = nlp(text);
+  const entities = doc.ents.map((entity) => ({ text: entity.text, label: entity.label_ }));
+  return entities;
 };
 
 const performTopicModeling = async (text: string) => {
   const response = await axios.post('https://api.nlpcloud.io/v1/topic-modeling', {
     text: text,
     lang: 'en',
-  }, {
-    headers: {
-      'Authorization': 'Bearer YOUR_NLP_CLOUD_API_KEY',
-      'Content-Type': 'application/json',
-    },
   });
-  return response.data.topics;
+  return response.data;
 };
 
 const ContentAnalyzerPage = () => {

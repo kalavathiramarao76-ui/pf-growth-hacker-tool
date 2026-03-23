@@ -45,129 +45,68 @@ const ContentCalendarPage = () => {
     {
       name: 'Google Calendar',
       component: <GoogleCalendar />,
-      connect: () => connectToGoogleCalendar(),
-      disconnect: () => disconnectFromGoogleCalendar(),
+      isConnected: isGoogleCalendarConnected,
+      setIsConnected: setIsGoogleCalendarConnected,
+      accessToken: googleCalendarAccessToken,
+      setAccessToken: setGoogleCalendarAccessToken,
     },
     {
       name: 'Outlook Calendar',
       component: <OutlookCalendar />,
-      connect: () => connectToOutlookCalendar(),
-      disconnect: () => disconnectFromOutlookCalendar(),
+      isConnected: isOutlookCalendarConnected,
+      setIsConnected: setIsOutlookCalendarConnected,
+      accessToken: outlookCalendarAccessToken,
+      setAccessToken: setOutlookCalendarAccessToken,
     },
     {
       name: 'Apple Calendar',
       component: <AppleCalendar />,
-      connect: () => connectToAppleCalendar(),
-      disconnect: () => disconnectFromAppleCalendar(),
+      isConnected: isAppleCalendarConnected,
+      setIsConnected: setIsAppleCalendarConnected,
+      accessToken: appleCalendarAccessToken,
+      setAccessToken: setAppleCalendarAccessToken,
     },
   ];
 
-  const connectToGoogleCalendar = async () => {
-    const response = await fetch('/api/connect/google-calendar', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ ssoToken }),
-    });
-    const data = await response.json();
-    if (data.accessToken) {
-      setGoogleCalendarAccessToken(data.accessToken);
-      setIsGoogleCalendarConnected(true);
-    }
-  };
+  const projectManagementIntegrations = [
+    {
+      name: 'Trello',
+      component: <TrelloIntegration />,
+      isConnected: isTrelloConnected,
+      setIsConnected: setIsTrelloConnected,
+    },
+    {
+      name: 'Asana',
+      component: <AsanaIntegration />,
+      isConnected: isAsanaConnected,
+      setIsConnected: setIsAsanaConnected,
+    },
+    {
+      name: 'Notion',
+      component: <NotionIntegration />,
+      isConnected: isNotionConnected,
+      setIsConnected: setIsNotionConnected,
+    },
+  ];
 
-  const disconnectFromGoogleCalendar = async () => {
-    const response = await fetch('/api/disconnect/google-calendar', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ ssoToken }),
-    });
-    const data = await response.json();
-    if (data.success) {
-      setGoogleCalendarAccessToken(null);
-      setIsGoogleCalendarConnected(false);
-    }
-  };
-
-  const connectToOutlookCalendar = async () => {
-    const response = await fetch('/api/connect/outlook-calendar', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ ssoToken }),
-    });
-    const data = await response.json();
-    if (data.accessToken) {
-      setOutlookCalendarAccessToken(data.accessToken);
-      setIsOutlookCalendarConnected(true);
-    }
-  };
-
-  const disconnectFromOutlookCalendar = async () => {
-    const response = await fetch('/api/disconnect/outlook-calendar', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ ssoToken }),
-    });
-    const data = await response.json();
-    if (data.success) {
-      setOutlookCalendarAccessToken(null);
-      setIsOutlookCalendarConnected(false);
-    }
-  };
-
-  const connectToAppleCalendar = async () => {
-    const response = await fetch('/api/connect/apple-calendar', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ ssoToken }),
-    });
-    const data = await response.json();
-    if (data.accessToken) {
-      setAppleCalendarAccessToken(data.accessToken);
-      setIsAppleCalendarConnected(true);
-    }
-  };
-
-  const disconnectFromAppleCalendar = async () => {
-    const response = await fetch('/api/disconnect/apple-calendar', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ ssoToken }),
-    });
-    const data = await response.json();
-    if (data.success) {
-      setAppleCalendarAccessToken(null);
-      setIsAppleCalendarConnected(false);
-    }
-  };
-
-  const handleSSOLogin = async () => {
-    const response = await fetch('/api/sso/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    const data = await response.json();
-    if (data.ssoToken) {
-      setSsoToken(data.ssoToken);
-    }
-  };
-
-  useEffect(() => {
-    handleSSOLogin();
-  }, []);
+  const communicationIntegrations = [
+    {
+      name: 'Slack',
+      component: <SlackIntegration />,
+      isConnected: isSlackConnected,
+      setIsConnected: setIsSlackConnected,
+      accessToken: slackAccessToken,
+      setAccessToken: setSlackAccessToken,
+    },
+    {
+      name: 'Microsoft Teams',
+      component: <MicrosoftTeamsIntegration />,
+      isConnected: isMicrosoftTeamsConnected,
+      setIsConnected: setIsMicrosoftTeamsConnected,
+      accessToken: microsoftTeamsAccessToken,
+      setAccessToken: setMicrosoftTeamsAccessToken,
+    },
+  ];
 
   return (
     <Layout>
@@ -176,25 +115,45 @@ const ContentCalendarPage = () => {
         <Calendar
           events={events}
           selectedDate={selectedDate}
-          onDateChange={(date) => setSelectedDate(date)}
-          onEventDrop={(event) => setDraggedEvent(event)}
-          onEventHover={(event) => setHoveredEvent(event)}
+          setSelectedDate={setSelectedDate}
+          draggedEvent={draggedEvent}
+          setDraggedEvent={setDraggedEvent}
+          hoveredEvent={hoveredEvent}
+          setHoveredEvent={setHoveredEvent}
         />
-        {calendarIntegrations.map((integration) => (
-          <div key={integration.name}>
-            {integration.component}
-            {isGoogleCalendarConnected || isOutlookCalendarConnected || isAppleCalendarConnected ? (
-              <button onClick={integration.disconnect}>Disconnect</button>
-            ) : (
-              <button onClick={integration.connect}>Connect</button>
-            )}
-          </div>
-        ))}
-        <TrelloIntegration />
-        <AsanaIntegration />
-        <NotionIntegration />
-        <SlackIntegration />
-        <MicrosoftTeamsIntegration />
+        <div>
+          <h2>Calendar Integrations</h2>
+          {calendarIntegrations.map((integration) => (
+            <div key={integration.name}>
+              {integration.component}
+              <button onClick={() => integration.setIsConnected(!integration.isConnected)}>
+                {integration.isConnected ? 'Disconnect' : 'Connect'}
+              </button>
+            </div>
+          ))}
+        </div>
+        <div>
+          <h2>Project Management Integrations</h2>
+          {projectManagementIntegrations.map((integration) => (
+            <div key={integration.name}>
+              {integration.component}
+              <button onClick={() => integration.setIsConnected(!integration.isConnected)}>
+                {integration.isConnected ? 'Disconnect' : 'Connect'}
+              </button>
+            </div>
+          ))}
+        </div>
+        <div>
+          <h2>Communication Integrations</h2>
+          {communicationIntegrations.map((integration) => (
+            <div key={integration.name}>
+              {integration.component}
+              <button onClick={() => integration.setIsConnected(!integration.isConnected)}>
+                {integration.isConnected ? 'Disconnect' : 'Connect'}
+              </button>
+            </div>
+          ))}
+        </div>
       </DndProvider>
     </Layout>
   );
