@@ -13,6 +13,7 @@ import { v1 as uuidv1 } from 'uuid';
 import axios from 'axios';
 import { spaCy } from '@spacyjs/spacy';
 import * as tf from '@tensorflow/tfjs';
+import { NlpManager } from 'node-nlp';
 
 const advancedContentAnalysis = async (analysis: any) => {
   const advancedAnalysis = {
@@ -74,30 +75,51 @@ const countSyllables = (word: string) => {
   return syllableCount;
 };
 
+const manager = new NlpManager({ languages: ['en'] });
+
 const performSentimentAnalysis = async (text: string) => {
-  const model = await tf.loadLayersModel('https://storage.googleapis.com/tfjs-models/tfjs/sentiment_analysis/model.json');
-  const input = tf.tensor2d([text], [1, 1], 'string');
-  const output = model.predict(input);
-  const sentiment = await output.data();
-  return sentiment;
+  await manager.addDocument('en', text, 'positive');
+  await manager.addDocument('en', text, 'negative');
+  await manager.train();
+  const response = await manager.process('en', text);
+  return response.intent;
 };
 
 const performEntityRecognition = async (text: string) => {
-  const nlp = await spaCy.load('en_core_web_sm');
-  const doc = nlp(text);
-  const entities = doc.ents.map((ent) => ({ text: ent.text, label: ent.label_ }));
+  const entities = [];
+  const doc = await spaCy.load('en_core_web_sm');
+  const processedText = doc(text);
+  processedText.ents.forEach((entity) => {
+    entities.push({
+      text: entity.text,
+      type: entity.label_,
+    });
+  });
   return entities;
 };
 
 const performTopicModeling = async (text: string) => {
-  const nlp = await spaCy.load('en_core_web_sm');
-  const doc = nlp(text);
-  const topics = doc.vector;
+  const topics = [];
+  const words = text.split(' ');
+  const wordCounts = {};
+  words.forEach((word) => {
+    if (wordCounts[word]) {
+      wordCounts[word]++;
+    } else {
+      wordCounts[word] = 1;
+    }
+  });
+  Object.keys(wordCounts).forEach((word) => {
+    topics.push({
+      word,
+      count: wordCounts[word],
+    });
+  });
   return topics;
 };
 
-const Page = () => {
-  const [analysis, setAnalysis] = useState<any>({});
+const ContentAnalyzerPage = () => {
+  const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -113,17 +135,16 @@ const Page = () => {
       <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
       <ContentAnalyzerForm onAnalyze={handleAnalyze} />
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
+      {analysis && (
         <div>
           <OptimizationSuggestions analysis={analysis} />
           <EngagementTracker analysis={analysis} />
           <AlternativeFormats analysis={analysis} />
         </div>
       )}
+      {loading && <div>Loading...</div>}
     </div>
   );
 };
 
-export default Page;
+export default ContentAnalyzerPage;
