@@ -76,47 +76,90 @@ const countSyllables = (word: string) => {
 
 const performSentimentAnalysis = async (text: string) => {
   const model = await tf.loadLayersModel('https://storage.googleapis.com/tfjs-models/tfjs/sentiment_analysis/model.json');
-  const tensor = tf.tensor2d([text.split(' ').map((word) => word.charCodeAt(0))]);
-  const prediction = await model.predict(tensor);
-  const sentiment = prediction.dataSync()[0] > 0.5 ? 'Positive' : 'Negative';
+  const input = tf.tensor2d([text], [1, 1], 'string');
+  const output = model.predict(input);
+  const sentiment = await output.data();
   return sentiment;
 };
 
 const performEntityRecognition = async (text: string) => {
-  const entities = await spaCy.load('en_core_web_sm').then((nlp) => nlp(text));
+  const nlp = await spaCy.load('en_core_web_sm');
+  const doc = nlp(text);
+  const entities = doc.ents.map((ent) => ({ text: ent.text, label: ent.label_ }));
   return entities;
 };
 
 const performTopicModeling = async (text: string) => {
-  const topics = await axios.post('https://api.example.com/topic-modeling', { text });
-  return topics.data;
+  const model = await tf.loadLayersModel('https://storage.googleapis.com/tfjs-models/tfjs/topic_modeling/model.json');
+  const input = tf.tensor2d([text], [1, 1], 'string');
+  const output = model.predict(input);
+  const topics = await output.data();
+  return topics;
+};
+
+const suggestAlternativeFormats = (analysis: any) => {
+  const readabilityScore = analysis.readabilityScore;
+  const fleschKincaidGradeLevel = analysis.fleschKincaidGradeLevel;
+  const gunningFogIndex = analysis.gunningFogIndex;
+  const sentimentAnalysis = analysis.sentimentAnalysis;
+  const entityRecognition = analysis.entityRecognition;
+  const topicModeling = analysis.topicModeling;
+
+  let suggestedFormats = [];
+
+  if (readabilityScore < 60) {
+    suggestedFormats.push('Infographic');
+  }
+
+  if (fleschKincaidGradeLevel > 8) {
+    suggestedFormats.push('Video');
+  }
+
+  if (gunningFogIndex > 10) {
+    suggestedFormats.push('Podcast');
+  }
+
+  if (sentimentAnalysis > 0.5) {
+    suggestedFormats.push('Social Media Post');
+  }
+
+  if (entityRecognition.length > 5) {
+    suggestedFormats.push('Blog Post');
+  }
+
+  if (topicModeling.length > 3) {
+    suggestedFormats.push('E-book');
+  }
+
+  return suggestedFormats;
 };
 
 const Page = () => {
   const [analysis, setAnalysis] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [alternativeFormats, setAlternativeFormats] = useState(null);
   const router = useRouter();
 
   const handleAnalyze = async (text: string) => {
-    setLoading(true);
     const analysis = await advancedContentAnalysis({ text });
     setAnalysis(analysis);
-    setLoading(false);
+    const suggestedFormats = suggestAlternativeFormats(analysis);
+    setAlternativeFormats(suggestedFormats);
   };
 
   return (
     <div>
-      <SEO title="Content Analyzer" />
-      <PageHeader title="Content Analyzer" />
+      <SEO title="AI-Powered Content Optimizer" />
+      <PageHeader title="AI-Powered Content Optimizer" />
       <ContentAnalyzerForm onAnalyze={handleAnalyze} />
       {analysis && (
         <div>
           <OptimizationSuggestions analysis={analysis} />
           <EngagementTracker analysis={analysis} />
-          <AlternativeFormats analysis={analysis} />
+          {alternativeFormats && (
+            <AlternativeFormats formats={alternativeFormats} />
+          )}
         </div>
       )}
-      {loading && <p>Loading...</p>}
     </div>
   );
 };

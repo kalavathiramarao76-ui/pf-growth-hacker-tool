@@ -61,11 +61,11 @@ export default function DashboardPage() {
             <div className="clear-call-to-action">
               <h3>Don't Miss Out! Upgrade Now and:</h3>
               <ul>
-                <li>Maximize your content's potential with AI-powered optimization tools</li>
-                <li>Get priority support and expert guidance to help you succeed</li>
-                <li>Enjoy 20% more engagement and 30% more conversions with our premium features</li>
+                <li>Get 15% off your first year with code PREMIUM15</li>
+                <li>Unlock exclusive features, including AI-powered content optimization and personalized recommendations</li>
+                <li>Receive priority support and expert guidance to help you succeed</li>
               </ul>
-              <button className="upgrade-now-button" onClick={() => router.push('/upgrade-plan')}>Upgrade Now</button>
+              <p className="limited-time-offer">Limited time offer: Upgrade within the next 72 hours to receive your exclusive discount and start achieving your content goals faster!</p>
             </div>
           </div>
         </div>
@@ -82,12 +82,23 @@ export default function DashboardPage() {
           <DragDropContext>
             <Droppable droppableId="widgets">
               {(provided) => (
-                <div ref={provided.innerRef} {...provided.droppableProps}>
+                <div {...provided.droppableProps} ref={provided.innerRef}>
                   {widgets.map((widget, index) => (
                     <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
                       {(provided) => (
-                        <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
-                          <DashboardCard widget={widget} />
+                        <div
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                          ref={provided.innerRef}
+                          className="widget"
+                        >
+                          <DashboardCard
+                            title={widget.title}
+                            icon={widget.icon}
+                            onClick={widget.onClick}
+                            description={widget.description}
+                            callToAction={widget.callToAction}
+                          />
                         </div>
                       )}
                     </Draggable>
