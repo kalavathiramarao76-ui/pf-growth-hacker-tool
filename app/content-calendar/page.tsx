@@ -55,61 +55,44 @@ const ContentCalendarPage = () => {
     setIntegrationTokens((prevTokens) => ({ ...prevTokens, [integration]: null }));
   };
 
+  const integrations = [
+    { name: 'Google Calendar', isConnected: isGoogleCalendarConnected, onConnect: () => handleIntegrationConnect('googleCalendar', 'token') },
+    { name: 'Outlook Calendar', isConnected: isOutlookCalendarConnected, onConnect: () => handleIntegrationConnect('outlookCalendar', 'token') },
+    { name: 'Apple Calendar', isConnected: isAppleCalendarConnected, onConnect: () => handleIntegrationConnect('appleCalendar', 'token') },
+    { name: 'Trello', isConnected: isTrelloConnected, onConnect: () => handleIntegrationConnect('trello', 'token') },
+    { name: 'Asana', isConnected: isAsanaConnected, onConnect: () => handleIntegrationConnect('asana', 'token') },
+    { name: 'Notion', isConnected: isNotionConnected, onConnect: () => handleIntegrationConnect('notion', 'token') },
+    { name: 'Slack', isConnected: isSlackConnected, onConnect: () => handleIntegrationConnect('slack', 'token') },
+    { name: 'Microsoft Teams', isConnected: isMicrosoftTeamsConnected, onConnect: () => handleIntegrationConnect('microsoftTeams', 'token') },
+  ];
+
   return (
     <Layout>
       <SEO title="Content Calendar" />
       <DndProvider backend={HTML5Backend}>
-        <Calendar
-          events={events}
-          selectedDate={selectedDate}
-          onDateChange={(date) => setSelectedDate(date)}
-          onEventDragStart={(event) => setDraggedEvent(event)}
-          onEventDragEnd={(event) => setDraggedEvent(null)}
-          onEventHover={(event) => setHoveredEvent(event)}
-          onEventHoverEnd={(event) => setHoveredEvent(null)}
-        >
-          <DroppableCalendar />
-        </Calendar>
-        <GoogleCalendar
-          isConnected={isGoogleCalendarConnected}
-          onConnect={() => handleIntegrationConnect('googleCalendar', 'token')}
-          onDisconnect={() => handleIntegrationDisconnect('googleCalendar')}
-        />
-        <OutlookCalendar
-          isConnected={isOutlookCalendarConnected}
-          onConnect={() => handleIntegrationConnect('outlookCalendar', 'token')}
-          onDisconnect={() => handleIntegrationDisconnect('outlookCalendar')}
-        />
-        <AppleCalendar
-          isConnected={isAppleCalendarConnected}
-          onConnect={() => handleIntegrationConnect('appleCalendar', 'token')}
-          onDisconnect={() => handleIntegrationDisconnect('appleCalendar')}
-        />
-        <TrelloIntegration
-          isConnected={isTrelloConnected}
-          onConnect={() => handleIntegrationConnect('trello', 'token')}
-          onDisconnect={() => handleIntegrationDisconnect('trello')}
-        />
-        <AsanaIntegration
-          isConnected={isAsanaConnected}
-          onConnect={() => handleIntegrationConnect('asana', 'token')}
-          onDisconnect={() => handleIntegrationDisconnect('asana')}
-        />
-        <NotionIntegration
-          isConnected={isNotionConnected}
-          onConnect={() => handleIntegrationConnect('notion', 'token')}
-          onDisconnect={() => handleIntegrationDisconnect('notion')}
-        />
-        <SlackIntegration
-          isConnected={isSlackConnected}
-          onConnect={() => handleIntegrationConnect('slack', 'token')}
-          onDisconnect={() => handleIntegrationDisconnect('slack')}
-        />
-        <MicrosoftTeamsIntegration
-          isConnected={isMicrosoftTeamsConnected}
-          onConnect={() => handleIntegrationConnect('microsoftTeams', 'token')}
-          onDisconnect={() => handleIntegrationDisconnect('microsoftTeams')}
-        />
+        <div>
+          <h1>Content Calendar</h1>
+          <Calendar
+            events={events}
+            selectedDate={selectedDate}
+            onDateChange={(date) => setSelectedDate(date)}
+          />
+          <div>
+            <h2>Integrations</h2>
+            <ul>
+              {integrations.map((integration) => (
+                <li key={integration.name}>
+                  <span>{integration.name}</span>
+                  {integration.isConnected ? (
+                    <button onClick={() => handleIntegrationDisconnect(integration.name)}>Disconnect</button>
+                  ) : (
+                    <button onClick={integration.onConnect}>Connect</button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
       </DndProvider>
     </Layout>
   );

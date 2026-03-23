@@ -14,6 +14,7 @@ import axios from 'axios';
 import { spaCy } from '@spacyjs/spacy';
 import * as tf from '@tensorflow/tfjs';
 import { NlpManager } from 'node-nlp';
+import * as spacy from 'spacy';
 
 const advancedContentAnalysis = async (analysis: any) => {
   const advancedAnalysis = {
@@ -21,8 +22,8 @@ const advancedContentAnalysis = async (analysis: any) => {
     readabilityScore: calculateReadabilityScore(analysis.text),
     fleschKincaidGradeLevel: calculateFleschKincaidGradeLevel(analysis.text),
     gunningFogIndex: calculateGunningFogIndex(analysis.text),
-    sentimentAnalysis: await performSentimentAnalysis(analysis.text),
-    entityRecognition: await performEntityRecognition(analysis.text),
+    sentimentAnalysis: await performSentimentAnalysisWithSpacy(analysis.text),
+    entityRecognition: await performEntityRecognitionWithSpacy(analysis.text),
     topicModeling: await performTopicModeling(analysis.text),
   };
   return advancedAnalysis;
@@ -75,59 +76,35 @@ const countSyllables = (word: string) => {
   return syllableCount;
 };
 
-const manager = new NlpManager({ languages: ['en'] });
-
-const performSentimentAnalysis = async (text: string) => {
-  await manager.addDocument('en', text, 'positive');
-  await manager.addDocument('en', text, 'negative');
-  await manager.train();
-  const response = await manager.process('en', text);
-  return response.intent;
+const performSentimentAnalysisWithSpacy = async (text: string) => {
+  const nlp = await spacy.load('en_core_web_sm');
+  const doc = nlp(text);
+  const sentiment = doc._.sentiment;
+  return sentiment;
 };
 
-const performEntityRecognition = async (text: string) => {
-  const entities = [];
-  const doc = await spaCy.load('en_core_web_sm');
-  const processedText = doc(text);
-  processedText.ents.forEach((entity) => {
-    entities.push({
-      text: entity.text,
-      type: entity.label_,
-    });
-  });
+const performEntityRecognitionWithSpacy = async (text: string) => {
+  const nlp = await spacy.load('en_core_web_sm');
+  const doc = nlp(text);
+  const entities = doc.ents.map((ent) => ({ text: ent.text, label: ent.label_ }));
   return entities;
 };
 
 const performTopicModeling = async (text: string) => {
-  const topics = [];
-  const words = text.split(' ');
-  const wordCounts = {};
-  words.forEach((word) => {
-    if (wordCounts[word]) {
-      wordCounts[word]++;
-    } else {
-      wordCounts[word] = 1;
-    }
-  });
-  Object.keys(wordCounts).forEach((word) => {
-    topics.push({
-      word,
-      count: wordCounts[word],
-    });
-  });
+  const manager = new NlpManager({ languages: ['en'] });
+  const response = await manager.process('en', text);
+  const topics = response.topics;
   return topics;
 };
 
 const ContentAnalyzerPage = () => {
-  const [analysis, setAnalysis] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [analysis, setAnalysis] = useState<any>({});
+  const [text, setText] = useState('');
   const router = useRouter();
 
   const handleAnalyze = async (text: string) => {
-    setLoading(true);
     const analysis = await advancedContentAnalysis({ text });
     setAnalysis(analysis);
-    setLoading(false);
   };
 
   return (
@@ -142,7 +119,6 @@ const ContentAnalyzerPage = () => {
           <AlternativeFormats analysis={analysis} />
         </div>
       )}
-      {loading && <div>Loading...</div>}
     </div>
   );
 };
