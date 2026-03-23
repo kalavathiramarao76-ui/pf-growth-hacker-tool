@@ -50,27 +50,26 @@ export default function DashboardPage() {
             <li>30% more conversions</li>
             <li>Expert guidance and support</li>
           </ul>
-          <button className="upgrade-button" onClick={() => router.push('/upgrade-plan')}>Upgrade Now and Get Started Today!</button>
-          <p className="upgrade-benefits">By upgrading, you'll get access to advanced features, priority support, and expert guidance to help you achieve your content goals.</p>
-          <div className="clear-call-to-action">
-            <h3>Don't Miss Out! Upgrade Now and:</h3>
+          <div className="pricing-and-benefits">
+            <h3>Pricing Plans:</h3>
             <ul>
-              <li>Maximize your content's reach and impact</li>
-              <li>Get personalized support from our expert team</li>
-              <li>Stay ahead of the competition with our latest features and updates</li>
+              <li>Monthly: $9.99</li>
+              <li>Yearly: $99.99 (save 20% compared to monthly)</li>
             </ul>
-            <button className="upgrade-button" onClick={() => router.push('/upgrade-plan')}>Upgrade to Premium Today!</button>
+            <button className="upgrade-button" onClick={() => router.push('/upgrade-plan')}>Upgrade Now and Get Started Today!</button>
+            <p className="upgrade-benefits">By upgrading, you'll get access to advanced features, priority support, and expert guidance to help you achieve your content goals.</p>
+            <div className="clear-call-to-action">
+              <h3>Don't Miss Out! Upgrade Now and:</h3>
+              <ul>
+                <li>Maximize your content's reach and impact</li>
+                <li>Get personalized support from our expert team</li>
+                <li>Stay ahead of the competition with our latest features and updates</li>
+              </ul>
+            </div>
           </div>
         </div>
-      )
+      ),
     },
-  ]);
-
-  const [subscription, setSubscription] = useState(null);
-  const [showTutorial, setShowTutorial] = useState(false);
-  const [tutorialStep, setTutorialStep] = useState(1);
-  const [availableWidgets, setAvailableWidgets] = useState([
-    { id: 6, title: 'New Widget', icon: <AiOutlinePlus size={24} /> }
   ]);
 
   return (
@@ -97,13 +96,7 @@ export default function DashboardPage() {
           </Droppable>
         </DragDropContext>
       </DndProvider>
-      {showTutorial && (
-        <WidgetSettings
-          tutorialStep={tutorialStep}
-          setTutorialStep={setTutorialStep}
-          setShowTutorial={setShowTutorial}
-        />
-      )}
+      <WidgetSettings />
     </div>
   );
 }

@@ -76,9 +76,9 @@ const countSyllables = (word: string) => {
 
 const performSentimentAnalysis = async (text: string) => {
   const model = await tf.loadLayersModel('https://storage.googleapis.com/tfjs-models/tfjs/sentiment_analysis/model.json');
-  const input = tf.tensor2d([text], [1, 1], 'string');
-  const output = model.predict(input);
-  const sentiment = await output.data();
+  const tensor = tf.tensor2d([text], [1, 1], 'string');
+  const prediction = model.predict(tensor);
+  const sentiment = await prediction.data();
   return sentiment;
 };
 
@@ -90,20 +90,29 @@ const performEntityRecognition = async (text: string) => {
 };
 
 const performTopicModeling = async (text: string) => {
-  const nlp = await spaCy.load('en_core_web_sm');
-  const doc = nlp(text);
-  const topics = doc.ents.map((ent) => ent.text);
+  const words = text.split(' ');
+  const wordCounts = {};
+  words.forEach((word) => {
+    if (wordCounts[word]) {
+      wordCounts[word]++;
+    } else {
+      wordCounts[word] = 1;
+    }
+  });
+  const topics = Object.keys(wordCounts).sort((a, b) => wordCounts[b] - wordCounts[a]);
   return topics;
 };
 
-const ContentAnalyzerPage = () => {
-  const [analysis, setAnalysis] = useState({});
-  const [text, setText] = useState('');
+const Page = () => {
+  const [analysis, setAnalysis] = useState(null);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleAnalyze = async (text: string) => {
+    setLoading(true);
     const analysis = await advancedContentAnalysis({ text });
     setAnalysis(analysis);
+    setLoading(false);
   };
 
   return (
@@ -118,8 +127,9 @@ const ContentAnalyzerPage = () => {
           <AlternativeFormats analysis={analysis} />
         </div>
       )}
+      {loading && <p>Loading...</p>}
     </div>
   );
 };
 
-export default ContentAnalyzerPage;
+export default Page;
