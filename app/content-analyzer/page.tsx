@@ -14,6 +14,8 @@ const advancedContentAnalysis = async (analysis: any) => {
   const advancedAnalysis = {
     ...analysis,
     readabilityScore: calculateReadabilityScore(analysis.text),
+    fleschKincaidGradeLevel: calculateFleschKincaidGradeLevel(analysis.text),
+    gunningFogIndex: calculateGunningFogIndex(analysis.text),
     sentimentAnalysis: await performSentimentAnalysis(analysis.text),
     entityRecognition: await performEntityRecognition(analysis.text),
     topicModeling: await performTopicModeling(analysis.text),
@@ -26,6 +28,46 @@ const calculateReadabilityScore = (text: string) => {
   const sentences = text.split('.').filter((sentence) => sentence !== '');
   const readabilityScore = 206.835 - 1.015 * (words.length / sentences.length) - 84.6 * (sentences.length / words.length);
   return readabilityScore;
+};
+
+const calculateFleschKincaidGradeLevel = (text: string) => {
+  const words = text.split(' ');
+  const sentences = text.split('.').filter((sentence) => sentence !== '');
+  const syllables = words.reduce((acc, word) => acc + countSyllables(word), 0);
+  const fleschKincaidGradeLevel = 0.39 * (words.length / sentences.length) + 0.11 * (syllables / words.length) + 0.58;
+  return fleschKincaidGradeLevel;
+};
+
+const calculateGunningFogIndex = (text: string) => {
+  const words = text.split(' ');
+  const sentences = text.split('.').filter((sentence) => sentence !== '');
+  const complexWords = words.filter((word) => countSyllables(word) >= 3);
+  const gunningFogIndex = 0.4 * ((words.length / sentences.length) + (complexWords.length / words.length));
+  return gunningFogIndex;
+};
+
+const countSyllables = (word: string) => {
+  word = word.toLowerCase();
+  const vowels = 'aeiouy';
+  let syllableCount = 0;
+  let lastCharWasVowel = false;
+  for (let i = 0; i < word.length; i++) {
+    if (vowels.includes(word[i])) {
+      if (!lastCharWasVowel) {
+        syllableCount++;
+      }
+      lastCharWasVowel = true;
+    } else {
+      lastCharWasVowel = false;
+    }
+  }
+  if (word.endsWith('e')) {
+    syllableCount--;
+  }
+  if (syllableCount === 0) {
+    syllableCount = 1;
+  }
+  return syllableCount;
 };
 
 const performSentimentAnalysis = async (text: string) => {
@@ -79,66 +121,6 @@ const ContentAnalyzerPage = () => {
   const [socialMediaPost, setSocialMediaPost] = useState(null);
   const [analysisHistory, setAnalysisHistory] = useState([]);
   const [alternativeFormats, setAlternativeFormats] = useState(null);
-  const [realTimeAnalysis, setRealTimeAnalysis] = useState(null);
-  const [user, setUser] = useState(null);
-  const [userEngagementMetrics, setUserEngagementMetrics] = useState(null);
-
-  useEffect(() => {
-    const storedContent = LocalStorage.get('content');
-    const storedAnalysisHistory = LocalStorage.get('analysisHistory');
-    const storedUser = LocalStorage.get('user');
-    if (storedContent) {
-      setContent(storedContent);
-    }
-    if (storedAnalysisHistory) {
-      setAnalysisHistory(storedAnalysisHistory);
-    }
-    if (storedUser) {
-      setUser(storedUser);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (content) {
-      const analyzeContent = async () => {
-        try {
-          const formData = new FormData();
-          formData.append('content', content);
-          formData.append('contentType', contentType);
-          if (image) {
-            formData.append('image', image);
-          }
-          if (video) {
-            formData.append('video', video);
-          }
-          if (audio) {
-            formData.append('audio', audio);
-          }
-          if (pdf) {
-            formData.append('pdf', pdf);
-          }
-          if (podcast) {
-            formData.append('podcast', podcast);
-          }
-          if (socialMediaPost) {
-            formData.append('socialMediaPost', socialMediaPost);
-          }
-          const response = await fetch('/api/analyze', {
-            method: 'POST',
-            body: formData,
-          });
-          const data = await response.json();
-          const advancedAnalysis = await advancedContentAnalysis(data.analysis);
-          setRealTimeAnalysis(advancedAnalysis);
-          setAnalysis(data.analysis);
-          setSuggestions(data.suggestions);
-        } catch (error) {
-          console.error(error);
-        }
-      };
-      analyzeContent();
-    }
-  }, [content, contentType, image, video, audio, pdf, podcast, socialMediaPost]);
 
   return (
     <div>
@@ -147,29 +129,29 @@ const ContentAnalyzerPage = () => {
       <ContentAnalyzerForm
         content={content}
         contentType={contentType}
-        image={image}
-        video={video}
-        audio={audio}
-        pdf={pdf}
-        podcast={podcast}
-        socialMediaPost={socialMediaPost}
-        onChangeContent={(newContent) => setContent(newContent)}
-        onChangeContentType={(newContentType) => setContentType(newContentType)}
-        onChangeImage={(newImage) => setImage(newImage)}
-        onChangeVideo={(newVideo) => setVideo(newVideo)}
-        onChangeAudio={(newAudio) => setAudio(newAudio)}
-        onChangePdf={(newPdf) => setPdf(newPdf)}
-        onChangePodcast={(newPodcast) => setPodcast(newPodcast)}
-        onChangeSocialMediaPost={(newSocialMediaPost) => setSocialMediaPost(newSocialMediaPost)}
+        onContentChange={(newContent) => setContent(newContent)}
+        onContentTypeChange={(newContentType) => setContentType(newContentType)}
+        onAnalyze={(text) => advancedContentAnalysis({ text }).then((analysis) => setAnalysis(analysis))}
       />
       {analysis && (
-        <OptimizationSuggestions suggestions={suggestions} analysis={analysis} />
+        <div>
+          <h2>Analysis Results</h2>
+          <p>Readability Score: {analysis.readabilityScore}</p>
+          <p>Flesch-Kincaid Grade Level: {analysis.fleschKincaidGradeLevel}</p>
+          <p>Gunning-Fog Index: {analysis.gunningFogIndex}</p>
+          <p>Sentiment Analysis: {JSON.stringify(analysis.sentimentAnalysis)}</p>
+          <p>Entity Recognition: {JSON.stringify(analysis.entityRecognition)}</p>
+          <p>Topic Modeling: {JSON.stringify(analysis.topicModeling)}</p>
+        </div>
+      )}
+      {suggestions && (
+        <OptimizationSuggestions suggestions={suggestions} />
       )}
       {engagement && (
         <EngagementTracker engagement={engagement} />
       )}
       {alternativeFormats && (
-        <AlternativeFormats formats={alternativeFormats} />
+        <AlternativeFormats alternativeFormats={alternativeFormats} />
       )}
     </div>
   );

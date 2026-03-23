@@ -9,7 +9,7 @@ import DashboardCard from '../components/DashboardCard';
 import DashboardHeader from '../components/DashboardHeader';
 import WidgetSettings from '../components/WidgetSettings';
 import NavigationMenu from '../components/NavigationMenu';
-import { DndProvider } from 'react-beautiful-dnd';
+import { DndProvider, DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 
 interface Widget {
   id: number;
@@ -61,34 +61,65 @@ export default function DashboardPage() {
     { id: 1, title: 'Create Content', icon: <AiOutlinePlus size={24} />, onClick: () => router.push('/content-analyzer'), frequency: 0 },
     { id: 2, title: 'View Analytics', icon: <IoMdAnalytics size={24} />, onClick: () => router.push('/engagement-tracker'), frequency: 0 },
     { id: 3, title: 'Content Calendar', icon: <FaRegCalendarAlt size={24} />, onClick: () => router.push('/content-calendar'), frequency: 0 },
-    { id: 4, title: 'Settings', icon: <MdSettings size={24} />, onClick: () => router.push('/settings'), frequency: 0 },
   ]);
+
+  const handleDragEnd = (result: any) => {
+    if (!result.destination) return;
+    const { source, destination } = result;
+    const newWidgets = [...selectedWidgets];
+    const [removed] = newWidgets.splice(source.index, 1);
+    newWidgets.splice(destination.index, 0, removed);
+    setSelectedWidgets(newWidgets);
+  };
+
+  useEffect(() => {
+    const storedWidgets = localStorage.getItem('selectedWidgets');
+    if (storedWidgets) {
+      setSelectedWidgets(JSON.parse(storedWidgets));
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('selectedWidgets', JSON.stringify(selectedWidgets));
+  }, [selectedWidgets]);
 
   return (
     <DndProvider>
       <DashboardHeader />
       <NavigationMenu />
-      <div className="container mx-auto p-4 pt-6 md:p-6 lg:p-12 xl:p-24">
-        <div className="flex flex-wrap -mx-4">
-          {widgets.map((widget) => (
-            <DashboardCard key={widget.id} widget={widget} />
-          ))}
-          <div className="w-full md:w-1/2 xl:w-1/3 p-6">
-            <div className="bg-white rounded shadow-md p-4">
-              <h2 className="text-lg font-bold mb-2">Upgrade to Premium</h2>
-              <p className="text-gray-600">Take your content to the next level with our premium plan. Get:</p>
-              <ul className="list-disc list-inside mb-4">
-                <li>20% more engagement</li>
-                <li>30% more conversions</li>
-                <li>Expert guidance and priority support</li>
-              </ul>
-              <button
-                className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded"
-                onClick={() => router.push('/upgrade-plan')}
-              >
-                Upgrade Now
-              </button>
-            </div>
+      <div className="container mx-auto p-4">
+        <h1 className="text-3xl font-bold mb-4">Dashboard</h1>
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <Droppable droppableId="widgets">
+            {(provided) => (
+              <div {...provided.droppableProps} ref={provided.innerRef} className="grid grid-cols-3 gap-4">
+                {selectedWidgets.map((widget, index) => (
+                  <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+                    {(provided) => (
+                      <div
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        ref={provided.innerRef}
+                        className="bg-white rounded shadow p-4"
+                      >
+                        <DashboardCard widget={widget} />
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
+        <div className="mt-4">
+          <h2 className="text-2xl font-bold mb-2">Available Widgets</h2>
+          <div className="grid grid-cols-3 gap-4">
+            {availableWidgets.map((widget) => (
+              <div key={widget.id} className="bg-white rounded shadow p-4">
+                <DashboardCard widget={widget} />
+              </div>
+            ))}
           </div>
         </div>
       </div>
