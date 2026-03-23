@@ -52,6 +52,15 @@ export default function DashboardPage() {
           </ul>
           <button className="upgrade-button" onClick={() => router.push('/upgrade-plan')}>Upgrade Now and Get Started Today!</button>
           <p className="upgrade-benefits">By upgrading, you'll get access to advanced features, priority support, and expert guidance to help you achieve your content goals.</p>
+          <div className="clear-call-to-action">
+            <h3>Don't Miss Out! Upgrade Now and:</h3>
+            <ul>
+              <li>Maximize your content's reach and impact</li>
+              <li>Get personalized support from our expert team</li>
+              <li>Stay ahead of the competition with our latest features and updates</li>
+            </ul>
+            <button className="upgrade-button" onClick={() => router.push('/upgrade-plan')}>Upgrade to Premium Today!</button>
+          </div>
         </div>
       )
     },
@@ -61,53 +70,40 @@ export default function DashboardPage() {
   const [showTutorial, setShowTutorial] = useState(false);
   const [tutorialStep, setTutorialStep] = useState(1);
   const [availableWidgets, setAvailableWidgets] = useState([
-    { id: 6, title: 'New Widget', icon: <AiOutlinePlus size={24} />, onClick: () => console.log('New widget clicked') },
-    { id: 7, title: 'Another Widget', icon: <IoMdAnalytics size={24} />, onClick: () => console.log('Another widget clicked') },
+    { id: 6, title: 'New Widget', icon: <AiOutlinePlus size={24} /> }
   ]);
-  const [selectedWidget, setSelectedWidget] = useState(null);
-  const [widgetLayout, setWidgetLayout] = useState({
-    columns: 4,
-    rows: 2,
-    widgets: widgets,
-  });
 
   return (
-    <div className="dashboard-page">
+    <div>
       <DashboardHeader />
       <NavigationMenu />
-      <div className="dashboard-content">
-        <DndProvider>
-          <DragDropContext>
-            <Droppable droppableId="widgets">
-              {(provided) => (
-                <div {...provided.droppableProps} ref={provided.innerRef}>
-                  {widgetLayout.widgets.map((widget, index) => (
-                    <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
-                      {(provided) => (
-                        <div
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          ref={provided.innerRef}
-                          className="widget"
-                        >
-                          <DashboardCard
-                            title={widget.title}
-                            icon={widget.icon}
-                            onClick={widget.onClick}
-                            description={widget.description}
-                            callToAction={widget.callToAction}
-                          />
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </DragDropContext>
-        </DndProvider>
-      </div>
+      <DndProvider>
+        <DragDropContext>
+          <Droppable droppableId="widgets">
+            {(provided) => (
+              <div ref={provided.innerRef} {...provided.droppableProps}>
+                {widgets.map((widget, index) => (
+                  <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+                    {(provided) => (
+                      <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                        <DashboardCard widget={widget} />
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
+      </DndProvider>
+      {showTutorial && (
+        <WidgetSettings
+          tutorialStep={tutorialStep}
+          setTutorialStep={setTutorialStep}
+          setShowTutorial={setShowTutorial}
+        />
+      )}
     </div>
   );
 }

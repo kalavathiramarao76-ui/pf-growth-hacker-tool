@@ -42,70 +42,20 @@ const ContentCalendarPage = () => {
   const [ssoToken, setSsoToken] = useState<string | null>(null);
 
   const calendarIntegrations = [
-    {
-      name: 'Google Calendar',
-      component: <GoogleCalendar />,
-      isConnected: isGoogleCalendarConnected,
-      setIsConnected: setIsGoogleCalendarConnected,
-      accessToken: googleCalendarAccessToken,
-      setAccessToken: setGoogleCalendarAccessToken,
-    },
-    {
-      name: 'Outlook Calendar',
-      component: <OutlookCalendar />,
-      isConnected: isOutlookCalendarConnected,
-      setIsConnected: setIsOutlookCalendarConnected,
-      accessToken: outlookCalendarAccessToken,
-      setAccessToken: setOutlookCalendarAccessToken,
-    },
-    {
-      name: 'Apple Calendar',
-      component: <AppleCalendar />,
-      isConnected: isAppleCalendarConnected,
-      setIsConnected: setIsAppleCalendarConnected,
-      accessToken: appleCalendarAccessToken,
-      setAccessToken: setAppleCalendarAccessToken,
-    },
+    { name: 'Google Calendar', component: <GoogleCalendar />, isConnected: isGoogleCalendarConnected, accessToken: googleCalendarAccessToken, setAccessToken: setGoogleCalendarAccessToken, setIsConnected: setIsGoogleCalendarConnected },
+    { name: 'Outlook Calendar', component: <OutlookCalendar />, isConnected: isOutlookCalendarConnected, accessToken: outlookCalendarAccessToken, setAccessToken: setOutlookCalendarAccessToken, setIsConnected: setIsOutlookCalendarConnected },
+    { name: 'Apple Calendar', component: <AppleCalendar />, isConnected: isAppleCalendarConnected, accessToken: appleCalendarAccessToken, setAccessToken: setAppleCalendarAccessToken, setIsConnected: setIsAppleCalendarConnected },
   ];
 
   const projectManagementIntegrations = [
-    {
-      name: 'Trello',
-      component: <TrelloIntegration />,
-      isConnected: isTrelloConnected,
-      setIsConnected: setIsTrelloConnected,
-    },
-    {
-      name: 'Asana',
-      component: <AsanaIntegration />,
-      isConnected: isAsanaConnected,
-      setIsConnected: setIsAsanaConnected,
-    },
-    {
-      name: 'Notion',
-      component: <NotionIntegration />,
-      isConnected: isNotionConnected,
-      setIsConnected: setIsNotionConnected,
-    },
+    { name: 'Trello', component: <TrelloIntegration />, isConnected: isTrelloConnected, setConnected: setIsTrelloConnected },
+    { name: 'Asana', component: <AsanaIntegration />, isConnected: isAsanaConnected, setConnected: setIsAsanaConnected },
+    { name: 'Notion', component: <NotionIntegration />, isConnected: isNotionConnected, setConnected: setIsNotionConnected },
   ];
 
   const communicationIntegrations = [
-    {
-      name: 'Slack',
-      component: <SlackIntegration />,
-      isConnected: isSlackConnected,
-      setIsConnected: setIsSlackConnected,
-      accessToken: slackAccessToken,
-      setAccessToken: setSlackAccessToken,
-    },
-    {
-      name: 'Microsoft Teams',
-      component: <MicrosoftTeamsIntegration />,
-      isConnected: isMicrosoftTeamsConnected,
-      setIsConnected: setIsMicrosoftTeamsConnected,
-      accessToken: microsoftTeamsAccessToken,
-      setAccessToken: setMicrosoftTeamsAccessToken,
-    },
+    { name: 'Slack', component: <SlackIntegration />, isConnected: isSlackConnected, accessToken: slackAccessToken, setAccessToken: setSlackAccessToken, setIsConnected: setIsSlackConnected },
+    { name: 'Microsoft Teams', component: <MicrosoftTeamsIntegration />, isConnected: isMicrosoftTeamsConnected, accessToken: microsoftTeamsAccessToken, setAccessToken: setMicrosoftTeamsAccessToken, setIsConnected: setIsMicrosoftTeamsConnected },
   ];
 
   return (
@@ -126,9 +76,11 @@ const ContentCalendarPage = () => {
           {calendarIntegrations.map((integration) => (
             <div key={integration.name}>
               {integration.component}
-              <button onClick={() => integration.setIsConnected(!integration.isConnected)}>
-                {integration.isConnected ? 'Disconnect' : 'Connect'}
-              </button>
+              {integration.isConnected ? (
+                <button onClick={() => integration.setIsConnected(false)}>Disconnect</button>
+              ) : (
+                <button onClick={() => integration.setIsConnected(true)}>Connect</button>
+              )}
             </div>
           ))}
         </div>
@@ -137,9 +89,11 @@ const ContentCalendarPage = () => {
           {projectManagementIntegrations.map((integration) => (
             <div key={integration.name}>
               {integration.component}
-              <button onClick={() => integration.setIsConnected(!integration.isConnected)}>
-                {integration.isConnected ? 'Disconnect' : 'Connect'}
-              </button>
+              {integration.isConnected ? (
+                <button onClick={() => integration.setConnected(false)}>Disconnect</button>
+              ) : (
+                <button onClick={() => integration.setConnected(true)}>Connect</button>
+              )}
             </div>
           ))}
         </div>
@@ -148,9 +102,11 @@ const ContentCalendarPage = () => {
           {communicationIntegrations.map((integration) => (
             <div key={integration.name}>
               {integration.component}
-              <button onClick={() => integration.setIsConnected(!integration.isConnected)}>
-                {integration.isConnected ? 'Disconnect' : 'Connect'}
-              </button>
+              {integration.isConnected ? (
+                <button onClick={() => integration.setIsConnected(false)}>Disconnect</button>
+              ) : (
+                <button onClick={() => integration.setIsConnected(true)}>Connect</button>
+              )}
             </div>
           ))}
         </div>

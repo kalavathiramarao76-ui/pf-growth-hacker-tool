@@ -12,6 +12,7 @@ import * as natural from 'natural';
 import { v1 as uuidv1 } from 'uuid';
 import axios from 'axios';
 import { spaCy } from '@spacyjs/spacy';
+import * as tf from '@tensorflow/tfjs';
 
 const advancedContentAnalysis = async (analysis: any) => {
   const advancedAnalysis = {
@@ -74,37 +75,35 @@ const countSyllables = (word: string) => {
 };
 
 const performSentimentAnalysis = async (text: string) => {
-  const nlp = await spaCy.load('en_core_web_sm');
-  const doc = nlp(text);
-  const sentiment = doc._.sentiment;
+  const model = await tf.loadLayersModel('https://storage.googleapis.com/tfjs-models/tfjs/sentiment_analysis/model.json');
+  const input = tf.tensor2d([text], [1, 1], 'string');
+  const output = model.predict(input);
+  const sentiment = await output.data();
   return sentiment;
 };
 
 const performEntityRecognition = async (text: string) => {
   const nlp = await spaCy.load('en_core_web_sm');
   const doc = nlp(text);
-  const entities = doc.ents.map((entity) => ({ text: entity.text, label: entity.label_ }));
+  const entities = doc.ents.map((ent) => ({ text: ent.text, label: ent.label_ }));
   return entities;
 };
 
 const performTopicModeling = async (text: string) => {
-  const response = await axios.post('https://api.nlpcloud.io/v1/topic-modeling', {
-    text: text,
-    lang: 'en',
-  });
-  return response.data;
+  const nlp = await spaCy.load('en_core_web_sm');
+  const doc = nlp(text);
+  const topics = doc.ents.map((ent) => ent.text);
+  return topics;
 };
 
 const ContentAnalyzerPage = () => {
+  const [analysis, setAnalysis] = useState({});
+  const [text, setText] = useState('');
   const router = useRouter();
-  const [analysis, setAnalysis] = useState(null);
-  const [loading, setLoading] = useState(false);
 
   const handleAnalyze = async (text: string) => {
-    setLoading(true);
     const analysis = await advancedContentAnalysis({ text });
     setAnalysis(analysis);
-    setLoading(false);
   };
 
   return (
@@ -119,7 +118,6 @@ const ContentAnalyzerPage = () => {
           <AlternativeFormats analysis={analysis} />
         </div>
       )}
-      {loading && <p>Loading...</p>}
     </div>
   );
 };
