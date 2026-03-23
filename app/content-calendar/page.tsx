@@ -45,51 +45,34 @@ const ContentCalendarPage = () => {
       name: 'Google Calendar',
       component: <GoogleCalendar />,
       isConnected: isGoogleCalendarConnected,
-      setIsConnected: setIsGoogleCalendarConnected,
-      accessToken: googleCalendarAccessToken,
-      setAccessToken: setGoogleCalendarAccessToken,
-      events: googleCalendarEvents,
-      setEvents: setGoogleCalendarEvents,
+      onConnect: () => {
+        // handle google calendar connection
+      },
+      onDisconnect: () => {
+        // handle google calendar disconnection
+      },
     },
     {
       name: 'Outlook Calendar',
       component: <OutlookCalendar />,
       isConnected: isOutlookCalendarConnected,
-      setIsConnected: setIsOutlookCalendarConnected,
-      accessToken: outlookCalendarAccessToken,
-      setAccessToken: setOutlookCalendarAccessToken,
-      events: outlookCalendarEvents,
-      setEvents: setOutlookCalendarEvents,
+      onConnect: () => {
+        // handle outlook calendar connection
+      },
+      onDisconnect: () => {
+        // handle outlook calendar disconnection
+      },
     },
     {
       name: 'Apple Calendar',
       component: <AppleCalendar />,
       isConnected: isAppleCalendarConnected,
-      setIsConnected: setIsAppleCalendarConnected,
-      accessToken: appleCalendarAccessToken,
-      setAccessToken: setAppleCalendarAccessToken,
-      events: appleCalendarEvents,
-      setEvents: setAppleCalendarEvents,
-    },
-    {
-      name: 'Slack',
-      component: <SlackIntegration />,
-      isConnected: isSlackConnected,
-      setIsConnected: setIsSlackConnected,
-      accessToken: slackAccessToken,
-      setAccessToken: setSlackAccessToken,
-      events: slackEvents,
-      setEvents: setSlackEvents,
-    },
-    {
-      name: 'Microsoft Teams',
-      component: <MicrosoftTeamsIntegration />,
-      isConnected: isMicrosoftTeamsConnected,
-      setIsConnected: setIsMicrosoftTeamsConnected,
-      accessToken: microsoftTeamsAccessToken,
-      setAccessToken: setMicrosoftTeamsAccessToken,
-      events: microsoftTeamsEvents,
-      setEvents: setMicrosoftTeamsEvents,
+      onConnect: () => {
+        // handle apple calendar connection
+      },
+      onDisconnect: () => {
+        // handle apple calendar disconnection
+      },
     },
   ];
 
@@ -98,25 +81,59 @@ const ContentCalendarPage = () => {
       name: 'Trello',
       component: <TrelloIntegration />,
       isConnected: isTrelloConnected,
-      setIsConnected: setIsTrelloConnected,
-      events: trelloEvents,
-      setEvents: setTrelloEvents,
+      onConnect: () => {
+        // handle trello connection
+      },
+      onDisconnect: () => {
+        // handle trello disconnection
+      },
     },
     {
       name: 'Asana',
       component: <AsanaIntegration />,
       isConnected: isAsanaConnected,
-      setIsConnected: setIsAsanaConnected,
-      events: asanaEvents,
-      setEvents: setAsanaEvents,
+      onConnect: () => {
+        // handle asana connection
+      },
+      onDisconnect: () => {
+        // handle asana disconnection
+      },
     },
     {
       name: 'Notion',
       component: <NotionIntegration />,
       isConnected: isNotionConnected,
-      setIsConnected: setIsNotionConnected,
-      events: notionEvents,
-      setEvents: setNotionEvents,
+      onConnect: () => {
+        // handle notion connection
+      },
+      onDisconnect: () => {
+        // handle notion disconnection
+      },
+    },
+  ];
+
+  const communicationIntegrations = [
+    {
+      name: 'Slack',
+      component: <SlackIntegration />,
+      isConnected: isSlackConnected,
+      onConnect: () => {
+        // handle slack connection
+      },
+      onDisconnect: () => {
+        // handle slack disconnection
+      },
+    },
+    {
+      name: 'Microsoft Teams',
+      component: <MicrosoftTeamsIntegration />,
+      isConnected: isMicrosoftTeamsConnected,
+      onConnect: () => {
+        // handle microsoft teams connection
+      },
+      onDisconnect: () => {
+        // handle microsoft teams disconnection
+      },
     },
   ];
 
@@ -124,39 +141,127 @@ const ContentCalendarPage = () => {
     <Layout>
       <SEO title="Content Calendar" />
       <DndProvider backend={HTML5Backend}>
-        <DroppableCalendar
-          events={events}
-          setEvents={setEvents}
-          selectedDate={selectedDate}
-          setSelectedDate={setSelectedDate}
-          draggedEvent={draggedEvent}
-          setDraggedEvent={setDraggedEvent}
-          hoveredEvent={hoveredEvent}
-          setHoveredEvent={setHoveredEvent}
-        />
-        <div>
-          {calendarIntegrations.map((integration) => (
-            <div key={integration.name}>
-              {integration.component}
-              {integration.isConnected ? (
-                <button onClick={() => integration.setIsConnected(false)}>Disconnect</button>
-              ) : (
-                <button onClick={() => integration.setIsConnected(true)}>Connect</button>
-              )}
+        <div className="flex flex-col h-screen">
+          <div className="flex justify-between items-center p-4 border-b border-gray-200">
+            <h1 className="text-2xl font-bold">Content Calendar</h1>
+            <div className="flex items-center space-x-4">
+              <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                Create Event
+              </button>
+              <button className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded">
+                View Settings
+              </button>
             </div>
-          ))}
-        </div>
-        <div>
-          {projectManagementIntegrations.map((integration) => (
-            <div key={integration.name}>
-              {integration.component}
-              {integration.isConnected ? (
-                <button onClick={() => integration.setIsConnected(false)}>Disconnect</button>
-              ) : (
-                <button onClick={() => integration.setIsConnected(true)}>Connect</button>
-              )}
+          </div>
+          <div className="flex flex-1 overflow-y-auto">
+            <div className="w-1/3 p-4 border-r border-gray-200">
+              <h2 className="text-xl font-bold mb-4">Calendar Integrations</h2>
+              <ul>
+                {calendarIntegrations.map((integration) => (
+                  <li key={integration.name} className="mb-4">
+                    <div className="flex items-center space-x-4">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-bold">{integration.name}</h3>
+                        <p className="text-gray-600">
+                          {integration.isConnected ? 'Connected' : 'Not Connected'}
+                        </p>
+                      </div>
+                      <div>
+                        {integration.isConnected ? (
+                          <button
+                            className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                            onClick={integration.onDisconnect}
+                          >
+                            Disconnect
+                          </button>
+                        ) : (
+                          <button
+                            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                            onClick={integration.onConnect}
+                          >
+                            Connect
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
             </div>
-          ))}
+            <div className="w-1/3 p-4 border-r border-gray-200">
+              <h2 className="text-xl font-bold mb-4">Project Management Integrations</h2>
+              <ul>
+                {projectManagementIntegrations.map((integration) => (
+                  <li key={integration.name} className="mb-4">
+                    <div className="flex items-center space-x-4">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-bold">{integration.name}</h3>
+                        <p className="text-gray-600">
+                          {integration.isConnected ? 'Connected' : 'Not Connected'}
+                        </p>
+                      </div>
+                      <div>
+                        {integration.isConnected ? (
+                          <button
+                            className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                            onClick={integration.onDisconnect}
+                          >
+                            Disconnect
+                          </button>
+                        ) : (
+                          <button
+                            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                            onClick={integration.onConnect}
+                          >
+                            Connect
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="w-1/3 p-4">
+              <h2 className="text-xl font-bold mb-4">Communication Integrations</h2>
+              <ul>
+                {communicationIntegrations.map((integration) => (
+                  <li key={integration.name} className="mb-4">
+                    <div className="flex items-center space-x-4">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-bold">{integration.name}</h3>
+                        <p className="text-gray-600">
+                          {integration.isConnected ? 'Connected' : 'Not Connected'}
+                        </p>
+                      </div>
+                      <div>
+                        {integration.isConnected ? (
+                          <button
+                            className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                            onClick={integration.onDisconnect}
+                          >
+                            Disconnect
+                          </button>
+                        ) : (
+                          <button
+                            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                            onClick={integration.onConnect}
+                          >
+                            Connect
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          <div className="flex justify-center items-center p-4 border-t border-gray-200">
+            <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+              Save Changes
+            </button>
+          </div>
         </div>
       </DndProvider>
     </Layout>

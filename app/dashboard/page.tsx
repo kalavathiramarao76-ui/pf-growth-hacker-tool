@@ -41,10 +41,15 @@ export default function DashboardPage() {
       onClick: () => router.push('/upgrade-plan'), 
       description: 'Unlock advanced features, priority support, and more with our premium plan. Get 20% more engagement, 30% more conversions, and expert guidance to take your content to the next level.',
       callToAction: (
-        <div>
-          <h3>Upgrade to Premium Today!</h3>
-          <p>Get access to exclusive features, priority support, and expert guidance to take your content to the next level.</p>
-          <button onClick={() => router.push('/upgrade-plan')}>Upgrade Now</button>
+        <div className="premium-upgrade-call-to-action">
+          <h2>Unlock Your Content's Full Potential</h2>
+          <p>Upgrade to our premium plan and get access to exclusive features, priority support, and expert guidance to take your content to the next level.</p>
+          <ul>
+            <li>20% more engagement</li>
+            <li>30% more conversions</li>
+            <li>Expert guidance and support</li>
+          </ul>
+          <button className="upgrade-button" onClick={() => router.push('/upgrade-plan')}>Upgrade Now</button>
         </div>
       )
     },
@@ -66,51 +71,17 @@ export default function DashboardPage() {
   const [personalizedRecommendations, setPersonalizedRecommendations] = useState([]);
   const [customizableWidgets, setCustomizableWidgets] = useState([]);
 
-  const categorizedWidgets = {
-    'Content Creation': [
-      { id: 1, title: 'Create Content', icon: <AiOutlinePlus size={24} />, onClick: () => router.push('/content-analyzer') },
-    ],
-    'Analytics and Insights': [
-      { id: 2, title: 'View Analytics', icon: <IoMdAnalytics size={24} />, onClick: () => router.push('/engagement-tracker') },
-    ],
-    'Content Planning': [
-      { id: 3, title: 'Content Calendar', icon: <FaRegCalendarAlt size={24} />, onClick: () => router.push('/content-calendar') },
-    ],
-    'Settings and Upgrades': [
-      { id: 4, title: 'Settings', icon: <MdSettings size={24} />, onClick: () => router.push('/settings') },
-      { 
-        id: 5, 
-        title: 'Upgrade to Premium', 
-        icon: <MdSettings size={24} />, 
-        onClick: () => router.push('/upgrade-plan'), 
-        description: 'Unlock advanced features, priority support, and more with our premium plan. Get 20% more engagement, 30% more conversions, and expert guidance to take your content to the next level.',
-        callToAction: (
-          <div>
-            <h3>Upgrade to Premium Today!</h3>
-            <p>Get access to exclusive features, priority support, and expert guidance to take your content to the next level.</p>
-            <button onClick={() => router.push('/upgrade-plan')}>Upgrade Now</button>
-          </div>
-        )
-      },
-    ],
-  };
-
   return (
-    <div className="dashboard-container">
+    <div>
       <DashboardHeader />
       <NavigationMenu />
-      <div className="dashboard-content">
-        {Object.keys(categorizedWidgets).map((category, index) => (
-          <div key={index} className="widget-category">
-            <h2>{category}</h2>
-            <div className="widget-grid">
-              {categorizedWidgets[category].map((widget, widgetIndex) => (
-                <DashboardCard key={widgetIndex} widget={widget} />
-              ))}
-            </div>
-          </div>
+      <div className="dashboard-container">
+        {widgets.map((widget) => (
+          <DashboardCard key={widget.id} widget={widget} />
         ))}
+        {widgets.find((widget) => widget.id === 5)?.callToAction}
       </div>
+      <WidgetSettings />
     </div>
   );
 }
