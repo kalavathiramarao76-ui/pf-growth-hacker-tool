@@ -10,6 +10,7 @@ import { Tooltip } from '../components/Tooltip';
 import Image from 'next/image';
 import { TrelloIntegration, AsanaIntegration, NotionIntegration } from '../components/ProjectManagementIntegrations';
 import { DraggableEvent, DroppableCalendar } from '../components/DraggableEvent';
+import { SlackIntegration, MicrosoftTeamsIntegration } from '../components/CommunicationIntegrations';
 
 const ContentCalendarPage = () => {
   const pathname = usePathname();
@@ -23,15 +24,21 @@ const ContentCalendarPage = () => {
   const [trelloEvents, setTrelloEvents] = useState<CalendarEvent[]>([]);
   const [asanaEvents, setAsanaEvents] = useState<CalendarEvent[]>([]);
   const [notionEvents, setNotionEvents] = useState<CalendarEvent[]>([]);
+  const [slackEvents, setSlackEvents] = useState<CalendarEvent[]>([]);
+  const [microsoftTeamsEvents, setMicrosoftTeamsEvents] = useState<CalendarEvent[]>([]);
   const [isGoogleCalendarConnected, setIsGoogleCalendarConnected] = useState(false);
   const [isOutlookCalendarConnected, setIsOutlookCalendarConnected] = useState(false);
   const [isAppleCalendarConnected, setIsAppleCalendarConnected] = useState(false);
   const [isTrelloConnected, setIsTrelloConnected] = useState(false);
   const [isAsanaConnected, setIsAsanaConnected] = useState(false);
   const [isNotionConnected, setIsNotionConnected] = useState(false);
+  const [isSlackConnected, setIsSlackConnected] = useState(false);
+  const [isMicrosoftTeamsConnected, setIsMicrosoftTeamsConnected] = useState(false);
   const [googleCalendarAccessToken, setGoogleCalendarAccessToken] = useState<string | null>(null);
   const [outlookCalendarAccessToken, setOutlookCalendarAccessToken] = useState<string | null>(null);
   const [appleCalendarAccessToken, setAppleCalendarAccessToken] = useState<string | null>(null);
+  const [slackAccessToken, setSlackAccessToken] = useState<string | null>(null);
+  const [microsoftTeamsAccessToken, setMicrosoftTeamsAccessToken] = useState<string | null>(null);
 
   const calendarIntegrations = [
     {
@@ -63,6 +70,26 @@ const ContentCalendarPage = () => {
       setAccessToken: setAppleCalendarAccessToken,
       events: appleCalendarEvents,
       setEvents: setAppleCalendarEvents,
+    },
+    {
+      name: 'Slack',
+      component: <SlackIntegration />,
+      isConnected: isSlackConnected,
+      setIsConnected: setIsSlackConnected,
+      accessToken: slackAccessToken,
+      setAccessToken: setSlackAccessToken,
+      events: slackEvents,
+      setEvents: setSlackEvents,
+    },
+    {
+      name: 'Microsoft Teams',
+      component: <MicrosoftTeamsIntegration />,
+      isConnected: isMicrosoftTeamsConnected,
+      setIsConnected: setIsMicrosoftTeamsConnected,
+      accessToken: microsoftTeamsAccessToken,
+      setAccessToken: setMicrosoftTeamsAccessToken,
+      events: microsoftTeamsEvents,
+      setEvents: setMicrosoftTeamsEvents,
     },
   ];
 
@@ -97,8 +124,9 @@ const ContentCalendarPage = () => {
     <Layout>
       <SEO title="Content Calendar" />
       <DndProvider backend={HTML5Backend}>
-        <Calendar
+        <DroppableCalendar
           events={events}
+          setEvents={setEvents}
           selectedDate={selectedDate}
           setSelectedDate={setSelectedDate}
           draggedEvent={draggedEvent}
@@ -107,30 +135,26 @@ const ContentCalendarPage = () => {
           setHoveredEvent={setHoveredEvent}
         />
         <div>
-          <h2>Calendar Integrations</h2>
           {calendarIntegrations.map((integration) => (
             <div key={integration.name}>
               {integration.component}
-              <Tooltip>
-                {integration.isConnected ? 'Connected' : 'Not Connected'}
-              </Tooltip>
-              <button onClick={() => integration.setIsConnected(!integration.isConnected)}>
-                {integration.isConnected ? 'Disconnect' : 'Connect'}
-              </button>
+              {integration.isConnected ? (
+                <button onClick={() => integration.setIsConnected(false)}>Disconnect</button>
+              ) : (
+                <button onClick={() => integration.setIsConnected(true)}>Connect</button>
+              )}
             </div>
           ))}
         </div>
         <div>
-          <h2>Project Management Integrations</h2>
           {projectManagementIntegrations.map((integration) => (
             <div key={integration.name}>
               {integration.component}
-              <Tooltip>
-                {integration.isConnected ? 'Connected' : 'Not Connected'}
-              </Tooltip>
-              <button onClick={() => integration.setIsConnected(!integration.isConnected)}>
-                {integration.isConnected ? 'Disconnect' : 'Connect'}
-              </button>
+              {integration.isConnected ? (
+                <button onClick={() => integration.setIsConnected(false)}>Disconnect</button>
+              ) : (
+                <button onClick={() => integration.setIsConnected(true)}>Connect</button>
+              )}
             </div>
           ))}
         </div>

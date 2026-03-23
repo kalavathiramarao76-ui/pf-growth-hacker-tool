@@ -79,69 +79,118 @@ const performSentimentAnalysis = async (text: string) => {
     body: JSON.stringify({ text }),
   });
   const sentimentAnalysis = await response.json();
-  const vaderSentiment = await vaderSentimentAnalysis(text);
-  const textBlobSentiment = await textBlobSentimentAnalysis(text);
-  const combinedSentiment = combineSentiments(sentimentAnalysis, vaderSentiment, textBlobSentiment);
-  return combinedSentiment;
+  return sentimentAnalysis;
 };
 
-const vaderSentimentAnalysis = async (text: string) => {
-  const response = await fetch('/api/vader-sentiment-analysis', {
+const performEntityRecognition = async (text: string) => {
+  const response = await fetch('/api/entity-recognition', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ text }),
   });
-  return await response.json();
+  const entityRecognition = await response.json();
+  return entityRecognition;
 };
 
-const textBlobSentimentAnalysis = async (text: string) => {
-  const response = await fetch('/api/textblob-sentiment-analysis', {
+const performTopicModeling = async (text: string) => {
+  const response = await fetch('/api/topic-modeling', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ text }),
   });
-  return await response.json();
-};
-
-const combineSentiments = (sentiment1: any, sentiment2: any, sentiment3: any) => {
-  const combinedSentiment = {
-    compound: (sentiment1.compound + sentiment2.compound + sentiment3.compound) / 3,
-    pos: (sentiment1.pos + sentiment2.pos + sentiment3.pos) / 3,
-    neu: (sentiment1.neu + sentiment2.neu + sentiment3.neu) / 3,
-    neg: (sentiment1.neg + sentiment2.neg + sentiment3.neg) / 3,
-  };
-  return combinedSentiment;
+  const topicModeling = await response.json();
+  return topicModeling;
 };
 
 const ContentAnalyzerPage = () => {
+  const [analysisResults, setAnalysisResults] = useState([]);
+  const [savedResults, setSavedResults] = useState(() => LocalStorage.get('savedResults', []));
+  const [currentAnalysis, setCurrentAnalysis] = useState(null);
   const router = useRouter();
-  const [analysis, setAnalysis] = useState(null);
-  const [loading, setLoading] = useState(false);
 
-  const handleAnalyze = async (text: string) => {
-    setLoading(true);
+  const handleAnalysis = async (text: string) => {
     const analysis = await advancedContentAnalysis({ text });
-    setAnalysis(analysis);
-    setLoading(false);
+    setCurrentAnalysis(analysis);
+  };
+
+  const handleSaveResult = () => {
+    if (currentAnalysis) {
+      const newSavedResults = [...savedResults, currentAnalysis];
+      LocalStorage.set('savedResults', newSavedResults);
+      setSavedResults(newSavedResults);
+    }
+  };
+
+  const handleCompareResults = () => {
+    if (savedResults.length > 1) {
+      const comparisonResults = savedResults.map((result) => ({
+        readabilityScore: result.readabilityScore,
+        fleschKincaidGradeLevel: result.fleschKincaidGradeLevel,
+        gunningFogIndex: result.gunningFogIndex,
+        sentimentAnalysis: result.sentimentAnalysis,
+      }));
+      setAnalysisResults(comparisonResults);
+    }
   };
 
   return (
     <div>
-      <SEO title="Content Analyzer" />
-      <PageHeader title="Content Analyzer" />
-      <ContentAnalyzerForm onAnalyze={handleAnalyze} />
-      {analysis && (
+      <SEO title="AI-Powered Content Optimizer" />
+      <PageHeader title="AI-Powered Content Optimizer" />
+      <ContentAnalyzerForm onAnalyze={handleAnalysis} />
+      {currentAnalysis && (
         <div>
-          <OptimizationSuggestions analysis={analysis} />
-          <EngagementTracker analysis={analysis} />
-          <AlternativeFormats analysis={analysis} />
+          <OptimizationSuggestions analysis={currentAnalysis} />
+          <EngagementTracker analysis={currentAnalysis} />
+          <AlternativeFormats analysis={currentAnalysis} />
+          <button onClick={handleSaveResult}>Save Result</button>
         </div>
       )}
-      {loading && <p>Loading...</p>}
+      {savedResults.length > 0 && (
+        <div>
+          <h2>Saved Results</h2>
+          <ul>
+            {savedResults.map((result, index) => (
+              <li key={index}>
+                <p>Readability Score: {result.readabilityScore}</p>
+                <p>Flesch-Kincaid Grade Level: {result.fleschKincaidGradeLevel}</p>
+                <p>Gunning-Fog Index: {result.gunningFogIndex}</p>
+                <p>Sentiment Analysis: {result.sentimentAnalysis}</p>
+              </li>
+            ))}
+          </ul>
+          <button onClick={handleCompareResults}>Compare Results</button>
+        </div>
+      )}
+      {analysisResults.length > 0 && (
+        <div>
+          <h2>Comparison Results</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Readability Score</th>
+                <th>Flesch-Kincaid Grade Level</th>
+                <th>Gunning-Fog Index</th>
+                <th>Sentiment Analysis</th>
+              </tr>
+            </thead>
+            <tbody>
+              {analysisResults.map((result, index) => (
+                <tr key={index}>
+                  <td>{result.readabilityScore}</td>
+                  <td>{result.fleschKincaidGradeLevel}</td>
+                  <td>{result.gunningFogIndex}</td>
+                  <td>{result.sentimentAnalysis}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 };

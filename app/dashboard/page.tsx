@@ -64,42 +64,53 @@ export default function DashboardPage() {
     widgets: []
   });
   const [personalizedRecommendations, setPersonalizedRecommendations] = useState([]);
-  const [customizableWidgets, setCustomizableWidgets] = useState([
-    { id: 1, title: 'Create Content', icon: <AiOutlinePlus size={24} />, onClick: () => router.push('/content-analyzer'), frequency: 0 },
-    { id: 2, title: 'View Analytics', icon: <IoMdAnalytics size={24} />, onClick: () => router.push('/engagement-tracker'), frequency: 0 },
-    { id: 3, title: 'Content Calendar', icon: <FaRegCalendarAlt size={24} />, onClick: () => router.push('/content-calendar'), frequency: 0 },
-  ]);
+  const [customizableWidgets, setCustomizableWidgets] = useState([]);
+
+  const categorizedWidgets = {
+    'Content Creation': [
+      { id: 1, title: 'Create Content', icon: <AiOutlinePlus size={24} />, onClick: () => router.push('/content-analyzer') },
+    ],
+    'Analytics and Insights': [
+      { id: 2, title: 'View Analytics', icon: <IoMdAnalytics size={24} />, onClick: () => router.push('/engagement-tracker') },
+    ],
+    'Content Planning': [
+      { id: 3, title: 'Content Calendar', icon: <FaRegCalendarAlt size={24} />, onClick: () => router.push('/content-calendar') },
+    ],
+    'Settings and Upgrades': [
+      { id: 4, title: 'Settings', icon: <MdSettings size={24} />, onClick: () => router.push('/settings') },
+      { 
+        id: 5, 
+        title: 'Upgrade to Premium', 
+        icon: <MdSettings size={24} />, 
+        onClick: () => router.push('/upgrade-plan'), 
+        description: 'Unlock advanced features, priority support, and more with our premium plan. Get 20% more engagement, 30% more conversions, and expert guidance to take your content to the next level.',
+        callToAction: (
+          <div>
+            <h3>Upgrade to Premium Today!</h3>
+            <p>Get access to exclusive features, priority support, and expert guidance to take your content to the next level.</p>
+            <button onClick={() => router.push('/upgrade-plan')}>Upgrade Now</button>
+          </div>
+        )
+      },
+    ],
+  };
 
   return (
-    <div>
+    <div className="dashboard-container">
       <DashboardHeader />
       <NavigationMenu />
-      <DndProvider>
-        <DragDropContext>
-          <Droppable droppableId="widgets">
-            {(provided) => (
-              <div ref={provided.innerRef} {...provided.droppableProps}>
-                {selectedWidgets.map((widget, index) => (
-                  <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
-                    {(provided) => (
-                      <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
-                        <DashboardCard
-                          title={widget.title}
-                          icon={widget.icon}
-                          onClick={widget.onClick}
-                          description={widget.description}
-                          callToAction={widget.callToAction}
-                        />
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-        </DragDropContext>
-      </DndProvider>
+      <div className="dashboard-content">
+        {Object.keys(categorizedWidgets).map((category, index) => (
+          <div key={index} className="widget-category">
+            <h2>{category}</h2>
+            <div className="widget-grid">
+              {categorizedWidgets[category].map((widget, widgetIndex) => (
+                <DashboardCard key={widgetIndex} widget={widget} />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
