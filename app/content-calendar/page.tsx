@@ -39,230 +39,162 @@ const ContentCalendarPage = () => {
   const [appleCalendarAccessToken, setAppleCalendarAccessToken] = useState<string | null>(null);
   const [slackAccessToken, setSlackAccessToken] = useState<string | null>(null);
   const [microsoftTeamsAccessToken, setMicrosoftTeamsAccessToken] = useState<string | null>(null);
+  const [ssoToken, setSsoToken] = useState<string | null>(null);
 
   const calendarIntegrations = [
     {
       name: 'Google Calendar',
       component: <GoogleCalendar />,
-      isConnected: isGoogleCalendarConnected,
-      onConnect: () => {
-        // handle google calendar connection
-      },
-      onDisconnect: () => {
-        // handle google calendar disconnection
-      },
+      connect: () => connectToGoogleCalendar(),
+      disconnect: () => disconnectFromGoogleCalendar(),
     },
     {
       name: 'Outlook Calendar',
       component: <OutlookCalendar />,
-      isConnected: isOutlookCalendarConnected,
-      onConnect: () => {
-        // handle outlook calendar connection
-      },
-      onDisconnect: () => {
-        // handle outlook calendar disconnection
-      },
+      connect: () => connectToOutlookCalendar(),
+      disconnect: () => disconnectFromOutlookCalendar(),
     },
     {
       name: 'Apple Calendar',
       component: <AppleCalendar />,
-      isConnected: isAppleCalendarConnected,
-      onConnect: () => {
-        // handle apple calendar connection
-      },
-      onDisconnect: () => {
-        // handle apple calendar disconnection
-      },
+      connect: () => connectToAppleCalendar(),
+      disconnect: () => disconnectFromAppleCalendar(),
     },
   ];
 
-  const projectManagementIntegrations = [
-    {
-      name: 'Trello',
-      component: <TrelloIntegration />,
-      isConnected: isTrelloConnected,
-      onConnect: () => {
-        // handle trello connection
+  const connectToGoogleCalendar = async () => {
+    const response = await fetch('/api/connect/google-calendar', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
-      onDisconnect: () => {
-        // handle trello disconnection
-      },
-    },
-    {
-      name: 'Asana',
-      component: <AsanaIntegration />,
-      isConnected: isAsanaConnected,
-      onConnect: () => {
-        // handle asana connection
-      },
-      onDisconnect: () => {
-        // handle asana disconnection
-      },
-    },
-    {
-      name: 'Notion',
-      component: <NotionIntegration />,
-      isConnected: isNotionConnected,
-      onConnect: () => {
-        // handle notion connection
-      },
-      onDisconnect: () => {
-        // handle notion disconnection
-      },
-    },
-  ];
+      body: JSON.stringify({ ssoToken }),
+    });
+    const data = await response.json();
+    if (data.accessToken) {
+      setGoogleCalendarAccessToken(data.accessToken);
+      setIsGoogleCalendarConnected(true);
+    }
+  };
 
-  const communicationIntegrations = [
-    {
-      name: 'Slack',
-      component: <SlackIntegration />,
-      isConnected: isSlackConnected,
-      onConnect: () => {
-        // handle slack connection
+  const disconnectFromGoogleCalendar = async () => {
+    const response = await fetch('/api/disconnect/google-calendar', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
-      onDisconnect: () => {
-        // handle slack disconnection
+      body: JSON.stringify({ ssoToken }),
+    });
+    const data = await response.json();
+    if (data.success) {
+      setGoogleCalendarAccessToken(null);
+      setIsGoogleCalendarConnected(false);
+    }
+  };
+
+  const connectToOutlookCalendar = async () => {
+    const response = await fetch('/api/connect/outlook-calendar', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
-    },
-    {
-      name: 'Microsoft Teams',
-      component: <MicrosoftTeamsIntegration />,
-      isConnected: isMicrosoftTeamsConnected,
-      onConnect: () => {
-        // handle microsoft teams connection
+      body: JSON.stringify({ ssoToken }),
+    });
+    const data = await response.json();
+    if (data.accessToken) {
+      setOutlookCalendarAccessToken(data.accessToken);
+      setIsOutlookCalendarConnected(true);
+    }
+  };
+
+  const disconnectFromOutlookCalendar = async () => {
+    const response = await fetch('/api/disconnect/outlook-calendar', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
-      onDisconnect: () => {
-        // handle microsoft teams disconnection
+      body: JSON.stringify({ ssoToken }),
+    });
+    const data = await response.json();
+    if (data.success) {
+      setOutlookCalendarAccessToken(null);
+      setIsOutlookCalendarConnected(false);
+    }
+  };
+
+  const connectToAppleCalendar = async () => {
+    const response = await fetch('/api/connect/apple-calendar', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
-    },
-  ];
+      body: JSON.stringify({ ssoToken }),
+    });
+    const data = await response.json();
+    if (data.accessToken) {
+      setAppleCalendarAccessToken(data.accessToken);
+      setIsAppleCalendarConnected(true);
+    }
+  };
+
+  const disconnectFromAppleCalendar = async () => {
+    const response = await fetch('/api/disconnect/apple-calendar', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ ssoToken }),
+    });
+    const data = await response.json();
+    if (data.success) {
+      setAppleCalendarAccessToken(null);
+      setIsAppleCalendarConnected(false);
+    }
+  };
+
+  const handleSSOLogin = async () => {
+    const response = await fetch('/api/sso/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    const data = await response.json();
+    if (data.ssoToken) {
+      setSsoToken(data.ssoToken);
+    }
+  };
+
+  useEffect(() => {
+    handleSSOLogin();
+  }, []);
 
   return (
     <Layout>
       <SEO title="Content Calendar" />
       <DndProvider backend={HTML5Backend}>
-        <div className="flex flex-col h-screen">
-          <div className="flex justify-between items-center p-4 border-b border-gray-200">
-            <h1 className="text-2xl font-bold">Content Calendar</h1>
-            <div className="flex items-center space-x-4">
-              <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                Create Event
-              </button>
-              <button className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded">
-                View Settings
-              </button>
-            </div>
+        <Calendar
+          events={events}
+          selectedDate={selectedDate}
+          onDateChange={(date) => setSelectedDate(date)}
+          onEventDrop={(event) => setDraggedEvent(event)}
+          onEventHover={(event) => setHoveredEvent(event)}
+        />
+        {calendarIntegrations.map((integration) => (
+          <div key={integration.name}>
+            {integration.component}
+            {isGoogleCalendarConnected || isOutlookCalendarConnected || isAppleCalendarConnected ? (
+              <button onClick={integration.disconnect}>Disconnect</button>
+            ) : (
+              <button onClick={integration.connect}>Connect</button>
+            )}
           </div>
-          <div className="flex flex-1 overflow-y-auto">
-            <div className="w-1/3 p-4 border-r border-gray-200">
-              <h2 className="text-xl font-bold mb-4">Calendar Integrations</h2>
-              <ul>
-                {calendarIntegrations.map((integration) => (
-                  <li key={integration.name} className="mb-4">
-                    <div className="flex items-center space-x-4">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-bold">{integration.name}</h3>
-                        <p className="text-gray-600">
-                          {integration.isConnected ? 'Connected' : 'Not Connected'}
-                        </p>
-                      </div>
-                      <div>
-                        {integration.isConnected ? (
-                          <button
-                            className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-                            onClick={integration.onDisconnect}
-                          >
-                            Disconnect
-                          </button>
-                        ) : (
-                          <button
-                            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                            onClick={integration.onConnect}
-                          >
-                            Connect
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="w-1/3 p-4 border-r border-gray-200">
-              <h2 className="text-xl font-bold mb-4">Project Management Integrations</h2>
-              <ul>
-                {projectManagementIntegrations.map((integration) => (
-                  <li key={integration.name} className="mb-4">
-                    <div className="flex items-center space-x-4">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-bold">{integration.name}</h3>
-                        <p className="text-gray-600">
-                          {integration.isConnected ? 'Connected' : 'Not Connected'}
-                        </p>
-                      </div>
-                      <div>
-                        {integration.isConnected ? (
-                          <button
-                            className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-                            onClick={integration.onDisconnect}
-                          >
-                            Disconnect
-                          </button>
-                        ) : (
-                          <button
-                            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                            onClick={integration.onConnect}
-                          >
-                            Connect
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="w-1/3 p-4">
-              <h2 className="text-xl font-bold mb-4">Communication Integrations</h2>
-              <ul>
-                {communicationIntegrations.map((integration) => (
-                  <li key={integration.name} className="mb-4">
-                    <div className="flex items-center space-x-4">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-bold">{integration.name}</h3>
-                        <p className="text-gray-600">
-                          {integration.isConnected ? 'Connected' : 'Not Connected'}
-                        </p>
-                      </div>
-                      <div>
-                        {integration.isConnected ? (
-                          <button
-                            className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-                            onClick={integration.onDisconnect}
-                          >
-                            Disconnect
-                          </button>
-                        ) : (
-                          <button
-                            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                            onClick={integration.onConnect}
-                          >
-                            Connect
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-          <div className="flex justify-center items-center p-4 border-t border-gray-200">
-            <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-              Save Changes
-            </button>
-          </div>
-        </div>
+        ))}
+        <TrelloIntegration />
+        <AsanaIntegration />
+        <NotionIntegration />
+        <SlackIntegration />
+        <MicrosoftTeamsIntegration />
       </DndProvider>
     </Layout>
   );

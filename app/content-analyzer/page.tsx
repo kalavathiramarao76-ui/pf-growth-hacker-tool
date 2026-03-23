@@ -1,5 +1,4 @@
-use client;
-
+import client from '../client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { LocalStorage } from '../utils/local-storage';
@@ -10,6 +9,8 @@ import { OptimizationSuggestions } from '../components/optimization-suggestions'
 import { EngagementTracker } from '../components/engagement-tracker';
 import { AlternativeFormats } from '../components/alternative-formats';
 import * as natural from 'natural';
+import { v1 as uuidv1 } from 'uuid';
+import axios from 'axios';
 
 const advancedContentAnalysis = async (analysis: any) => {
   const advancedAnalysis = {
@@ -72,35 +73,42 @@ const countSyllables = (word: string) => {
 };
 
 const performSentimentAnalysis = async (text: string) => {
-  const Analyzer = new natural.SentimentAnalyzer('English', natural.PorterStemmer, 'afinn');
-  const sentimentAnalysis = Analyzer.getSentiment(text);
-  return sentimentAnalysis;
+  const response = await axios.post('https://api.nlpcloud.io/v1/sentiment', {
+    text: text,
+    lang: 'en',
+  }, {
+    headers: {
+      'Authorization': 'Bearer YOUR_NLP_CLOUD_API_KEY',
+      'Content-Type': 'application/json',
+    },
+  });
+  return response.data.sentiment;
 };
 
 const performEntityRecognition = async (text: string) => {
-  const tokenizer = new natural.WordTokenizer();
-  const tokens = tokenizer.tokenize(text);
-  const entities = [];
-  for (const token of tokens) {
-    if (natural.PorterStemmer.stem(token) !== token) {
-      entities.push(token);
-    }
-  }
-  return entities;
+  const response = await axios.post('https://api.nlpcloud.io/v1/ner', {
+    text: text,
+    lang: 'en',
+  }, {
+    headers: {
+      'Authorization': 'Bearer YOUR_NLP_CLOUD_API_KEY',
+      'Content-Type': 'application/json',
+    },
+  });
+  return response.data.entities;
 };
 
 const performTopicModeling = async (text: string) => {
-  const tokenizer = new natural.WordTokenizer();
-  const tokens = tokenizer.tokenize(text);
-  const topics = {};
-  for (const token of tokens) {
-    if (topics[token]) {
-      topics[token]++;
-    } else {
-      topics[token] = 1;
-    }
-  }
-  return topics;
+  const response = await axios.post('https://api.nlpcloud.io/v1/topic-modeling', {
+    text: text,
+    lang: 'en',
+  }, {
+    headers: {
+      'Authorization': 'Bearer YOUR_NLP_CLOUD_API_KEY',
+      'Content-Type': 'application/json',
+    },
+  });
+  return response.data.topics;
 };
 
 const ContentAnalyzerPage = () => {

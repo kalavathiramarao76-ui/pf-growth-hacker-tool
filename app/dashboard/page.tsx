@@ -18,6 +18,7 @@ interface Widget {
   onClick: () => void;
   frequency?: number;
   description?: string;
+  callToAction?: JSX.Element;
 }
 
 interface WidgetLayout {
@@ -62,26 +63,38 @@ export default function DashboardPage() {
     { id: 6, title: 'New Widget', icon: <AiOutlinePlus size={24} />, onClick: () => console.log('New widget clicked') },
     { id: 7, title: 'Another Widget', icon: <IoMdAnalytics size={24} />, onClick: () => console.log('Another widget clicked') },
   ]);
-  const [selectedWidgets, setSelectedWidgets] = useState(widgets);
-  const [widgetLayout, setWidgetLayout] = useState<WidgetLayout>({
-    columns: 3,
-    rows: 2,
-    widgets: []
-  });
-  const [personalizedRecommendations, setPersonalizedRecommendations] = useState([]);
-  const [customizableWidgets, setCustomizableWidgets] = useState([]);
+  const [selectedWidgets, setSelectedWidgets] = useState([]);
 
   return (
     <div>
       <DashboardHeader />
       <NavigationMenu />
-      <div className="dashboard-container">
-        {widgets.map((widget) => (
-          <DashboardCard key={widget.id} widget={widget} />
-        ))}
-        {widgets.find((widget) => widget.id === 5)?.callToAction}
-      </div>
-      <WidgetSettings />
+      <DndProvider>
+        <DragDropContext>
+          <Droppable droppableId="widgets">
+            {(provided) => (
+              <div ref={provided.innerRef} {...provided.droppableProps}>
+                {widgets.map((widget, index) => (
+                  <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+                    {(provided) => (
+                      <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                        <DashboardCard
+                          title={widget.title}
+                          icon={widget.icon}
+                          onClick={widget.onClick}
+                          description={widget.description}
+                          callToAction={widget.callToAction}
+                        />
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
+      </DndProvider>
     </div>
   );
 }
