@@ -43,34 +43,34 @@ export default function DashboardPage() {
       description: 'Unlock advanced features, priority support, and more with our premium plan. Get 20% more engagement, 30% more conversions, and expert guidance to take your content to the next level.',
       callToAction: (
         <div className="premium-upgrade-call-to-action">
-          <h2>Unlock Your Content's Full Potential</h2>
-          <p>Upgrade to our premium plan and get access to exclusive features, priority support, and expert guidance to take your content to the next level.</p>
+          <h1>Unlock Your Content's Full Potential with Our Premium Plan</h1>
+          <p>Take your content to the next level with our premium plan, featuring advanced features, priority support, and expert guidance. Limited time offer: get 15% off your first year!</p>
           <ul>
             <li>20% more engagement</li>
             <li>30% more conversions</li>
             <li>Expert guidance and support</li>
+            <li>Priority access to new features</li>
+            <li>Enhanced security and backups</li>
           </ul>
           <div className="pricing-and-benefits">
-            <h3>Pricing Plans:</h3>
+            <h2>Pricing Plans:</h2>
             <ul>
               <li>Monthly: $9.99</li>
               <li>Yearly: $99.99 (save 20% compared to monthly)</li>
             </ul>
             <div className="limited-time-offer">
-              <h3>Limited Time Offer: Get 15% Off Your First Year!</h3>
+              <h2>Limited Time Offer: Get 15% Off Your First Year!</h2>
               <p>Use code PREMIUM15 at checkout to receive your discount. Offer valid until March 31st, 2024.</p>
+              <button 
+                className="upgrade-button" 
+                onClick={() => {
+                  // Track the conversion rate of users who click on the CTA
+                  router.push('/upgrade-plan');
+                }}
+              >
+                Upgrade Now
+              </button>
             </div>
-            <button 
-              className="upgrade-button" 
-              onClick={() => {
-                // Track the conversion rate of users who click on the CTA
-                trackConversion();
-                router.push('/upgrade-plan');
-              }}
-            >
-              Upgrade Now and Get Started Today!
-            </button>
-            <p className="upgrade-benefits">By upgrading, you'll get access to advanced features, priority support, and expert guidance to take your content to the next level. Don't miss out on this limited time offer!</p>
           </div>
         </div>
       ),
@@ -86,12 +86,22 @@ export default function DashboardPage() {
           <DragDropContext>
             <Droppable droppableId="widgets">
               {(provided) => (
-                <div ref={provided.innerRef} {...provided.droppableProps}>
+                <div {...provided.droppableProps} ref={provided.innerRef}>
                   {widgets.map((widget, index) => (
                     <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
                       {(provided) => (
-                        <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
-                          <DashboardCard widget={widget} />
+                        <div
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                          ref={provided.innerRef}
+                        >
+                          <DashboardCard
+                            title={widget.title}
+                            icon={widget.icon}
+                            onClick={widget.onClick}
+                            description={widget.description}
+                            callToAction={widget.callToAction}
+                          />
                         </div>
                       )}
                     </Draggable>
@@ -105,8 +115,4 @@ export default function DashboardPage() {
       </div>
     </div>
   );
-}
-
-function trackConversion() {
-  // Add your conversion tracking code here
 }

@@ -97,13 +97,15 @@ const performTopicModeling = async (text: string) => {
 };
 
 const Page = () => {
-  const [analysis, setAnalysis] = useState({});
-  const [text, setText] = useState('');
+  const [analysis, setAnalysis] = useState<any>({});
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleAnalyze = async (text: string) => {
+    setLoading(true);
     const analysis = await advancedContentAnalysis({ text });
     setAnalysis(analysis);
+    setLoading(false);
   };
 
   return (
@@ -111,7 +113,9 @@ const Page = () => {
       <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
       <ContentAnalyzerForm onAnalyze={handleAnalyze} />
-      {analysis && (
+      {loading ? (
+        <p>Loading...</p>
+      ) : (
         <div>
           <OptimizationSuggestions analysis={analysis} />
           <EngagementTracker analysis={analysis} />
