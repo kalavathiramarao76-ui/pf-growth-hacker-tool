@@ -56,6 +56,10 @@ export default function DashboardPage() {
               <li>Monthly: $9.99</li>
               <li>Yearly: $99.99 (save 20% compared to monthly)</li>
             </ul>
+            <div className="limited-time-offer">
+              <h3>Limited Time Offer: Get 15% Off Your First Year!</h3>
+              <p>Use code PREMIUM15 at checkout to receive your discount. Offer valid until March 31st, 2024.</p>
+            </div>
             <button 
               className="upgrade-button" 
               onClick={() => {
@@ -66,61 +70,43 @@ export default function DashboardPage() {
             >
               Upgrade Now and Get Started Today!
             </button>
-            <p className="upgrade-benefits">By upgrading, you'll get access to advanced features, priority support, and expert guidance to help you achieve your content goals.</p>
-            <div className="clear-call-to-action">
-              <h3>Don't Miss Out! Upgrade Now and:</h3>
-              <ul>
-                <li>Maximize your content's potential with AI-powered optimization</li>
-                <li>Get expert guidance and support to achieve your content goals</li>
-                <li>Stay ahead of the competition with exclusive features and updates</li>
-              </ul>
-            </div>
+            <p className="upgrade-benefits">By upgrading, you'll get access to advanced features, priority support, and expert guidance to take your content to the next level. Don't miss out on this limited time offer!</p>
           </div>
         </div>
       ),
     },
   ]);
 
-  const trackConversion = () => {
-    // Implement tracking logic here, e.g., using Google Analytics or other analytics tools
-    console.log('Conversion tracked: Upgrade to Premium button clicked');
-  };
-
   return (
-    <div>
+    <div className="dashboard-page">
       <DashboardHeader />
       <NavigationMenu />
-      <DndProvider>
-        <DragDropContext>
-          <Droppable droppableId="widgets">
-            {(provided) => (
-              <div {...provided.droppableProps} ref={provided.innerRef}>
-                {widgets.map((widget, index) => (
-                  <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
-                    {(provided) => (
-                      <div
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        ref={provided.innerRef}
-                      >
-                        <DashboardCard
-                          title={widget.title}
-                          icon={widget.icon}
-                          onClick={widget.onClick}
-                          description={widget.description}
-                          callToAction={widget.callToAction}
-                        />
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-        </DragDropContext>
-      </DndProvider>
-      <WidgetSettings />
+      <div className="dashboard-content">
+        <DndProvider>
+          <DragDropContext>
+            <Droppable droppableId="widgets">
+              {(provided) => (
+                <div ref={provided.innerRef} {...provided.droppableProps}>
+                  {widgets.map((widget, index) => (
+                    <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+                      {(provided) => (
+                        <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                          <DashboardCard widget={widget} />
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
+        </DndProvider>
+      </div>
     </div>
   );
+}
+
+function trackConversion() {
+  // Add your conversion tracking code here
 }
