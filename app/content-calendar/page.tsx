@@ -41,18 +41,44 @@ const ContentCalendarPage = () => {
   const [microsoftTeamsAccessToken, setMicrosoftTeamsAccessToken] = useState<string | null>(null);
   const [ssoToken, setSsoToken] = useState<string | null>(null);
 
-  const handleDragStart = (event: CalendarEvent) => {
-    setDraggedEvent(event);
-  };
+  const calendarIntegrations = [
+    {
+      name: 'Google Calendar',
+      isConnected: isGoogleCalendarConnected,
+      onConnect: () => {
+        // handle Google Calendar connection
+      },
+      onDisconnect: () => {
+        // handle Google Calendar disconnection
+      },
+    },
+    {
+      name: 'Outlook Calendar',
+      isConnected: isOutlookCalendarConnected,
+      onConnect: () => {
+        // handle Outlook Calendar connection
+      },
+      onDisconnect: () => {
+        // handle Outlook Calendar disconnection
+      },
+    },
+    {
+      name: 'Apple Calendar',
+      isConnected: isAppleCalendarConnected,
+      onConnect: () => {
+        // handle Apple Calendar connection
+      },
+      onDisconnect: () => {
+        // handle Apple Calendar disconnection
+      },
+    },
+  ];
 
-  const handleDragEnd = () => {
-    setDraggedEvent(null);
-  };
-
-  const handleDrop = (date: Date) => {
-    if (draggedEvent) {
-      const newEvent = { ...draggedEvent, startDate: date };
-      setEvents((prevEvents) => prevEvents.map((event) => (event.id === draggedEvent.id ? newEvent : event)));
+  const handleConnectCalendar = (calendar: any) => {
+    if (calendar.isConnected) {
+      calendar.onDisconnect();
+    } else {
+      calendar.onConnect();
     }
   };
 
@@ -60,56 +86,39 @@ const ContentCalendarPage = () => {
     <Layout>
       <SEO title="Content Calendar" />
       <DndProvider backend={HTML5Backend}>
-        <DroppableCalendar onDrop={handleDrop}>
+        <div className="calendar-container">
+          <div className="calendar-integrations">
+            {calendarIntegrations.map((calendar) => (
+              <div key={calendar.name} className="calendar-integration">
+                <span>{calendar.name}</span>
+                <button onClick={() => handleConnectCalendar(calendar)}>
+                  {calendar.isConnected ? 'Disconnect' : 'Connect'}
+                </button>
+              </div>
+            ))}
+          </div>
           <Calendar
             events={events}
             selectedDate={selectedDate}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-          >
-            {events.map((event) => (
-              <DraggableEvent key={event.id} event={event} />
-            ))}
-          </Calendar>
-        </DroppableCalendar>
+            onDateChange={(date) => setSelectedDate(date)}
+          />
+          <DroppableCalendar
+            events={events}
+            onDrop={(event) => {
+              // handle event drop
+            }}
+          />
+          <DraggableEvent
+            event={draggedEvent}
+            onDragStart={(event) => {
+              // handle event drag start
+            }}
+            onDragEnd={(event) => {
+              // handle event drag end
+            }}
+          />
+        </div>
       </DndProvider>
-      <GoogleCalendar
-        isConnected={isGoogleCalendarConnected}
-        accessToken={googleCalendarAccessToken}
-        events={googleCalendarEvents}
-      />
-      <OutlookCalendar
-        isConnected={isOutlookCalendarConnected}
-        accessToken={outlookCalendarAccessToken}
-        events={outlookCalendarEvents}
-      />
-      <AppleCalendar
-        isConnected={isAppleCalendarConnected}
-        accessToken={appleCalendarAccessToken}
-        events={appleCalendarEvents}
-      />
-      <TrelloIntegration
-        isConnected={isTrelloConnected}
-        events={trelloEvents}
-      />
-      <AsanaIntegration
-        isConnected={isAsanaConnected}
-        events={asanaEvents}
-      />
-      <NotionIntegration
-        isConnected={isNotionConnected}
-        events={notionEvents}
-      />
-      <SlackIntegration
-        isConnected={isSlackConnected}
-        accessToken={slackAccessToken}
-        events={slackEvents}
-      />
-      <MicrosoftTeamsIntegration
-        isConnected={isMicrosoftTeamsConnected}
-        accessToken={microsoftTeamsAccessToken}
-        events={microsoftTeamsEvents}
-      />
     </Layout>
   );
 };

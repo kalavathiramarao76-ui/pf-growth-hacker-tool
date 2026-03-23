@@ -75,93 +75,53 @@ const countSyllables = (word: string) => {
 };
 
 const performSentimentAnalysis = async (text: string) => {
-  const model = await tf.loadLayersModel('https://storage.googleapis.com/tfjs-models/tfjs/sentiment_analysis/model.json');
-  const input = tf.tensor2d([text], [1, 1], 'string');
-  const output = model.predict(input);
-  const sentiment = await output.data();
+  const nlp = await import('compromise');
+  const doc = nlp(text);
+  const sentiment = doc.sentiment;
   return sentiment;
 };
 
 const performEntityRecognition = async (text: string) => {
-  const nlp = await spaCy.load('en_core_web_sm');
+  const nlp = await import('compromise');
   const doc = nlp(text);
-  const entities = doc.ents.map((ent) => ({ text: ent.text, label: ent.label_ }));
+  const entities = doc.terms().out('array');
   return entities;
 };
 
 const performTopicModeling = async (text: string) => {
-  const model = await tf.loadLayersModel('https://storage.googleapis.com/tfjs-models/tfjs/topic_modeling/model.json');
-  const input = tf.tensor2d([text], [1, 1], 'string');
-  const output = model.predict(input);
-  const topics = await output.data();
+  const nlp = await import('compromise');
+  const doc = nlp(text);
+  const topics = doc.topics().out('array');
   return topics;
 };
 
-const suggestAlternativeFormats = (analysis: any) => {
-  const readabilityScore = analysis.readabilityScore;
-  const fleschKincaidGradeLevel = analysis.fleschKincaidGradeLevel;
-  const gunningFogIndex = analysis.gunningFogIndex;
-  const sentimentAnalysis = analysis.sentimentAnalysis;
-  const entityRecognition = analysis.entityRecognition;
-  const topicModeling = analysis.topicModeling;
-
-  let suggestedFormats = [];
-
-  if (readabilityScore < 60) {
-    suggestedFormats.push('Infographic');
-  }
-
-  if (fleschKincaidGradeLevel > 8) {
-    suggestedFormats.push('Video');
-  }
-
-  if (gunningFogIndex > 10) {
-    suggestedFormats.push('Podcast');
-  }
-
-  if (sentimentAnalysis > 0.5) {
-    suggestedFormats.push('Social Media Post');
-  }
-
-  if (entityRecognition.length > 5) {
-    suggestedFormats.push('Blog Post');
-  }
-
-  if (topicModeling.length > 3) {
-    suggestedFormats.push('E-book');
-  }
-
-  return suggestedFormats;
-};
-
-const Page = () => {
+const ContentAnalyzerPage = () => {
   const [analysis, setAnalysis] = useState(null);
-  const [alternativeFormats, setAlternativeFormats] = useState(null);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleAnalyze = async (text: string) => {
+    setLoading(true);
     const analysis = await advancedContentAnalysis({ text });
     setAnalysis(analysis);
-    const suggestedFormats = suggestAlternativeFormats(analysis);
-    setAlternativeFormats(suggestedFormats);
+    setLoading(false);
   };
 
   return (
     <div>
-      <SEO title="AI-Powered Content Optimizer" />
-      <PageHeader title="AI-Powered Content Optimizer" />
+      <SEO title="Content Analyzer" />
+      <PageHeader title="Content Analyzer" />
       <ContentAnalyzerForm onAnalyze={handleAnalyze} />
       {analysis && (
         <div>
           <OptimizationSuggestions analysis={analysis} />
           <EngagementTracker analysis={analysis} />
-          {alternativeFormats && (
-            <AlternativeFormats formats={alternativeFormats} />
-          )}
+          <AlternativeFormats analysis={analysis} />
         </div>
       )}
+      {loading && <div>Loading...</div>}
     </div>
   );
 };
 
-export default Page;
+export default ContentAnalyzerPage;
