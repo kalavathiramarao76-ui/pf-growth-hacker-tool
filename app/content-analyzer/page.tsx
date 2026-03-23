@@ -71,7 +71,7 @@ const countSyllables = (word: string) => {
 };
 
 const performSentimentAnalysis = async (text: string) => {
-  const response = await fetch('/api/sentiment-analysis', {
+  const response = await fetch('/api/advanced-sentiment-analysis', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -82,76 +82,29 @@ const performSentimentAnalysis = async (text: string) => {
   return sentimentAnalysis;
 };
 
-const performEntityRecognition = async (text: string) => {
-  const response = await fetch('/api/entity-recognition', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ text }),
-  });
-  const entityRecognition = await response.json();
-  return entityRecognition;
-};
-
-const performTopicModeling = async (text: string) => {
-  const response = await fetch('/api/topic-modeling', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ text }),
-  });
-  const topicModeling = await response.json();
-  return topicModeling;
-};
-
 const ContentAnalyzerPage = () => {
   const router = useRouter();
-  const [content, setContent] = useState('');
-  const [contentType, setContentType] = useState('text');
   const [analysis, setAnalysis] = useState(null);
-  const [suggestions, setSuggestions] = useState(null);
-  const [engagement, setEngagement] = useState(null);
-  const [image, setImage] = useState(null);
-  const [video, setVideo] = useState(null);
-  const [audio, setAudio] = useState(null);
-  const [pdf, setPdf] = useState(null);
-  const [podcast, setPodcast] = useState(null);
-  const [socialMediaPost, setSocialMediaPost] = useState(null);
-  const [analysisHistory, setAnalysisHistory] = useState([]);
-  const [alternativeFormats, setAlternativeFormats] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleAnalyze = async (text: string) => {
+    setLoading(true);
+    const analysis = await advancedContentAnalysis({ text });
+    setAnalysis(analysis);
+    setLoading(false);
+  };
 
   return (
     <div>
       <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
-      <ContentAnalyzerForm
-        content={content}
-        contentType={contentType}
-        onContentChange={(newContent) => setContent(newContent)}
-        onContentTypeChange={(newContentType) => setContentType(newContentType)}
-        onAnalyze={(text) => advancedContentAnalysis({ text }).then((analysis) => setAnalysis(analysis))}
-      />
+      <ContentAnalyzerForm onAnalyze={handleAnalyze} loading={loading} />
       {analysis && (
         <div>
-          <h2>Analysis Results</h2>
-          <p>Readability Score: {analysis.readabilityScore}</p>
-          <p>Flesch-Kincaid Grade Level: {analysis.fleschKincaidGradeLevel}</p>
-          <p>Gunning-Fog Index: {analysis.gunningFogIndex}</p>
-          <p>Sentiment Analysis: {JSON.stringify(analysis.sentimentAnalysis)}</p>
-          <p>Entity Recognition: {JSON.stringify(analysis.entityRecognition)}</p>
-          <p>Topic Modeling: {JSON.stringify(analysis.topicModeling)}</p>
+          <OptimizationSuggestions analysis={analysis} />
+          <EngagementTracker analysis={analysis} />
+          <AlternativeFormats analysis={analysis} />
         </div>
-      )}
-      {suggestions && (
-        <OptimizationSuggestions suggestions={suggestions} />
-      )}
-      {engagement && (
-        <EngagementTracker engagement={engagement} />
-      )}
-      {alternativeFormats && (
-        <AlternativeFormats alternativeFormats={alternativeFormats} />
       )}
     </div>
   );

@@ -61,68 +61,73 @@ export default function DashboardPage() {
     { id: 1, title: 'Create Content', icon: <AiOutlinePlus size={24} />, onClick: () => router.push('/content-analyzer'), frequency: 0 },
     { id: 2, title: 'View Analytics', icon: <IoMdAnalytics size={24} />, onClick: () => router.push('/engagement-tracker'), frequency: 0 },
     { id: 3, title: 'Content Calendar', icon: <FaRegCalendarAlt size={24} />, onClick: () => router.push('/content-calendar'), frequency: 0 },
+    { id: 4, title: 'Settings', icon: <MdSettings size={24} />, onClick: () => router.push('/settings'), frequency: 0 },
   ]);
 
-  const handleDragEnd = (result: any) => {
-    if (!result.destination) return;
-    const { source, destination } = result;
-    const newWidgets = [...selectedWidgets];
-    const [removed] = newWidgets.splice(source.index, 1);
-    newWidgets.splice(destination.index, 0, removed);
+  const handleWidgetAdd = (widget: Widget) => {
+    const newWidgets = [...selectedWidgets, widget];
     setSelectedWidgets(newWidgets);
   };
 
-  useEffect(() => {
-    const storedWidgets = localStorage.getItem('selectedWidgets');
-    if (storedWidgets) {
-      setSelectedWidgets(JSON.parse(storedWidgets));
-    }
-  }, []);
+  const handleWidgetRemove = (widgetId: number) => {
+    const newWidgets = selectedWidgets.filter((widget) => widget.id !== widgetId);
+    setSelectedWidgets(newWidgets);
+  };
 
-  useEffect(() => {
-    localStorage.setItem('selectedWidgets', JSON.stringify(selectedWidgets));
-  }, [selectedWidgets]);
+  const handleWidgetReorder = (widgets: Widget[]) => {
+    setSelectedWidgets(widgets);
+  };
+
+  const handleWidgetSettings = (widget: Widget) => {
+    // Open widget settings modal
+  };
+
+  const handleNavigationMenuClick = (menuItem: string) => {
+    // Handle navigation menu click
+  };
 
   return (
-    <DndProvider>
+    <div>
       <DashboardHeader />
-      <NavigationMenu />
-      <div className="container mx-auto p-4">
-        <h1 className="text-3xl font-bold mb-4">Dashboard</h1>
-        <DragDropContext onDragEnd={handleDragEnd}>
-          <Droppable droppableId="widgets">
-            {(provided) => (
-              <div {...provided.droppableProps} ref={provided.innerRef} className="grid grid-cols-3 gap-4">
-                {selectedWidgets.map((widget, index) => (
-                  <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
-                    {(provided) => (
-                      <div
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        ref={provided.innerRef}
-                        className="bg-white rounded shadow p-4"
-                      >
-                        <DashboardCard widget={widget} />
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-        </DragDropContext>
-        <div className="mt-4">
-          <h2 className="text-2xl font-bold mb-2">Available Widgets</h2>
-          <div className="grid grid-cols-3 gap-4">
-            {availableWidgets.map((widget) => (
-              <div key={widget.id} className="bg-white rounded shadow p-4">
-                <DashboardCard widget={widget} />
-              </div>
-            ))}
-          </div>
+      <NavigationMenu onMenuItemClick={handleNavigationMenuClick} />
+      <div className="dashboard-content">
+        <DndProvider>
+          <DragDropContext onDragEnd={(result) => handleWidgetReorder(result.destination.index)}>
+            <Droppable droppableId="widgets">
+              {(provided) => (
+                <div {...provided.droppableProps} ref={provided.innerRef}>
+                  {selectedWidgets.map((widget, index) => (
+                    <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+                      {(provided) => (
+                        <div
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                          ref={provided.innerRef}
+                        >
+                          <DashboardCard
+                            title={widget.title}
+                            icon={widget.icon}
+                            onClick={widget.onClick}
+                            onSettingsClick={() => handleWidgetSettings(widget)}
+                          />
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
+        </DndProvider>
+        <div className="widget-settings">
+          <WidgetSettings
+            availableWidgets={availableWidgets}
+            onWidgetAdd={handleWidgetAdd}
+            onWidgetRemove={handleWidgetRemove}
+          />
         </div>
       </div>
-    </DndProvider>
+    </div>
   );
 }
