@@ -76,31 +76,20 @@ const countSyllables = (word: string) => {
 
 const performSentimentAnalysis = async (text: string) => {
   const model = await tf.loadLayersModel('https://storage.googleapis.com/tfjs-models/tfjs/sentiment_analysis/model.json');
-  const tensor = tf.tensor2d([text], [1, 1], 'string');
-  const prediction = model.predict(tensor);
-  const sentiment = await prediction.data();
+  const tensor = tf.tensor2d([text.split(' ').map((word) => word.charCodeAt(0))]);
+  const prediction = await model.predict(tensor);
+  const sentiment = prediction.dataSync()[0] > 0.5 ? 'Positive' : 'Negative';
   return sentiment;
 };
 
 const performEntityRecognition = async (text: string) => {
-  const nlp = await spaCy.load('en_core_web_sm');
-  const doc = nlp(text);
-  const entities = doc.ents.map((ent) => ({ text: ent.text, label: ent.label_ }));
+  const entities = await spaCy.load('en_core_web_sm').then((nlp) => nlp(text));
   return entities;
 };
 
 const performTopicModeling = async (text: string) => {
-  const words = text.split(' ');
-  const wordCounts = {};
-  words.forEach((word) => {
-    if (wordCounts[word]) {
-      wordCounts[word]++;
-    } else {
-      wordCounts[word] = 1;
-    }
-  });
-  const topics = Object.keys(wordCounts).sort((a, b) => wordCounts[b] - wordCounts[a]);
-  return topics;
+  const topics = await axios.post('https://api.example.com/topic-modeling', { text });
+  return topics.data;
 };
 
 const Page = () => {

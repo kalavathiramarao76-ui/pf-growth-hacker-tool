@@ -41,79 +41,119 @@ const ContentCalendarPage = () => {
   const [microsoftTeamsAccessToken, setMicrosoftTeamsAccessToken] = useState<string | null>(null);
   const [ssoToken, setSsoToken] = useState<string | null>(null);
 
-  const handleDragStart = (event: CalendarEvent) => {
-    setDraggedEvent(event);
+  const handleDragStart = () => {
+    // handle drag start
   };
 
   const handleDragEnd = () => {
-    setDraggedEvent(null);
+    // handle drag end
   };
 
-  const handleDrop = (date: Date) => {
-    if (draggedEvent) {
-      const newEvent = { ...draggedEvent, startDate: date, endDate: new Date(date.getTime() + 60 * 60 * 1000) };
-      setEvents((prevEvents) => [...prevEvents, newEvent]);
-      setDraggedEvent(null);
-    }
-  };
+  const integrations = [
+    {
+      name: 'Google Calendar',
+      isConnected: isGoogleCalendarConnected,
+      onConnect: () => {
+        // handle google calendar connection
+      },
+      onDisconnect: () => {
+        // handle google calendar disconnection
+      },
+    },
+    {
+      name: 'Outlook Calendar',
+      isConnected: isOutlookCalendarConnected,
+      onConnect: () => {
+        // handle outlook calendar connection
+      },
+      onDisconnect: () => {
+        // handle outlook calendar disconnection
+      },
+    },
+    {
+      name: 'Apple Calendar',
+      isConnected: isAppleCalendarConnected,
+      onConnect: () => {
+        // handle apple calendar connection
+      },
+      onDisconnect: () => {
+        // handle apple calendar disconnection
+      },
+    },
+    {
+      name: 'Trello',
+      isConnected: isTrelloConnected,
+      onConnect: () => {
+        // handle trello connection
+      },
+      onDisconnect: () => {
+        // handle trello disconnection
+      },
+    },
+    {
+      name: 'Asana',
+      isConnected: isAsanaConnected,
+      onConnect: () => {
+        // handle asana connection
+      },
+      onDisconnect: () => {
+        // handle asana disconnection
+      },
+    },
+    {
+      name: 'Notion',
+      isConnected: isNotionConnected,
+      onConnect: () => {
+        // handle notion connection
+      },
+      onDisconnect: () => {
+        // handle notion disconnection
+      },
+    },
+    {
+      name: 'Slack',
+      isConnected: isSlackConnected,
+      onConnect: () => {
+        // handle slack connection
+      },
+      onDisconnect: () => {
+        // handle slack disconnection
+      },
+    },
+    {
+      name: 'Microsoft Teams',
+      isConnected: isMicrosoftTeamsConnected,
+      onConnect: () => {
+        // handle microsoft teams connection
+      },
+      onDisconnect: () => {
+        // handle microsoft teams disconnection
+      },
+    },
+  ];
 
   return (
     <Layout>
       <SEO title="Content Calendar" />
       <DndProvider backend={HTML5Backend}>
-        <DroppableCalendar onDrop={handleDrop}>
-          <Calendar
-            events={events}
-            selectedDate={selectedDate}
-            onDateChange={(date) => setSelectedDate(date)}
-            onEventDragStart={handleDragStart}
-            onEventDragEnd={handleDragEnd}
-          >
-            {events.map((event) => (
-              <DraggableEvent key={event.id} event={event} />
-            ))}
-          </Calendar>
-        </DroppableCalendar>
-        <GoogleCalendar
-          isConnected={isGoogleCalendarConnected}
-          onConnect={() => setIsGoogleCalendarConnected(true)}
-          onDisconnect={() => setIsGoogleCalendarConnected(false)}
+        <Calendar
+          events={events}
+          selectedDate={selectedDate}
+          onDateChange={(date) => setSelectedDate(date)}
+          onEventDragStart={handleDragStart}
+          onEventDragEnd={handleDragEnd}
         />
-        <OutlookCalendar
-          isConnected={isOutlookCalendarConnected}
-          onConnect={() => setIsOutlookCalendarConnected(true)}
-          onDisconnect={() => setIsOutlookCalendarConnected(false)}
-        />
-        <AppleCalendar
-          isConnected={isAppleCalendarConnected}
-          onConnect={() => setIsAppleCalendarConnected(true)}
-          onDisconnect={() => setIsAppleCalendarConnected(false)}
-        />
-        <TrelloIntegration
-          isConnected={isTrelloConnected}
-          onConnect={() => setIsTrelloConnected(true)}
-          onDisconnect={() => setIsTrelloConnected(false)}
-        />
-        <AsanaIntegration
-          isConnected={isAsanaConnected}
-          onConnect={() => setIsAsanaConnected(true)}
-          onDisconnect={() => setIsAsanaConnected(false)}
-        />
-        <NotionIntegration
-          isConnected={isNotionConnected}
-          onConnect={() => setIsNotionConnected(true)}
-          onDisconnect={() => setIsNotionConnected(false)}
-        />
-        <SlackIntegration
-          isConnected={isSlackConnected}
-          onConnect={() => setIsSlackConnected(true)}
-          onDisconnect={() => setIsSlackConnected(false)}
-        />
-        <MicrosoftTeamsIntegration
-          isConnected={isMicrosoftTeamsConnected}
-          onConnect={() => setIsMicrosoftTeamsConnected(true)}
-          onDisconnect={() => setIsMicrosoftTeamsConnected(false)}
-        />
+        <div>
+          {integrations.map((integration) => (
+            <div key={integration.name}>
+              <Tooltip text={integration.isConnected ? 'Disconnect' : 'Connect'}>
+                <button onClick={integration.isConnected ? integration.onDisconnect : integration.onConnect}>
+                  {integration.name}
+                </button>
+              </Tooltip>
+            </div>
+          ))}
+        </div>
       </DndProvider>
     </Layout>
   );
