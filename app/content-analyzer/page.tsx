@@ -17,6 +17,7 @@ import { NlpManager } from 'node-nlp';
 import * as spacy from 'spacy';
 import { LanguageModel } from 'langchain';
 import { HuggingFaceHub } from 'huggingface-hub';
+import { Transformers } from 'transformers';
 
 const advancedContentAnalysis = async (analysis: any) => {
   const advancedAnalysis = {
@@ -79,30 +80,46 @@ const countSyllables = (word: string) => {
 };
 
 const performSentimentAnalysisWithHuggingFace = async (text: string) => {
-  const model = await HuggingFaceHub.loadModel('distilbert-base-uncased-finetuned-sst-2-english');
-  const sentiment = await model.predict(text);
+  const model = await Transformers.loadModel('distilbert-base-uncased-finetuned-sst-2-english');
+  const tokenizer = await Transformers.loadTokenizer('distilbert-base-uncased-finetuned-sst-2-english');
+  const inputs = await tokenizer.encodePlus(
+    text,
+    addSpecialTokens = true,
+    max_length = 512,
+    return_attention_mask = true,
+    return_tensors = 'pt',
+    truncation = true,
+    padding = 'max_length',
+  );
+  const outputs = await model(inputs.input_ids, attention_mask = inputs.attention_mask);
+  const sentiment = await tf.argMax(outputs.logits, 1).dataSync();
   return sentiment;
 };
 
 const performEntityRecognitionWithSpacy = async (text: string) => {
   const nlp = await spacy.load('en_core_web_sm');
-  const doc = nlp(text);
+  const doc = await nlp(text);
   const entities = doc.ents.map((ent) => ({ text: ent.text, label: ent.label_ }));
   return entities;
 };
 
 const performTopicModeling = async (text: string) => {
-  const nlpManager = new NlpManager({ languages: ['en'] });
-  const topicModel = await nlpManager.topicModeling(text);
-  return topicModel;
+  const model = await LanguageModel.load('gpt2');
+  const topics = await model.generate(text, max_length = 100);
+  return topics;
 };
 
 const ContentAnalyzerPage = () => {
-  const [analysis, setAnalysis] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const [analysis, setAnalysis] = useState<any>({});
+  const [text, setText] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleAnalyze = async (text: string) => {
+  const handleTextChange = (event: any) => {
+    setText(event.target.value);
+  };
+
+  const handleAnalyze = async () => {
     setLoading(true);
     const analysis = await advancedContentAnalysis({ text });
     setAnalysis(analysis);
@@ -113,7 +130,12 @@ const ContentAnalyzerPage = () => {
     <div>
       <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
-      <ContentAnalyzerForm onAnalyze={handleAnalyze} />
+      <ContentAnalyzerForm
+        text={text}
+        onTextChange={handleTextChange}
+        onAnalyze={handleAnalyze}
+        loading={loading}
+      />
       {analysis && (
         <div>
           <OptimizationSuggestions analysis={analysis} />
@@ -121,7 +143,6 @@ const ContentAnalyzerPage = () => {
           <AlternativeFormats analysis={analysis} />
         </div>
       )}
-      {loading && <p>Loading...</p>}
     </div>
   );
 };

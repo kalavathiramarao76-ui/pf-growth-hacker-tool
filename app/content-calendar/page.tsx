@@ -46,84 +46,27 @@ const ContentCalendarPage = () => {
   const [collaborators, setCollaborators] = useState<string[]>([]);
   const [realTimeEvents, setRealTimeEvents] = useState<CalendarEvent[]>([]);
   const [integrationStep, setIntegrationStep] = useState(0);
-  const [selectedIntegration, setSelectedIntegration] = useState('');
+  const [selectedIntegration, setSelectedIntegration] = useState<string | null>(null);
+  const [calendarIntegrationModal, setCalendarIntegrationModal] = useState(false);
 
-  const socket = new Socket();
-
-  useEffect(() => {
-    socket.connect();
-    socket.on('connect', () => {
-      console.log('Connected to socket');
-    });
-  }, []);
-
-  const handleIntegration = (integration: string) => {
-    setSelectedIntegration(integration);
-    setIntegrationStep(1);
-  };
-
-  const handleConnectIntegration = () => {
-    switch (selectedIntegration) {
-      case 'googleCalendar':
-        setIsGoogleCalendarConnected(true);
+  const handleConnectCalendar = (calendarType: string) => {
+    switch (calendarType) {
+      case 'google':
+        window.open('https://accounts.google.com/o/oauth2/auth?client_id=YOUR_CLIENT_ID&redirect_uri=YOUR_REDIRECT_URI&response_type=code&scope=https://www.googleapis.com/auth/calendar', '_blank');
         break;
-      case 'outlookCalendar':
-        setIsOutlookCalendarConnected(true);
+      case 'outlook':
+        window.open('https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=YOUR_CLIENT_ID&redirect_uri=YOUR_REDIRECT_URI&response_type=code&scope=https://outlook.office.com/.default', '_blank');
         break;
-      case 'appleCalendar':
-        setIsAppleCalendarConnected(true);
-        break;
-      case 'trello':
-        setIsTrelloConnected(true);
-        break;
-      case 'asana':
-        setIsAsanaConnected(true);
-        break;
-      case 'notion':
-        setIsNotionConnected(true);
-        break;
-      case 'slack':
-        setIsSlackConnected(true);
-        break;
-      case 'microsoftTeams':
-        setIsMicrosoftTeamsConnected(true);
+      case 'apple':
+        window.open('https://appleid.apple.com/oauth2/auth?client_id=YOUR_CLIENT_ID&redirect_uri=YOUR_REDIRECT_URI&response_type=code&scope=name%20email', '_blank');
         break;
       default:
         break;
     }
-    setIntegrationStep(0);
   };
 
-  const handleDisconnectIntegration = () => {
-    switch (selectedIntegration) {
-      case 'googleCalendar':
-        setIsGoogleCalendarConnected(false);
-        break;
-      case 'outlookCalendar':
-        setIsOutlookCalendarConnected(false);
-        break;
-      case 'appleCalendar':
-        setIsAppleCalendarConnected(false);
-        break;
-      case 'trello':
-        setIsTrelloConnected(false);
-        break;
-      case 'asana':
-        setIsAsanaConnected(false);
-        break;
-      case 'notion':
-        setIsNotionConnected(false);
-        break;
-      case 'slack':
-        setIsSlackConnected(false);
-        break;
-      case 'microsoftTeams':
-        setIsMicrosoftTeamsConnected(false);
-        break;
-      default:
-        break;
-    }
-    setIntegrationStep(0);
+  const handleSaveCalendarIntegration = () => {
+    setCalendarIntegrationModal(false);
   };
 
   return (
@@ -140,80 +83,25 @@ const ContentCalendarPage = () => {
           }}
         />
         <div>
-          <h2>Integrations</h2>
-          <ul>
-            <li>
-              <button onClick={() => handleIntegration('googleCalendar')}>Google Calendar</button>
-              {isGoogleCalendarConnected ? (
-                <button onClick={handleDisconnectIntegration}>Disconnect</button>
-              ) : (
-                <button onClick={handleConnectIntegration}>Connect</button>
-              )}
-            </li>
-            <li>
-              <button onClick={() => handleIntegration('outlookCalendar')}>Outlook Calendar</button>
-              {isOutlookCalendarConnected ? (
-                <button onClick={handleDisconnectIntegration}>Disconnect</button>
-              ) : (
-                <button onClick={handleConnectIntegration}>Connect</button>
-              )}
-            </li>
-            <li>
-              <button onClick={() => handleIntegration('appleCalendar')}>Apple Calendar</button>
-              {isAppleCalendarConnected ? (
-                <button onClick={handleDisconnectIntegration}>Disconnect</button>
-              ) : (
-                <button onClick={handleConnectIntegration}>Connect</button>
-              )}
-            </li>
-            <li>
-              <button onClick={() => handleIntegration('trello')}>Trello</button>
-              {isTrelloConnected ? (
-                <button onClick={handleDisconnectIntegration}>Disconnect</button>
-              ) : (
-                <button onClick={handleConnectIntegration}>Connect</button>
-              )}
-            </li>
-            <li>
-              <button onClick={() => handleIntegration('asana')}>Asana</button>
-              {isAsanaConnected ? (
-                <button onClick={handleDisconnectIntegration}>Disconnect</button>
-              ) : (
-                <button onClick={handleConnectIntegration}>Connect</button>
-              )}
-            </li>
-            <li>
-              <button onClick={() => handleIntegration('notion')}>Notion</button>
-              {isNotionConnected ? (
-                <button onClick={handleDisconnectIntegration}>Disconnect</button>
-              ) : (
-                <button onClick={handleConnectIntegration}>Connect</button>
-              )}
-            </li>
-            <li>
-              <button onClick={() => handleIntegration('slack')}>Slack</button>
-              {isSlackConnected ? (
-                <button onClick={handleDisconnectIntegration}>Disconnect</button>
-              ) : (
-                <button onClick={handleConnectIntegration}>Connect</button>
-              )}
-            </li>
-            <li>
-              <button onClick={() => handleIntegration('microsoftTeams')}>Microsoft Teams</button>
-              {isMicrosoftTeamsConnected ? (
-                <button onClick={handleDisconnectIntegration}>Disconnect</button>
-              ) : (
-                <button onClick={handleConnectIntegration}>Connect</button>
-              )}
-            </li>
-          </ul>
-          {integrationStep === 1 && (
+          <button onClick={() => setCalendarIntegrationModal(true)}>Connect Calendar</button>
+          {calendarIntegrationModal && (
             <div>
-              <h3>Connect {selectedIntegration}</h3>
-              <button onClick={handleConnectIntegration}>Connect</button>
+              <h2>Connect Calendar</h2>
+              <button onClick={() => handleConnectCalendar('google')}>Google Calendar</button>
+              <button onClick={() => handleConnectCalendar('outlook')}>Outlook Calendar</button>
+              <button onClick={() => handleConnectCalendar('apple')}>Apple Calendar</button>
+              <button onClick={handleSaveCalendarIntegration}>Save</button>
             </div>
           )}
         </div>
+        <GoogleCalendar events={googleCalendarEvents} isConnected={isGoogleCalendarConnected} />
+        <OutlookCalendar events={outlookCalendarEvents} isConnected={isOutlookCalendarConnected} />
+        <AppleCalendar events={appleCalendarEvents} isConnected={isAppleCalendarConnected} />
+        <TrelloIntegration events={trelloEvents} isConnected={isTrelloConnected} />
+        <AsanaIntegration events={asanaEvents} isConnected={isAsanaConnected} />
+        <NotionIntegration events={notionEvents} isConnected={isNotionConnected} />
+        <SlackIntegration events={slackEvents} isConnected={isSlackConnected} />
+        <MicrosoftTeamsIntegration events={microsoftTeamsEvents} isConnected={isMicrosoftTeamsConnected} />
       </DndProvider>
     </Layout>
   );
