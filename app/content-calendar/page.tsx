@@ -51,114 +51,79 @@ const ContentCalendarPage = () => {
   useEffect(() => {
     socket.connect();
     socket.on('connect', () => {
-      console.log('Connected to the server');
-    });
-    socket.on('disconnect', () => {
-      console.log('Disconnected from the server');
-    });
-    socket.on('realTimeEvents', (events: CalendarEvent[]) => {
-      setRealTimeEvents(events);
-    });
-    socket.on('collaborators', (collaborators: string[]) => {
-      setCollaborators(collaborators);
+      console.log('Connected to socket');
     });
   }, []);
 
-  const handleDragStart = (event: CalendarEvent) => {
-    setDraggedEvent(event);
-    socket.emit('dragStart', event);
+  const connectCalendar = async (calendarType: string) => {
+    switch (calendarType) {
+      case 'google':
+        if (!isGoogleCalendarConnected) {
+          const googleCalendarToken = await getGoogleCalendarToken();
+          setIntegrationTokens((prevTokens) => ({ ...prevTokens, googleCalendar: googleCalendarToken }));
+          setIsGoogleCalendarConnected(true);
+        }
+        break;
+      case 'outlook':
+        if (!isOutlookCalendarConnected) {
+          const outlookCalendarToken = await getOutlookCalendarToken();
+          setIntegrationTokens((prevTokens) => ({ ...prevTokens, outlookCalendar: outlookCalendarToken }));
+          setIsOutlookCalendarConnected(true);
+        }
+        break;
+      case 'apple':
+        if (!isAppleCalendarConnected) {
+          const appleCalendarToken = await getAppleCalendarToken();
+          setIntegrationTokens((prevTokens) => ({ ...prevTokens, appleCalendar: appleCalendarToken }));
+          setIsAppleCalendarConnected(true);
+        }
+        break;
+      default:
+        break;
+    }
   };
 
-  const handleDragEnd = (event: CalendarEvent) => {
-    setDraggedEvent(null);
-    socket.emit('dragEnd', event);
+  const getGoogleCalendarToken = async () => {
+    // Implement Google Calendar token retrieval logic
   };
 
-  const handleDrop = (event: CalendarEvent) => {
-    socket.emit('drop', event);
+  const getOutlookCalendarToken = async () => {
+    // Implement Outlook Calendar token retrieval logic
   };
 
-  const handleIntegrationConnect = (integration: string, token: string) => {
-    setIntegrationTokens((prevTokens) => ({ ...prevTokens, [integration]: token }));
-    socket.emit('integrationConnect', integration, token);
-  };
-
-  const handleIntegrationDisconnect = (integration: string) => {
-    setIntegrationTokens((prevTokens) => ({ ...prevTokens, [integration]: null }));
-    socket.emit('integrationDisconnect', integration);
+  const getAppleCalendarToken = async () => {
+    // Implement Apple Calendar token retrieval logic
   };
 
   return (
     <Layout>
       <SEO title="Content Calendar" />
       <DndProvider backend={HTML5Backend}>
-        <DroppableCalendar
+        <Calendar
           events={events}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-          onDrop={handleDrop}
+          selectedDate={selectedDate}
+          onDateChange={(date) => setSelectedDate(date)}
+          onEventDragStart={(event) => setDraggedEvent(event)}
+          onEventDragEnd={(event) => setDraggedEvent(null)}
+          onEventHover={(event) => setHoveredEvent(event)}
         >
-          {events.map((event) => (
-            <DraggableEvent key={event.id} event={event} />
-          ))}
-        </DroppableCalendar>
+          <DroppableCalendar />
+          {isGoogleCalendarConnected && (
+            <GoogleCalendar events={googleCalendarEvents} onEventClick={(event) => console.log(event)} />
+          )}
+          {isOutlookCalendarConnected && (
+            <OutlookCalendar events={outlookCalendarEvents} onEventClick={(event) => console.log(event)} />
+          )}
+          {isAppleCalendarConnected && (
+            <AppleCalendar events={appleCalendarEvents} onEventClick={(event) => console.log(event)} />
+          )}
+          <Tooltip>
+            <button onClick={() => connectCalendar('google')}>Connect Google Calendar</button>
+            <button onClick={() => connectCalendar('outlook')}>Connect Outlook Calendar</button>
+            <button onClick={() => connectCalendar('apple')}>Connect Apple Calendar</button>
+          </Tooltip>
+        </Calendar>
       </DndProvider>
-      <GoogleCalendar
-        isConnected={isGoogleCalendarConnected}
-        onConnect={() => handleIntegrationConnect('googleCalendar', integrationTokens.googleCalendar)}
-        onDisconnect={() => handleIntegrationDisconnect('googleCalendar')}
-      />
-      <OutlookCalendar
-        isConnected={isOutlookCalendarConnected}
-        onConnect={() => handleIntegrationConnect('outlookCalendar', integrationTokens.outlookCalendar)}
-        onDisconnect={() => handleIntegrationDisconnect('outlookCalendar')}
-      />
-      <AppleCalendar
-        isConnected={isAppleCalendarConnected}
-        onConnect={() => handleIntegrationConnect('appleCalendar', integrationTokens.appleCalendar)}
-        onDisconnect={() => handleIntegrationDisconnect('appleCalendar')}
-      />
-      <TrelloIntegration
-        isConnected={isTrelloConnected}
-        onConnect={() => handleIntegrationConnect('trello', integrationTokens.trello)}
-        onDisconnect={() => handleIntegrationDisconnect('trello')}
-      />
-      <AsanaIntegration
-        isConnected={isAsanaConnected}
-        onConnect={() => handleIntegrationConnect('asana', integrationTokens.asana)}
-        onDisconnect={() => handleIntegrationDisconnect('asana')}
-      />
-      <NotionIntegration
-        isConnected={isNotionConnected}
-        onConnect={() => handleIntegrationConnect('notion', integrationTokens.notion)}
-        onDisconnect={() => handleIntegrationDisconnect('notion')}
-      />
-      <SlackIntegration
-        isConnected={isSlackConnected}
-        onConnect={() => handleIntegrationConnect('slack', integrationTokens.slack)}
-        onDisconnect={() => handleIntegrationDisconnect('slack')}
-      />
-      <MicrosoftTeamsIntegration
-        isConnected={isMicrosoftTeamsConnected}
-        onConnect={() => handleIntegrationConnect('microsoftTeams', integrationTokens.microsoftTeams)}
-        onDisconnect={() => handleIntegrationDisconnect('microsoftTeams')}
-      />
-      <div>
-        <h2>Collaborators:</h2>
-        <ul>
-          {collaborators.map((collaborator) => (
-            <li key={collaborator}>{collaborator}</li>
-          ))}
-        </ul>
-      </div>
-      <div>
-        <h2>Real-time Events:</h2>
-        <ul>
-          {realTimeEvents.map((event) => (
-            <li key={event.id}>{event.title}</li>
-          ))}
-        </ul>
-      </div>
     </Layout>
   );
 };

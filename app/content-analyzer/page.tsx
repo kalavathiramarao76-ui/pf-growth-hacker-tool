@@ -15,6 +15,7 @@ import { spaCy } from '@spacyjs/spacy';
 import * as tf from '@tensorflow/tfjs';
 import { NlpManager } from 'node-nlp';
 import * as spacy from 'spacy';
+import { LanguageModel } from 'langchain';
 
 const advancedContentAnalysis = async (analysis: any) => {
   const advancedAnalysis = {
@@ -76,48 +77,44 @@ const countSyllables = (word: string) => {
   return syllableCount;
 };
 
-const getAISuggestions = async (text: string) => {
-  const response = await axios.post('/api/ai-suggestions', { text });
-  return response.data;
+const performSentimentAnalysisWithSpacy = async (text: string) => {
+  const nlp = await LanguageModel.load('sentiment-analysis');
+  const result = await nlp(text);
+  return result;
+};
+
+const performEntityRecognitionWithSpacy = async (text: string) => {
+  const nlp = await LanguageModel.load('entity-recognition');
+  const result = await nlp(text);
+  return result;
+};
+
+const performTopicModeling = async (text: string) => {
+  const nlp = await LanguageModel.load('topic-modeling');
+  const result = await nlp(text);
+  return result;
 };
 
 const Page = () => {
+  const [analysis, setAnalysis] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const [analysis, setAnalysis] = useState({});
-  const [aiSuggestions, setAiSuggestions] = useState([]);
-  const [text, setText] = useState('');
 
-  useEffect(() => {
-    const storedAnalysis = LocalStorage.get('analysis');
-    if (storedAnalysis) {
-      setAnalysis(storedAnalysis);
-    }
-  }, []);
-
-  const handleTextChange = (text: string) => {
-    setText(text);
-  };
-
-  const handleAnalyze = async () => {
-    const advancedAnalysis = await advancedContentAnalysis({ text });
-    setAnalysis(advancedAnalysis);
-    LocalStorage.set('analysis', advancedAnalysis);
-    const suggestions = await getAISuggestions(text);
-    setAiSuggestions(suggestions);
+  const handleAnalyze = async (text: string) => {
+    setLoading(true);
+    const result = await advancedContentAnalysis({ text });
+    setAnalysis(result);
+    setLoading(false);
   };
 
   return (
     <div>
       <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
-      <ContentAnalyzerForm
-        text={text}
-        onTextChange={handleTextChange}
-        onAnalyze={handleAnalyze}
-      />
-      {analysis.text && (
+      <ContentAnalyzerForm onAnalyze={handleAnalyze} loading={loading} />
+      {analysis && (
         <div>
-          <OptimizationSuggestions analysis={analysis} aiSuggestions={aiSuggestions} />
+          <OptimizationSuggestions analysis={analysis} />
           <EngagementTracker analysis={analysis} />
           <AlternativeFormats analysis={analysis} />
         </div>

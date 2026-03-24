@@ -80,75 +80,48 @@ export default function DashboardPage() {
             </ul>
             <div className="limited-time-offer">
               <h2>Limited Time Offer: Get 15% Off Your First Year!</h2>
-              <p>Use code PREMIUM15 at checkout to receive your discount. Offer valid until March 31st, 2024.</p>
-              <button className="upgrade-button" onClick={() => router.push('/upgrade-plan')}>Upgrade Now</button>
+              <button className="upgrade-button" onClick={() => router.push('/upgrade-plan')}>Upgrade Now and Unlock Your Content's Full Potential</button>
             </div>
           </div>
         </div>
       )
     },
-    { 
-      id: 6, 
-      title: 'Advanced Analytics', 
-      icon: <IoMdAnalytics size={24} />, 
-      onClick: () => router.push('/advanced-analytics'), 
-      description: 'Get in-depth insights into your content performance with our advanced analytics tool.',
-      callToAction: (
-        <div className="premium-feature-call-to-action">
-          <h1>Unlock Advanced Analytics with Our Premium Plan</h1>
-          <p>Get detailed insights into your content performance, including engagement metrics, conversion rates, and more. Limited time offer: get 15% off your first year!</p>
-          <button className="upgrade-button" onClick={() => router.push('/upgrade-plan')}>Upgrade Now</button>
-        </div>
-      )
-    },
-    { 
-      id: 7, 
-      title: 'Priority Support', 
-      icon: <MdSettings size={24} />, 
-      onClick: () => router.push('/priority-support'), 
-      description: 'Get priority support from our expert team with our premium plan.',
-      callToAction: (
-        <div className="premium-feature-call-to-action">
-          <h1>Get Priority Support with Our Premium Plan</h1>
-          <p>Get help when you need it with our priority support feature. Limited time offer: get 15% off your first year!</p>
-          <button className="upgrade-button" onClick={() => router.push('/upgrade-plan')}>Upgrade Now</button>
-        </div>
-      )
-    }
   ]);
 
   return (
-    <div className="dashboard-page">
+    <div>
       <DashboardHeader />
       <NavigationMenu />
-      <div className="dashboard-content">
-        <DndProvider>
-          <DragDropContext>
-            <Droppable droppableId="widgets">
-              {(provided) => (
-                <div {...provided.droppableProps} ref={provided.innerRef}>
-                  {widgets.map((widget, index) => (
-                    <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
-                      {(provided) => (
-                        <div {...provided.draggableProps} {...provided.dragHandleProps} ref={provided.innerRef}>
-                          <DashboardCard 
-                            title={widget.title} 
-                            icon={widget.icon} 
-                            onClick={widget.onClick} 
-                            description={widget.description} 
-                            callToAction={widget.callToAction}
-                          />
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </DragDropContext>
-        </DndProvider>
-      </div>
+      <DndProvider>
+        <DragDropContext>
+          <Droppable droppableId="widgets">
+            {(provided) => (
+              <div {...provided.droppableProps} ref={provided.innerRef}>
+                {widgets.map((widget, index) => (
+                  <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+                    {(provided) => (
+                      <div
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        ref={provided.innerRef}
+                      >
+                        <DashboardCard
+                          title={widget.title}
+                          icon={widget.icon}
+                          onClick={widget.onClick}
+                          description={widget.description}
+                          callToAction={widget.callToAction}
+                        />
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
+      </DndProvider>
     </div>
   );
 }
