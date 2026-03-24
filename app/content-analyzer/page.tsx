@@ -19,6 +19,9 @@ import { LanguageModel } from 'langchain';
 import { HuggingFaceHub } from 'huggingface-hub';
 import { Transformers } from 'transformers';
 
+// Import the more advanced NLP library
+import { pipeline } from 'transformers';
+
 const advancedContentAnalysis = async (analysis: any) => {
   const advancedAnalysis = {
     ...analysis,
@@ -73,24 +76,25 @@ const countSyllables = (word: string) => {
   return syllableCount;
 };
 
+// Use the more advanced NLP library for sentiment analysis
 const performSentimentAnalysisWithHuggingFace = async (text: string) => {
-  const model = await Transformers.SentimentAnalysis.load('distilbert-base-uncased-finetuned-sst-2-english');
-  const result = await model.predict(text);
+  const sentimentPipeline = pipeline('sentiment-analysis');
+  const result = await sentimentPipeline(text);
   return result;
 };
 
+// Use the more advanced NLP library for entity recognition
 const performEntityRecognitionWithSpacy = async (text: string) => {
-  const nlp = await spacy.load('en_core_web_sm');
-  const doc = nlp(text);
-  const entities = doc.ents.map((ent) => ({ text: ent.text, label: ent.label_ }));
-  return entities;
+  const entityRecognitionPipeline = pipeline('ner');
+  const result = await entityRecognitionPipeline(text);
+  return result;
 };
 
+// Use the more advanced NLP library for topic modeling
 const performTopicModeling = async (text: string) => {
-  const nlp = new NlpManager({ languages: ['en'] });
-  const doc = await nlp.process('en', text);
-  const topics = doc.topics;
-  return topics;
+  const topicModelingPipeline = pipeline('topic-modeling');
+  const result = await topicModelingPipeline(text);
+  return result;
 };
 
 const Page = () => {
@@ -100,8 +104,8 @@ const Page = () => {
 
   const handleAnalyze = async (text: string) => {
     setLoading(true);
-    const analysis = await advancedContentAnalysis({ text });
-    setAnalysis(analysis);
+    const analysisResult = await advancedContentAnalysis({ text });
+    setAnalysis(analysisResult);
     setLoading(false);
   };
 

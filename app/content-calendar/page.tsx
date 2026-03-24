@@ -48,18 +48,17 @@ const ContentCalendarPage = () => {
   const [selectedIntegration, setSelectedIntegration] = useState<string | null>(null);
 
   const integrations = [
-    { name: 'Google Calendar', component: GoogleCalendar, isConnected: isGoogleCalendarConnected },
-    { name: 'Outlook Calendar', component: OutlookCalendar, isConnected: isOutlookCalendarConnected },
-    { name: 'Apple Calendar', component: AppleCalendar, isConnected: isAppleCalendarConnected },
-    { name: 'Trello', component: TrelloIntegration, isConnected: isTrelloConnected },
-    { name: 'Asana', component: AsanaIntegration, isConnected: isAsanaConnected },
-    { name: 'Notion', component: NotionIntegration, isConnected: isNotionConnected },
-    { name: 'Slack', component: SlackIntegration, isConnected: isSlackConnected },
-    { name: 'Microsoft Teams', component: MicrosoftTeamsIntegration, isConnected: isMicrosoftTeamsConnected },
+    { name: 'Google Calendar', isConnected: isGoogleCalendarConnected, component: <GoogleCalendar /> },
+    { name: 'Outlook Calendar', isConnected: isOutlookCalendarConnected, component: <OutlookCalendar /> },
+    { name: 'Apple Calendar', isConnected: isAppleCalendarConnected, component: <AppleCalendar /> },
+    { name: 'Trello', isConnected: isTrelloConnected, component: <TrelloIntegration /> },
+    { name: 'Asana', isConnected: isAsanaConnected, component: <AsanaIntegration /> },
+    { name: 'Notion', isConnected: isNotionConnected, component: <NotionIntegration /> },
+    { name: 'Slack', isConnected: isSlackConnected, component: <SlackIntegration /> },
+    { name: 'Microsoft Teams', isConnected: isMicrosoftTeamsConnected, component: <MicrosoftTeamsIntegration /> },
   ];
 
   const handleIntegrationConnect = (integration: string) => {
-    setSelectedIntegration(integration);
     switch (integration) {
       case 'Google Calendar':
         setIsGoogleCalendarConnected(true);
@@ -90,6 +89,37 @@ const ContentCalendarPage = () => {
     }
   };
 
+  const handleIntegrationDisconnect = (integration: string) => {
+    switch (integration) {
+      case 'Google Calendar':
+        setIsGoogleCalendarConnected(false);
+        break;
+      case 'Outlook Calendar':
+        setIsOutlookCalendarConnected(false);
+        break;
+      case 'Apple Calendar':
+        setIsAppleCalendarConnected(false);
+        break;
+      case 'Trello':
+        setIsTrelloConnected(false);
+        break;
+      case 'Asana':
+        setIsAsanaConnected(false);
+        break;
+      case 'Notion':
+        setIsNotionConnected(false);
+        break;
+      case 'Slack':
+        setIsSlackConnected(false);
+        break;
+      case 'Microsoft Teams':
+        setIsMicrosoftTeamsConnected(false);
+        break;
+      default:
+        break;
+    }
+  };
+
   return (
     <Layout>
       <SEO title="Content Calendar" />
@@ -97,31 +127,24 @@ const ContentCalendarPage = () => {
         <Calendar
           events={events}
           selectedDate={selectedDate}
-          draggedEvent={draggedEvent}
-          hoveredEvent={hoveredEvent}
           onDateChange={(date) => setSelectedDate(date)}
-          onEventDrag={(event) => setDraggedEvent(event)}
+          onEventDrop={(event) => setDraggedEvent(event)}
           onEventHover={(event) => setHoveredEvent(event)}
         />
         <div>
           {integrations.map((integration) => (
             <div key={integration.name}>
-              <Tooltip text={integration.name}>
-                <Image src={`/icons/${integration.name.toLowerCase().replace(' ', '-')}.svg`} width={24} height={24} />
+              <Tooltip title={integration.name}>
+                {integration.component}
               </Tooltip>
               {integration.isConnected ? (
-                <button onClick={() => handleIntegrationConnect(integration.name)}>Connected</button>
+                <button onClick={() => handleIntegrationDisconnect(integration.name)}>Disconnect</button>
               ) : (
                 <button onClick={() => handleIntegrationConnect(integration.name)}>Connect</button>
               )}
             </div>
           ))}
         </div>
-        {selectedIntegration && (
-          <div>
-            <selectedIntegration.component />
-          </div>
-        )}
       </DndProvider>
     </Layout>
   );

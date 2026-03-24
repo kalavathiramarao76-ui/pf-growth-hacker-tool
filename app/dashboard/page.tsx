@@ -80,61 +80,45 @@ export default function DashboardPage() {
             </ul>
             <div className="limited-time-offer">
               <h2>Limited Time Offer: Get 15% Off Your First Year!</h2>
-              <button className="upgrade-button" onClick={() => router.push('/upgrade-plan')}>Upgrade Now</button>
+            </div>
+            <div className="clear-cta">
+              <Link href="/pricing">
+                <a>
+                  <button>Upgrade to Premium Today and Unlock Exclusive Benefits!</button>
+                </a>
+              </Link>
+              <p>By upgrading, you'll get access to advanced features, priority support, and expert guidance to take your content to the next level.</p>
             </div>
           </div>
         </div>
       )
     },
-    { 
-      id: 6, 
-      title: 'Premium Plan Benefits', 
-      icon: <MdSettings size={24} />, 
-      onClick: () => router.push('/premium-benefits'), 
-      description: 'Discover the benefits of our premium plan, including advanced features, priority support, and expert guidance.',
-      callToAction: (
-        <div className="premium-benefits-call-to-action">
-          <h1>Experience the Power of Our Premium Plan</h1>
-          <p>Unlock advanced features, priority support, and expert guidance to take your content to the next level.</p>
-          <ul>
-            <li>Advanced analytics and insights</li>
-            <li>Priority support and expert guidance</li>
-            <li>Enhanced security and backups</li>
-            <li>Priority access to new features</li>
-          </ul>
-          <button className="learn-more-button" onClick={() => router.push('/premium-benefits')}>Learn More</button>
-        </div>
-      )
-    }
   ]);
 
   return (
-    <div className="dashboard-page">
+    <div>
       <DashboardHeader />
       <NavigationMenu />
-      <div className="dashboard-content">
-        <DndProvider>
-          <DragDropContext>
-            <Droppable droppableId="widgets">
-              {(provided) => (
-                <div {...provided.droppableProps} ref={provided.innerRef}>
-                  {widgets.map((widget, index) => (
-                    <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
-                      {(provided) => (
-                        <div {...provided.draggableProps} {...provided.dragHandleProps} ref={provided.innerRef}>
-                          <DashboardCard widget={widget} />
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </DragDropContext>
-        </DndProvider>
-      </div>
-      <WidgetSettings />
+      <DndProvider>
+        <DragDropContext>
+          <Droppable droppableId="widgets">
+            {(provided) => (
+              <div {...provided.droppableProps} ref={provided.innerRef}>
+                {widgets.map((widget, index) => (
+                  <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+                    {(provided) => (
+                      <div {...provided.draggableProps} {...provided.dragHandleProps} ref={provided.innerRef}>
+                        <DashboardCard widget={widget} />
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
+      </DndProvider>
     </div>
   );
 }
