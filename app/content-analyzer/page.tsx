@@ -70,56 +70,35 @@ const countSyllables = (word: string) => {
       lastCharWasVowel = false;
     }
   }
-  if (word.endsWith('e')) {
-    syllableCount--;
-  }
-  if (syllableCount === 0) {
-    syllableCount = 1;
-  }
   return syllableCount;
 };
 
 const performSentimentAnalysisWithHuggingFace = async (text: string) => {
-  const model = await Transformers.loadModel('distilbert-base-uncased-finetuned-sst-2-english');
-  const tokenizer = await Transformers.loadTokenizer('distilbert-base-uncased-finetuned-sst-2-english');
-  const inputs = await tokenizer.encodePlus(
-    text,
-    addSpecialTokens = true,
-    max_length = 512,
-    return_attention_mask = true,
-    return_tensors = 'pt',
-    truncation = true,
-    padding = 'max_length',
-  );
-  const outputs = await model(inputs.input_ids, attention_mask = inputs.attention_mask);
-  const sentiment = await tf.argMax(outputs.logits, 1).dataSync();
-  return sentiment;
+  const model = await Transformers.SentimentAnalysis.load('distilbert-base-uncased-finetuned-sst-2-english');
+  const result = await model.predict(text);
+  return result;
 };
 
 const performEntityRecognitionWithSpacy = async (text: string) => {
   const nlp = await spacy.load('en_core_web_sm');
-  const doc = await nlp(text);
+  const doc = nlp(text);
   const entities = doc.ents.map((ent) => ({ text: ent.text, label: ent.label_ }));
   return entities;
 };
 
 const performTopicModeling = async (text: string) => {
-  const model = await LanguageModel.load('gpt2');
-  const topics = await model.generate(text, max_length = 100);
+  const nlp = new NlpManager({ languages: ['en'] });
+  const doc = await nlp.process('en', text);
+  const topics = doc.topics;
   return topics;
 };
 
-const ContentAnalyzerPage = () => {
+const Page = () => {
   const router = useRouter();
   const [analysis, setAnalysis] = useState<any>({});
-  const [text, setText] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleTextChange = (event: any) => {
-    setText(event.target.value);
-  };
-
-  const handleAnalyze = async () => {
+  const handleAnalyze = async (text: string) => {
     setLoading(true);
     const analysis = await advancedContentAnalysis({ text });
     setAnalysis(analysis);
@@ -130,13 +109,10 @@ const ContentAnalyzerPage = () => {
     <div>
       <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
-      <ContentAnalyzerForm
-        text={text}
-        onTextChange={handleTextChange}
-        onAnalyze={handleAnalyze}
-        loading={loading}
-      />
-      {analysis && (
+      <ContentAnalyzerForm onAnalyze={handleAnalyze} />
+      {loading ? (
+        <p>Loading...</p>
+      ) : (
         <div>
           <OptimizationSuggestions analysis={analysis} />
           <EngagementTracker analysis={analysis} />
@@ -147,4 +123,4 @@ const ContentAnalyzerPage = () => {
   );
 };
 
-export default ContentAnalyzerPage;
+export default Page;
