@@ -27,113 +27,119 @@ interface WidgetLayout {
   widgets: Widget[];
 }
 
+const initialWidgets = [
+  { 
+    id: 1, 
+    title: 'Create Content', 
+    icon: <AiOutlinePlus size={24} />, 
+    onClick: () => {} 
+  },
+  { 
+    id: 2, 
+    title: 'View Analytics', 
+    icon: <IoMdAnalytics size={24} />, 
+    onClick: () => {} 
+  },
+  { 
+    id: 3, 
+    title: 'Content Calendar', 
+    icon: <FaRegCalendarAlt size={24} />, 
+    onClick: () => {} 
+  },
+  { 
+    id: 4, 
+    title: 'Settings', 
+    icon: <MdSettings size={24} />, 
+    onClick: () => {} 
+  },
+  { 
+    id: 5, 
+    title: 'Upgrade to Premium', 
+    icon: <MdSettings size={24} />, 
+    onClick: () => {}, 
+    description: 'Unlock advanced features, priority support, and more with our premium plan. Get 20% more engagement, 30% more conversions, and expert guidance to take your content to the next level.',
+    callToAction: (
+      <div className="premium-upgrade-call-to-action">
+        <h1>Unlock Your Content's Full Potential with Our Premium Plan</h1>
+        <p>Take your content to the next level with our premium plan, featuring advanced features, priority support, and expert guidance. Limited time offer: get 15% off your first year!</p>
+        <ul>
+          <li>20% more engagement</li>
+          <li>30% more conversions</li>
+          <li>Expert guidance and support</li>
+          <li>Priority access to new features</li>
+          <li>Enhanced security and backups</li>
+        </ul>
+        <div className="pricing-and-benefits">
+          <h2>Pricing Plans:</h2>
+          <ul>
+            <li>Monthly: $9.99</li>
+            <li>Yearly: $99.99 (save 20% compared to monthly)</li>
+          </ul>
+          <div className="limited-time-offer">
+            <h2>Limited Time Offer: Get 15% Off Your First</h2>
+          </div>
+        </div>
+      </div>
+    )
+  },
+];
+
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState(null);
-  const [widgets, setWidgets] = useState([
-    { 
-      id: 1, 
-      title: 'Create Content', 
-      icon: <AiOutlinePlus size={24} />, 
-      onClick: () => router.push('/content-analyzer') 
-    },
-    { 
-      id: 2, 
-      title: 'View Analytics', 
-      icon: <IoMdAnalytics size={24} />, 
-      onClick: () => router.push('/engagement-tracker') 
-    },
-    { 
-      id: 3, 
-      title: 'Content Calendar', 
-      icon: <FaRegCalendarAlt size={24} />, 
-      onClick: () => router.push('/content-calendar') 
-    },
-    { 
-      id: 4, 
-      title: 'Settings', 
-      icon: <MdSettings size={24} />, 
-      onClick: () => router.push('/settings') 
-    },
-    { 
-      id: 5, 
-      title: 'Upgrade to Premium', 
-      icon: <MdSettings size={24} />, 
-      onClick: () => router.push('/upgrade-plan'), 
-      description: 'Unlock advanced features, priority support, and more with our premium plan. Get 20% more engagement, 30% more conversions, and expert guidance to take your content to the next level.',
-      callToAction: (
-        <div className="premium-upgrade-call-to-action">
-          <h1>Unlock Your Content's Full Potential with Our Premium Plan</h1>
-          <p>Take your content to the next level with our premium plan, featuring advanced features, priority support, and expert guidance. Limited time offer: get 15% off your first year!</p>
-          <ul>
-            <li>20% more engagement</li>
-            <li>30% more conversions</li>
-            <li>Expert guidance and support</li>
-            <li>Priority access to new features</li>
-            <li>Enhanced security and backups</li>
-          </ul>
-          <div className="pricing-and-benefits">
-            <h2>Pricing Plans:</h2>
-            <ul>
-              <li>Monthly: $9.99</li>
-              <li>Yearly: $99.99 (save 20% compared to monthly)</li>
-            </ul>
-            <div className="limited-time-offer">
-              <h2>Limited Time Offer: Get 15% Off Your First Year</h2>
-              <p>Don't miss out on this amazing opportunity to elevate your content creation. Sign up now and get 15% off your first year!</p>
-            </div>
-          </div>
-        </div>
-      ),
-    },
-  ]);
+  const [widgets, setWidgets] = useState(initialWidgets);
 
-  const [layout, setLayout] = useState<WidgetLayout>({
-    columns: 3,
-    rows: 2,
-    widgets: widgets,
-  });
-
-  const handleDragEnd = (result: any) => {
-    if (!result.destination) return;
-
-    const { source, destination } = result;
-    const newWidgets = [...layout.widgets];
-    const [removed] = newWidgets.splice(source.index, 1);
-
-    newWidgets.splice(destination.index, 0, removed);
-
-    setLayout({
-      ...layout,
-      widgets: newWidgets,
+  const memoizedWidgets = useMemo(() => {
+    return widgets.map((widget) => {
+      if (widget.id === 1) {
+        return { ...widget, onClick: () => router.push('/content-analyzer') };
+      } else if (widget.id === 2) {
+        return { ...widget, onClick: () => router.push('/engagement-tracker') };
+      } else if (widget.id === 3) {
+        return { ...widget, onClick: () => router.push('/content-calendar') };
+      } else if (widget.id === 4) {
+        return { ...widget, onClick: () => router.push('/settings') };
+      } else if (widget.id === 5) {
+        return { ...widget, onClick: () => router.push('/upgrade-plan') };
+      }
+      return widget;
     });
-  };
+  }, [widgets, router]);
+
+  const handleWidgetRender = useCallback((widget) => {
+    return (
+      <Draggable key={widget.id} draggableId={widget.id.toString()} index={widget.id - 1}>
+        {(provided) => (
+          <div
+            ref={provided.innerRef}
+            {...provided.draggableProps}
+            {...provided.dragHandleProps}
+          >
+            <DashboardCard
+              title={widget.title}
+              icon={widget.icon}
+              onClick={widget.onClick}
+              description={widget.description}
+              callToAction={widget.callToAction}
+            />
+          </div>
+        )}
+      </Draggable>
+    );
+  }, []);
 
   return (
-    <div className="dashboard-page">
-      <DashboardHeader />
-      <NavigationMenu />
-      <DndProvider>
-        <DragDropContext onDragEnd={handleDragEnd}>
-          <div className="widget-grid" style={{ gridTemplateColumns: `repeat(${layout.columns}, 1fr)` }}>
-            {layout.widgets.map((widget, index) => (
-              <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
-                {(provided) => (
-                  <div
-                    ref={provided.innerRef}
-                    {...provided.draggableProps}
-                    {...provided.dragHandleProps}
-                    className="widget"
-                  >
-                    <DashboardCard widget={widget} />
-                  </div>
-                )}
-              </Draggable>
-            ))}
-          </div>
-        </DragDropContext>
-      </DndProvider>
-      <WidgetSettings />
-    </div>
+    <DndProvider>
+      <DragDropContext>
+        <Droppable droppableId="widgets">
+          {(provided) => (
+            <div ref={provided.innerRef} {...provided.droppableProps}>
+              {memoizedWidgets.map((widget) => handleWidgetRender(widget))}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
+    </DndProvider>
   );
 }

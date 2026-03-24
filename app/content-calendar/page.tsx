@@ -25,6 +25,26 @@ interface Integration {
   component: any;
 }
 
+const integrations: Integration[] = [
+  { name: 'Google Calendar', key: 'googleCalendar', component: GoogleCalendar },
+  { name: 'Outlook Calendar', key: 'outlookCalendar', component: OutlookCalendar },
+  { name: 'Apple Calendar', key: 'appleCalendar', component: AppleCalendar },
+  { name: 'iCal Calendar', key: 'iCalCalendar', component: ICalCalendar },
+  { name: 'Exchange Calendar', key: 'exchangeCalendar', component: ExchangeCalendar },
+  { name: 'Yahoo Calendar', key: 'yahooCalendar', component: YahooCalendar },
+  { name: 'Zoho Calendar', key: 'zohoCalendar', component: ZohoCalendar },
+  { name: 'Trello', key: 'trello', component: TrelloIntegration },
+  { name: 'Asana', key: 'asana', component: AsanaIntegration },
+  { name: 'Notion', key: 'notion', component: NotionIntegration },
+  { name: 'Jira', key: 'jira', component: JiraIntegration },
+  { name: 'Basecamp', key: 'basecamp', component: BasecampIntegration },
+  { name: 'Wrike', key: 'wrike', component: WrikeIntegration },
+  { name: 'Slack', key: 'slack', component: SlackIntegration },
+  { name: 'Microsoft Teams', key: 'microsoftTeams', component: MicrosoftTeamsIntegration },
+  { name: 'Discord', key: 'discord', component: DiscordIntegration },
+  { name: 'Zoom', key: 'zoom', component: ZoomIntegration },
+];
+
 const ContentCalendarPage = () => {
   const pathname = usePathname();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -55,47 +75,54 @@ const ContentCalendarPage = () => {
   const [realTimeEvents, setRealTimeEvents] = useState<CalendarEvent[]>([]);
   const [selectedIntegration, setSelectedIntegration] = useState<string | null>(null);
 
-  const integrations: Integration[] = [
-    { name: 'Google Calendar', key: 'googleCalendar', component: GoogleCalendar },
-    { name: 'Outlook Calendar', key: 'outlookCalendar', component: OutlookCalendar },
-    { name: 'Apple Calendar', key: 'appleCalendar', component: AppleCalendar },
-    { name: 'iCal Calendar', key: 'iCalCalendar', component: ICalCalendar },
-    { name: 'Exchange Calendar', key: 'exchangeCalendar', component: ExchangeCalendar },
-    { name: 'Yahoo Calendar', key: 'yahooCalendar', component: YahooCalendar },
-    { name: 'Zoho Calendar', key: 'zohoCalendar', component: ZohoCalendar },
-    { name: 'Trello', key: 'trello', component: TrelloIntegration },
-    { name: 'Asana', key: 'asana', component: AsanaIntegration },
-    { name: 'Notion', key: 'notion', component: NotionIntegration },
-    { name: 'Jira', key: 'jira', component: JiraIntegration },
-    { name: 'Basecamp', key: 'basecamp', component: BasecampIntegration },
-    { name: 'Wrike', key: 'wrike', component: WrikeIntegration },
-    { name: 'Slack', key: 'slack', component: SlackIntegration },
-    { name: 'Microsoft Teams', key: 'microsoftTeams', component: MicrosoftTeamsIntegration },
-    { name: 'Discord', key: 'discord', component: DiscordIntegration },
-    { name: 'Zoom', key: 'zoom', component: ZoomIntegration },
-  ];
+  const handleIntegrationConnect = (integration: Integration) => {
+    const component = integration.component;
+    // Connect to the integration using the component
+    // Update the integrationsState with the new connection status
+    setIntegrationsState((prevIntegrationsState) => ({
+      ...prevIntegrationsState,
+      [integration.key]: { events: [], isConnected: true, token: 'token' },
+    }));
+  };
+
+  const handleIntegrationDisconnect = (integration: Integration) => {
+    // Disconnect from the integration
+    // Update the integrationsState with the new connection status
+    setIntegrationsState((prevIntegrationsState) => ({
+      ...prevIntegrationsState,
+      [integration.key]: { events: [], isConnected: false, token: null },
+    }));
+  };
 
   return (
     <Layout>
       <SEO title="Content Calendar" />
       <DndProvider backend={HTML5Backend}>
-        <DroppableCalendar
-          events={events}
-          onEventDrop={(event) => console.log(event)}
-          onEventDrag={(event) => console.log(event)}
-        >
-          {integrations.map((integration) => (
-            <integration.component
-              key={integration.key}
-              integration={integration}
-              events={integrationsState[integration.key].events}
-              isConnected={integrationsState[integration.key].isConnected}
-              token={integrationsState[integration.key].token}
-              onConnect={() => console.log('Connected to ' + integration.name)}
-              onDisconnect={() => console.log('Disconnected from ' + integration.name)}
-            />
-          ))}
-        </DroppableCalendar>
+        <div>
+          <h1>Content Calendar</h1>
+          <div>
+            <h2>Integrations</h2>
+            <ul>
+              {integrations.map((integration) => (
+                <li key={integration.key}>
+                  <span>{integration.name}</span>
+                  {integrationsState[integration.key].isConnected ? (
+                    <button onClick={() => handleIntegrationDisconnect(integration)}>Disconnect</button>
+                  ) : (
+                    <button onClick={() => handleIntegrationConnect(integration)}>Connect</button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <Calendar
+            events={events}
+            selectedDate={selectedDate}
+            onDateChange={(date) => setSelectedDate(date)}
+            onEventDrop={(event) => setDraggedEvent(event)}
+            onEventHover={(event) => setHoveredEvent(event)}
+          />
+        </div>
       </DndProvider>
     </Layout>
   );

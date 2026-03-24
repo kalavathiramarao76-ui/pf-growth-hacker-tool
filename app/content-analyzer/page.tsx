@@ -83,8 +83,8 @@ const countSyllables = (word: string) => {
 };
 
 const performSentimentAnalysisWithHuggingFace = async (text: string) => {
-  const sentimentPipeline = pipeline('sentiment-analysis');
-  const sentimentAnalysis = await sentimentPipeline(text);
+  const sentimentAnalysisPipeline = pipeline('sentiment-analysis');
+  const sentimentAnalysis = await sentimentAnalysisPipeline(text);
   return sentimentAnalysis;
 };
 
@@ -101,16 +101,11 @@ const performTopicModeling = async (text: string) => {
 };
 
 const ContentAnalyzerPage = () => {
-  const router = useRouter();
-  const [analysis, setAnalysis] = useState<any>({});
-  const [text, setText] = useState('');
+  const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-  const handleTextChange = (event: any) => {
-    setText(event.target.value);
-  };
-
-  const handleAnalyze = async () => {
+  const handleAnalyzeContent = async (text: string) => {
     setLoading(true);
     const analysis = await advancedContentAnalysis({ text });
     setAnalysis(analysis);
@@ -121,12 +116,7 @@ const ContentAnalyzerPage = () => {
     <div>
       <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
-      <ContentAnalyzerForm
-        text={text}
-        onTextChange={handleTextChange}
-        onAnalyze={handleAnalyze}
-        loading={loading}
-      />
+      <ContentAnalyzerForm onAnalyze={handleAnalyzeContent} />
       {analysis && (
         <div>
           <OptimizationSuggestions analysis={analysis} />
@@ -134,6 +124,7 @@ const ContentAnalyzerPage = () => {
           <AlternativeFormats analysis={analysis} />
         </div>
       )}
+      {loading && <p>Loading...</p>}
     </div>
   );
 };
