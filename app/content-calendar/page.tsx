@@ -45,6 +45,25 @@ const integrations: Integration[] = [
   { name: 'Zoom', key: 'zoom', component: ZoomIntegration },
 ];
 
+const steps = [
+  {
+    title: 'Step 1: Choose an Integration',
+    description: 'Select the calendar or project management integration you want to connect.',
+  },
+  {
+    title: 'Step 2: Authenticate',
+    description: 'Authenticate with the chosen integration to grant access to your calendar or project management data.',
+  },
+  {
+    title: 'Step 3: Configure',
+    description: 'Configure the integration settings to customize the data synchronization.',
+  },
+  {
+    title: 'Step 4: Confirm',
+    description: 'Confirm the integration and start synchronizing your data.',
+  },
+];
+
 const ContentCalendarPage = () => {
   const pathname = usePathname();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -70,62 +89,44 @@ const ContentCalendarPage = () => {
     discord: { events: [], isConnected: false, token: null },
     zoom: { events: [], isConnected: false, token: null },
   });
-  const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null);
-  const [isConnecting, setIsConnecting] = useState(false);
-
-  const handleConnectIntegration = (integration: Integration) => {
-    setIsConnecting(true);
-    setSelectedIntegration(integration);
-    // Add logic to connect to the selected integration
-    // ...
-    setIsConnecting(false);
-  };
-
-  const handleDisconnectIntegration = (integration: Integration) => {
-    // Add logic to disconnect from the selected integration
-    // ...
-  };
+  const [currentStep, setCurrentStep] = useState(0);
 
   return (
     <Layout>
       <SEO title="Content Calendar" />
-      <DndProvider backend={HTML5Backend}>
-        <div className="flex flex-col h-screen">
-          <div className="flex justify-between items-center py-4">
-            <h1 className="text-3xl font-bold">Content Calendar</h1>
-            <div className="flex items-center">
-              <button
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                onClick={() => handleConnectIntegration(integrations[0])}
-              >
-                Connect Integration
-              </button>
-              {selectedIntegration && (
-                <button
-                  className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded ml-4"
-                  onClick={() => handleDisconnectIntegration(selectedIntegration)}
-                >
-                  Disconnect Integration
-                </button>
-              )}
+      <div className="container">
+        <div className="row">
+          <div className="col-md-12">
+            <h1>Content Calendar</h1>
+            <div className="integration-steps">
+              {steps.map((step, index) => (
+                <div key={index} className={`step ${currentStep === index ? 'active' : ''}`}>
+                  <h2>{step.title}</h2>
+                  <p>{step.description}</p>
+                </div>
+              ))}
             </div>
-          </div>
-          <div className="flex-1 overflow-y-auto">
-            <Calendar
-              events={events}
-              selectedDate={selectedDate}
-              onDateChange={(date) => setSelectedDate(date)}
-            />
-          </div>
-          {isConnecting && (
-            <div className="fixed top-0 left-0 right-0 bottom-0 bg-gray-500 bg-opacity-50 flex justify-center items-center">
-              <div className="bg-white p-4 rounded">
-                <h2 className="text-lg font-bold">Connecting to {selectedIntegration?.name}...</h2>
-              </div>
+            <div className="integration-container">
+              {integrations.map((integration) => (
+                <div key={integration.key} className="integration">
+                  <h2>{integration.name}</h2>
+                  <integration.component />
+                </div>
+              ))}
             </div>
-          )}
+            <DndProvider backend={HTML5Backend}>
+              <Calendar
+                events={events}
+                selectedDate={selectedDate}
+                onDateChange={(date) => setSelectedDate(date)}
+                onEventDragStart={(event) => setDraggedEvent(event)}
+                onEventDragEnd={(event) => setDraggedEvent(null)}
+                onEventHover={(event) => setHoveredEvent(event)}
+              />
+            </DndProvider>
+          </div>
         </div>
-      </DndProvider>
+      </div>
     </Layout>
   );
 };

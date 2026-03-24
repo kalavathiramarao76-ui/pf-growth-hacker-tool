@@ -83,7 +83,12 @@ const initialWidgets = [
           <div className="demo-request">
             <h2>Request a Demo</h2>
             <p>See our premium plan in action and learn how it can help you achieve your content goals.</p>
-            <button>Request a Demo</button>
+            <button>Request Demo</button>
+          </div>
+          <div className="upgrade-now">
+            <h2>Upgrade Now and Unlock Exclusive Benefits</h2>
+            <p>Don't miss out on this opportunity to take your content to the next level. Upgrade now and get instant access to our premium features.</p>
+            <button>Upgrade Now</button>
           </div>
         </div>
       </div>
@@ -91,19 +96,8 @@ const initialWidgets = [
   },
 ];
 
-export default function DashboardPage() {
+const App = () => {
   const router = useRouter();
-  const [user, setUser] = useState(null);
-  const [widgets, setWidgets] = useState(initialWidgets);
-
-  const memoizedWidgets = useMemo(() => {
-    return widgets.map((widget) => {
-      if (widget.id === 1) {
-        return { ...widget };
-      }
-      return widget;
-    });
-  }, [widgets]);
 
   return (
     <div>
@@ -113,12 +107,22 @@ export default function DashboardPage() {
         <DragDropContext>
           <Droppable droppableId="widgets">
             {(provided) => (
-              <div ref={provided.innerRef} {...provided.droppableProps}>
-                {memoizedWidgets.map((widget, index) => (
+              <div {...provided.droppableProps} ref={provided.innerRef}>
+                {initialWidgets.map((widget, index) => (
                   <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
                     {(provided) => (
-                      <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
-                        <DashboardCard widget={widget} />
+                      <div
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        ref={provided.innerRef}
+                      >
+                        <DashboardCard
+                          title={widget.title}
+                          icon={widget.icon}
+                          onClick={widget.onClick}
+                          description={widget.description}
+                          callToAction={widget.callToAction}
+                        />
                       </div>
                     )}
                   </Draggable>
@@ -129,6 +133,9 @@ export default function DashboardPage() {
           </Droppable>
         </DragDropContext>
       </DndProvider>
+      <WidgetSettings />
     </div>
   );
-}
+};
+
+export default App;
