@@ -87,28 +87,57 @@ const initialWidgets = [
           </div>
           <div className="upgrade-now">
             <h2>Upgrade Now and Unlock Exclusive Benefits</h2>
-            <p>Don't miss out on this opportunity to take your content to the next level. Upgrade now and get instant access to our premium features.</p>
+            <p>Don't miss out on this opportunity to elevate your content strategy. Upgrade to our premium plan today and start seeing results!</p>
             <button>Upgrade Now</button>
           </div>
         </div>
       </div>
     )
   },
+  { 
+    id: 6, 
+    title: 'Premium Plan Benefits', 
+    icon: <MdSettings size={24} />, 
+    onClick: () => {}, 
+    description: 'Learn more about the benefits of our premium plan, including advanced features, priority support, and expert guidance.',
+    callToAction: (
+      <div className="premium-plan-benefits">
+        <h1>What You'll Get with Our Premium Plan</h1>
+        <ul>
+          <li>Advanced analytics and insights</li>
+          <li>Priority support and expert guidance</li>
+          <li>Access to exclusive content and resources</li>
+          <li>Enhanced security and backups</li>
+          <li>And more!</li>
+        </ul>
+        <button>Learn More</button>
+      </div>
+    )
+  }
 ];
 
-const App = () => {
+const DashboardPage = () => {
   const router = useRouter();
+  const [widgets, setWidgets] = useState(initialWidgets);
+
+  const handleDragEnd = (result: any) => {
+    if (!result.destination) return;
+    const newWidgets = [...widgets];
+    const [reorderedItem] = newWidgets.splice(result.source.index, 1);
+    newWidgets.splice(result.destination.index, 0, reorderedItem);
+    setWidgets(newWidgets);
+  };
 
   return (
-    <div>
-      <DashboardHeader />
-      <NavigationMenu />
-      <DndProvider>
-        <DragDropContext>
+    <DndProvider>
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <DashboardHeader />
+        <NavigationMenu />
+        <div className="dashboard-content">
           <Droppable droppableId="widgets">
             {(provided) => (
               <div {...provided.droppableProps} ref={provided.innerRef}>
-                {initialWidgets.map((widget, index) => (
+                {widgets.map((widget, index) => (
                   <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
                     {(provided) => (
                       <div
@@ -131,11 +160,10 @@ const App = () => {
               </div>
             )}
           </Droppable>
-        </DragDropContext>
-      </DndProvider>
-      <WidgetSettings />
-    </div>
+        </div>
+      </DragDropContext>
+    </DndProvider>
   );
 };
 
-export default App;
+export default DashboardPage;

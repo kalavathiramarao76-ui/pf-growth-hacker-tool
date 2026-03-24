@@ -23,112 +23,144 @@ interface Integration {
   name: string;
   key: string;
   component: any;
+  category: string;
 }
 
 const integrations: Integration[] = [
-  { name: 'Google Calendar', key: 'googleCalendar', component: GoogleCalendar },
-  { name: 'Outlook Calendar', key: 'outlookCalendar', component: OutlookCalendar },
-  { name: 'Apple Calendar', key: 'appleCalendar', component: AppleCalendar },
-  { name: 'iCal Calendar', key: 'iCalCalendar', component: ICalCalendar },
-  { name: 'Exchange Calendar', key: 'exchangeCalendar', component: ExchangeCalendar },
-  { name: 'Yahoo Calendar', key: 'yahooCalendar', component: YahooCalendar },
-  { name: 'Zoho Calendar', key: 'zohoCalendar', component: ZohoCalendar },
-  { name: 'Trello', key: 'trello', component: TrelloIntegration },
-  { name: 'Asana', key: 'asana', component: AsanaIntegration },
-  { name: 'Notion', key: 'notion', component: NotionIntegration },
-  { name: 'Jira', key: 'jira', component: JiraIntegration },
-  { name: 'Basecamp', key: 'basecamp', component: BasecampIntegration },
-  { name: 'Wrike', key: 'wrike', component: WrikeIntegration },
-  { name: 'Slack', key: 'slack', component: SlackIntegration },
-  { name: 'Microsoft Teams', key: 'microsoftTeams', component: MicrosoftTeamsIntegration },
-  { name: 'Discord', key: 'discord', component: DiscordIntegration },
-  { name: 'Zoom', key: 'zoom', component: ZoomIntegration },
+  { name: 'Google Calendar', key: 'googleCalendar', component: GoogleCalendar, category: 'Calendar' },
+  { name: 'Outlook Calendar', key: 'outlookCalendar', component: OutlookCalendar, category: 'Calendar' },
+  { name: 'Apple Calendar', key: 'appleCalendar', component: AppleCalendar, category: 'Calendar' },
+  { name: 'iCal Calendar', key: 'iCalCalendar', component: ICalCalendar, category: 'Calendar' },
+  { name: 'Exchange Calendar', key: 'exchangeCalendar', component: ExchangeCalendar, category: 'Calendar' },
+  { name: 'Yahoo Calendar', key: 'yahooCalendar', component: YahooCalendar, category: 'Calendar' },
+  { name: 'Zoho Calendar', key: 'zohoCalendar', component: ZohoCalendar, category: 'Calendar' },
+  { name: 'Trello', key: 'trello', component: TrelloIntegration, category: 'Project Management' },
+  { name: 'Asana', key: 'asana', component: AsanaIntegration, category: 'Project Management' },
+  { name: 'Notion', key: 'notion', component: NotionIntegration, category: 'Project Management' },
+  { name: 'Jira', key: 'jira', component: JiraIntegration, category: 'Project Management' },
+  { name: 'Basecamp', key: 'basecamp', component: BasecampIntegration, category: 'Project Management' },
+  { name: 'Wrike', key: 'wrike', component: WrikeIntegration, category: 'Project Management' },
+  { name: 'Slack', key: 'slack', component: SlackIntegration, category: 'Communication' },
+  { name: 'Microsoft Teams', key: 'microsoftTeams', component: MicrosoftTeamsIntegration, category: 'Communication' },
+  { name: 'Discord', key: 'discord', component: DiscordIntegration, category: 'Communication' },
+  { name: 'Zoom', key: 'zoom', component: ZoomIntegration, category: 'Communication' },
+];
+
+const categories = [
+  { name: 'Calendar', integrations: integrations.filter(integration => integration.category === 'Calendar') },
+  { name: 'Project Management', integrations: integrations.filter(integration => integration.category === 'Project Management') },
+  { name: 'Communication', integrations: integrations.filter(integration => integration.category === 'Communication') },
 ];
 
 const steps = [
   {
-    title: 'Step 1: Choose an Integration',
-    description: 'Select the calendar or project management integration you want to connect.',
+    title: 'Step 1: Choose a Category',
+    description: 'Select the category of integration you want to connect.',
   },
   {
-    title: 'Step 2: Authenticate',
-    description: 'Authenticate with the chosen integration to grant access to your calendar or project management data.',
+    title: 'Step 2: Choose an Integration',
+    description: 'Select the integration you want to connect from the chosen category.',
   },
   {
-    title: 'Step 3: Configure',
+    title: 'Step 3: Authenticate',
+    description: 'Authenticate with the chosen integration to grant access to your data.',
+  },
+  {
+    title: 'Step 4: Configure',
     description: 'Configure the integration settings to customize the data synchronization.',
   },
   {
-    title: 'Step 4: Confirm',
-    description: 'Confirm the integration and start synchronizing your data.',
+    title: 'Step 5: Confirm',
+    description: 'Confirm the integration and start using the AI-Powered Content Optimizer.',
   },
 ];
 
-const ContentCalendarPage = () => {
-  const pathname = usePathname();
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [draggedEvent, setDraggedEvent] = useState<CalendarEvent | null>(null);
-  const [hoveredEvent, setHoveredEvent] = useState<CalendarEvent | null>(null);
-  const [integrationsState, setIntegrationsState] = useState({
-    googleCalendar: { events: [], isConnected: false, token: null },
-    outlookCalendar: { events: [], isConnected: false, token: null },
-    appleCalendar: { events: [], isConnected: false, token: null },
-    iCalCalendar: { events: [], isConnected: false, token: null },
-    exchangeCalendar: { events: [], isConnected: false, token: null },
-    yahooCalendar: { events: [], isConnected: false, token: null },
-    zohoCalendar: { events: [], isConnected: false, token: null },
-    trello: { events: [], isConnected: false, token: null },
-    asana: { events: [], isConnected: false, token: null },
-    notion: { events: [], isConnected: false, token: null },
-    jira: { events: [], isConnected: false, token: null },
-    basecamp: { events: [], isConnected: false, token: null },
-    wrike: { events: [], isConnected: false, token: null },
-    slack: { events: [], isConnected: false, token: null },
-    microsoftTeams: { events: [], isConnected: false, token: null },
-    discord: { events: [], isConnected: false, token: null },
-    zoom: { events: [], isConnected: false, token: null },
-  });
-  const [currentStep, setCurrentStep] = useState(0);
+const [currentStep, setCurrentStep] = useState(0);
+const [selectedCategory, setSelectedCategory] = useState(null);
+const [selectedIntegration, setSelectedIntegration] = useState(null);
 
+const handleCategorySelect = (category) => {
+  setSelectedCategory(category);
+  setCurrentStep(1);
+};
+
+const handleIntegrationSelect = (integration) => {
+  setSelectedIntegration(integration);
+  setCurrentStep(2);
+};
+
+const handleAuthenticate = () => {
+  // Authenticate with the chosen integration
+  setCurrentStep(3);
+};
+
+const handleConfigure = () => {
+  // Configure the integration settings
+  setCurrentStep(4);
+};
+
+const handleConfirm = () => {
+  // Confirm the integration and start using the AI-Powered Content Optimizer
+  setCurrentStep(5);
+};
+
+export default function ContentCalendarPage() {
   return (
     <Layout>
       <SEO title="Content Calendar" />
-      <div className="container">
-        <div className="row">
-          <div className="col-md-12">
-            <h1>Content Calendar</h1>
-            <div className="integration-steps">
-              {steps.map((step, index) => (
-                <div key={index} className={`step ${currentStep === index ? 'active' : ''}`}>
-                  <h2>{step.title}</h2>
-                  <p>{step.description}</p>
-                </div>
-              ))}
+      <DndProvider backend={HTML5Backend}>
+        <div className="content-calendar-page">
+          <h1>Content Calendar</h1>
+          {currentStep === 0 && (
+            <div>
+              <h2>Step 1: Choose a Category</h2>
+              <ul>
+                {categories.map(category => (
+                  <li key={category.name}>
+                    <button onClick={() => handleCategorySelect(category)}>{category.name}</button>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <div className="integration-container">
-              {integrations.map((integration) => (
-                <div key={integration.key} className="integration">
-                  <h2>{integration.name}</h2>
-                  <integration.component />
-                </div>
-              ))}
+          )}
+          {currentStep === 1 && (
+            <div>
+              <h2>Step 2: Choose an Integration</h2>
+              <ul>
+                {selectedCategory.integrations.map(integration => (
+                  <li key={integration.name}>
+                    <button onClick={() => handleIntegrationSelect(integration)}>{integration.name}</button>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <DndProvider backend={HTML5Backend}>
-              <Calendar
-                events={events}
-                selectedDate={selectedDate}
-                onDateChange={(date) => setSelectedDate(date)}
-                onEventDragStart={(event) => setDraggedEvent(event)}
-                onEventDragEnd={(event) => setDraggedEvent(null)}
-                onEventHover={(event) => setHoveredEvent(event)}
-              />
-            </DndProvider>
-          </div>
+          )}
+          {currentStep === 2 && (
+            <div>
+              <h2>Step 3: Authenticate</h2>
+              <button onClick={handleAuthenticate}>Authenticate</button>
+            </div>
+          )}
+          {currentStep === 3 && (
+            <div>
+              <h2>Step 4: Configure</h2>
+              <button onClick={handleConfigure}>Configure</button>
+            </div>
+          )}
+          {currentStep === 4 && (
+            <div>
+              <h2>Step 5: Confirm</h2>
+              <button onClick={handleConfirm}>Confirm</button>
+            </div>
+          )}
+          {currentStep === 5 && (
+            <div>
+              <h2>Integration Successful</h2>
+              <p>You have successfully integrated with {selectedIntegration.name}.</p>
+            </div>
+          )}
         </div>
-      </div>
+      </DndProvider>
     </Layout>
   );
-};
-
-export default ContentCalendarPage;
+}
