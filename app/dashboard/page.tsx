@@ -76,7 +76,14 @@ const initialWidgets = [
             <li>Yearly: $99.99 (save 20% compared to monthly)</li>
           </ul>
           <div className="limited-time-offer">
-            <h2>Limited Time Offer: Get 15% Off Your First</h2>
+            <h2>Limited Time Offer: Get 15% Off Your First Year</h2>
+            <p>Try our premium plan risk-free with a 14-day free trial. Cancel anytime.</p>
+            <button>Start Free Trial</button>
+          </div>
+          <div className="demo-request">
+            <h2>Request a Demo</h2>
+            <p>See our premium plan in action and learn how it can help you achieve your content goals.</p>
+            <button>Request a Demo</button>
           </div>
         </div>
       </div>
@@ -92,54 +99,36 @@ export default function DashboardPage() {
   const memoizedWidgets = useMemo(() => {
     return widgets.map((widget) => {
       if (widget.id === 1) {
-        return { ...widget, onClick: () => router.push('/content-analyzer') };
-      } else if (widget.id === 2) {
-        return { ...widget, onClick: () => router.push('/engagement-tracker') };
-      } else if (widget.id === 3) {
-        return { ...widget, onClick: () => router.push('/content-calendar') };
-      } else if (widget.id === 4) {
-        return { ...widget, onClick: () => router.push('/settings') };
-      } else if (widget.id === 5) {
-        return { ...widget, onClick: () => router.push('/upgrade-plan') };
+        return { ...widget };
       }
       return widget;
     });
-  }, [widgets, router]);
-
-  const handleWidgetRender = useCallback((widget) => {
-    return (
-      <Draggable key={widget.id} draggableId={widget.id.toString()} index={widget.id - 1}>
-        {(provided) => (
-          <div
-            ref={provided.innerRef}
-            {...provided.draggableProps}
-            {...provided.dragHandleProps}
-          >
-            <DashboardCard
-              title={widget.title}
-              icon={widget.icon}
-              onClick={widget.onClick}
-              description={widget.description}
-              callToAction={widget.callToAction}
-            />
-          </div>
-        )}
-      </Draggable>
-    );
-  }, []);
+  }, [widgets]);
 
   return (
-    <DndProvider>
-      <DragDropContext>
-        <Droppable droppableId="widgets">
-          {(provided) => (
-            <div ref={provided.innerRef} {...provided.droppableProps}>
-              {memoizedWidgets.map((widget) => handleWidgetRender(widget))}
-              {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
-      </DragDropContext>
-    </DndProvider>
+    <div>
+      <DashboardHeader />
+      <NavigationMenu />
+      <DndProvider>
+        <DragDropContext>
+          <Droppable droppableId="widgets">
+            {(provided) => (
+              <div ref={provided.innerRef} {...provided.droppableProps}>
+                {memoizedWidgets.map((widget, index) => (
+                  <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+                    {(provided) => (
+                      <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                        <DashboardCard widget={widget} />
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
+      </DndProvider>
+    </div>
   );
 }

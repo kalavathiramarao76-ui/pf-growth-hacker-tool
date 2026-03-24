@@ -70,58 +70,60 @@ const ContentCalendarPage = () => {
     discord: { events: [], isConnected: false, token: null },
     zoom: { events: [], isConnected: false, token: null },
   });
-  const [ssoToken, setSsoToken] = useState<string | null>(null);
-  const [collaborators, setCollaborators] = useState<string[]>([]);
-  const [realTimeEvents, setRealTimeEvents] = useState<CalendarEvent[]>([]);
-  const [selectedIntegration, setSelectedIntegration] = useState<string | null>(null);
+  const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
 
-  const handleIntegrationConnect = (integration: Integration) => {
-    const component = integration.component;
-    // Connect to the integration using the component
-    // Update the integrationsState with the new connection status
-    setIntegrationsState((prevIntegrationsState) => ({
-      ...prevIntegrationsState,
-      [integration.key]: { events: [], isConnected: true, token: 'token' },
-    }));
+  const handleConnectIntegration = (integration: Integration) => {
+    setIsConnecting(true);
+    setSelectedIntegration(integration);
+    // Add logic to connect to the selected integration
+    // ...
+    setIsConnecting(false);
   };
 
-  const handleIntegrationDisconnect = (integration: Integration) => {
-    // Disconnect from the integration
-    // Update the integrationsState with the new connection status
-    setIntegrationsState((prevIntegrationsState) => ({
-      ...prevIntegrationsState,
-      [integration.key]: { events: [], isConnected: false, token: null },
-    }));
+  const handleDisconnectIntegration = (integration: Integration) => {
+    // Add logic to disconnect from the selected integration
+    // ...
   };
 
   return (
     <Layout>
       <SEO title="Content Calendar" />
       <DndProvider backend={HTML5Backend}>
-        <div>
-          <h1>Content Calendar</h1>
-          <div>
-            <h2>Integrations</h2>
-            <ul>
-              {integrations.map((integration) => (
-                <li key={integration.key}>
-                  <span>{integration.name}</span>
-                  {integrationsState[integration.key].isConnected ? (
-                    <button onClick={() => handleIntegrationDisconnect(integration)}>Disconnect</button>
-                  ) : (
-                    <button onClick={() => handleIntegrationConnect(integration)}>Connect</button>
-                  )}
-                </li>
-              ))}
-            </ul>
+        <div className="flex flex-col h-screen">
+          <div className="flex justify-between items-center py-4">
+            <h1 className="text-3xl font-bold">Content Calendar</h1>
+            <div className="flex items-center">
+              <button
+                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                onClick={() => handleConnectIntegration(integrations[0])}
+              >
+                Connect Integration
+              </button>
+              {selectedIntegration && (
+                <button
+                  className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded ml-4"
+                  onClick={() => handleDisconnectIntegration(selectedIntegration)}
+                >
+                  Disconnect Integration
+                </button>
+              )}
+            </div>
           </div>
-          <Calendar
-            events={events}
-            selectedDate={selectedDate}
-            onDateChange={(date) => setSelectedDate(date)}
-            onEventDrop={(event) => setDraggedEvent(event)}
-            onEventHover={(event) => setHoveredEvent(event)}
-          />
+          <div className="flex-1 overflow-y-auto">
+            <Calendar
+              events={events}
+              selectedDate={selectedDate}
+              onDateChange={(date) => setSelectedDate(date)}
+            />
+          </div>
+          {isConnecting && (
+            <div className="fixed top-0 left-0 right-0 bottom-0 bg-gray-500 bg-opacity-50 flex justify-center items-center">
+              <div className="bg-white p-4 rounded">
+                <h2 className="text-lg font-bold">Connecting to {selectedIntegration?.name}...</h2>
+              </div>
+            </div>
+          )}
         </div>
       </DndProvider>
     </Layout>
