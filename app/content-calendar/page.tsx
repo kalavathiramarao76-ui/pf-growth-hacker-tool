@@ -45,6 +45,8 @@ const ContentCalendarPage = () => {
   const [ssoToken, setSsoToken] = useState<string | null>(null);
   const [collaborators, setCollaborators] = useState<string[]>([]);
   const [realTimeEvents, setRealTimeEvents] = useState<CalendarEvent[]>([]);
+  const [integrationStep, setIntegrationStep] = useState(0);
+  const [selectedIntegration, setSelectedIntegration] = useState('');
 
   const socket = new Socket();
 
@@ -55,44 +57,73 @@ const ContentCalendarPage = () => {
     });
   }, []);
 
-  const connectCalendar = async (calendarType: string) => {
-    switch (calendarType) {
-      case 'google':
-        if (!isGoogleCalendarConnected) {
-          const googleCalendarToken = await getGoogleCalendarToken();
-          setIntegrationTokens((prevTokens) => ({ ...prevTokens, googleCalendar: googleCalendarToken }));
-          setIsGoogleCalendarConnected(true);
-        }
+  const handleIntegration = (integration: string) => {
+    setSelectedIntegration(integration);
+    setIntegrationStep(1);
+  };
+
+  const handleConnectIntegration = () => {
+    switch (selectedIntegration) {
+      case 'googleCalendar':
+        setIsGoogleCalendarConnected(true);
         break;
-      case 'outlook':
-        if (!isOutlookCalendarConnected) {
-          const outlookCalendarToken = await getOutlookCalendarToken();
-          setIntegrationTokens((prevTokens) => ({ ...prevTokens, outlookCalendar: outlookCalendarToken }));
-          setIsOutlookCalendarConnected(true);
-        }
+      case 'outlookCalendar':
+        setIsOutlookCalendarConnected(true);
         break;
-      case 'apple':
-        if (!isAppleCalendarConnected) {
-          const appleCalendarToken = await getAppleCalendarToken();
-          setIntegrationTokens((prevTokens) => ({ ...prevTokens, appleCalendar: appleCalendarToken }));
-          setIsAppleCalendarConnected(true);
-        }
+      case 'appleCalendar':
+        setIsAppleCalendarConnected(true);
+        break;
+      case 'trello':
+        setIsTrelloConnected(true);
+        break;
+      case 'asana':
+        setIsAsanaConnected(true);
+        break;
+      case 'notion':
+        setIsNotionConnected(true);
+        break;
+      case 'slack':
+        setIsSlackConnected(true);
+        break;
+      case 'microsoftTeams':
+        setIsMicrosoftTeamsConnected(true);
         break;
       default:
         break;
     }
+    setIntegrationStep(0);
   };
 
-  const getGoogleCalendarToken = async () => {
-    // Implement Google Calendar token retrieval logic
-  };
-
-  const getOutlookCalendarToken = async () => {
-    // Implement Outlook Calendar token retrieval logic
-  };
-
-  const getAppleCalendarToken = async () => {
-    // Implement Apple Calendar token retrieval logic
+  const handleDisconnectIntegration = () => {
+    switch (selectedIntegration) {
+      case 'googleCalendar':
+        setIsGoogleCalendarConnected(false);
+        break;
+      case 'outlookCalendar':
+        setIsOutlookCalendarConnected(false);
+        break;
+      case 'appleCalendar':
+        setIsAppleCalendarConnected(false);
+        break;
+      case 'trello':
+        setIsTrelloConnected(false);
+        break;
+      case 'asana':
+        setIsAsanaConnected(false);
+        break;
+      case 'notion':
+        setIsNotionConnected(false);
+        break;
+      case 'slack':
+        setIsSlackConnected(false);
+        break;
+      case 'microsoftTeams':
+        setIsMicrosoftTeamsConnected(false);
+        break;
+      default:
+        break;
+    }
+    setIntegrationStep(0);
   };
 
   return (
@@ -102,27 +133,87 @@ const ContentCalendarPage = () => {
         <Calendar
           events={events}
           selectedDate={selectedDate}
-          onDateChange={(date) => setSelectedDate(date)}
-          onEventDragStart={(event) => setDraggedEvent(event)}
-          onEventDragEnd={(event) => setDraggedEvent(null)}
-          onEventHover={(event) => setHoveredEvent(event)}
-        >
-          <DroppableCalendar />
-          {isGoogleCalendarConnected && (
-            <GoogleCalendar events={googleCalendarEvents} onEventClick={(event) => console.log(event)} />
+          draggedEvent={draggedEvent}
+          hoveredEvent={hoveredEvent}
+          onEventDrop={(event: CalendarEvent) => {
+            setEvents((prevEvents) => [...prevEvents, event]);
+          }}
+        />
+        <div>
+          <h2>Integrations</h2>
+          <ul>
+            <li>
+              <button onClick={() => handleIntegration('googleCalendar')}>Google Calendar</button>
+              {isGoogleCalendarConnected ? (
+                <button onClick={handleDisconnectIntegration}>Disconnect</button>
+              ) : (
+                <button onClick={handleConnectIntegration}>Connect</button>
+              )}
+            </li>
+            <li>
+              <button onClick={() => handleIntegration('outlookCalendar')}>Outlook Calendar</button>
+              {isOutlookCalendarConnected ? (
+                <button onClick={handleDisconnectIntegration}>Disconnect</button>
+              ) : (
+                <button onClick={handleConnectIntegration}>Connect</button>
+              )}
+            </li>
+            <li>
+              <button onClick={() => handleIntegration('appleCalendar')}>Apple Calendar</button>
+              {isAppleCalendarConnected ? (
+                <button onClick={handleDisconnectIntegration}>Disconnect</button>
+              ) : (
+                <button onClick={handleConnectIntegration}>Connect</button>
+              )}
+            </li>
+            <li>
+              <button onClick={() => handleIntegration('trello')}>Trello</button>
+              {isTrelloConnected ? (
+                <button onClick={handleDisconnectIntegration}>Disconnect</button>
+              ) : (
+                <button onClick={handleConnectIntegration}>Connect</button>
+              )}
+            </li>
+            <li>
+              <button onClick={() => handleIntegration('asana')}>Asana</button>
+              {isAsanaConnected ? (
+                <button onClick={handleDisconnectIntegration}>Disconnect</button>
+              ) : (
+                <button onClick={handleConnectIntegration}>Connect</button>
+              )}
+            </li>
+            <li>
+              <button onClick={() => handleIntegration('notion')}>Notion</button>
+              {isNotionConnected ? (
+                <button onClick={handleDisconnectIntegration}>Disconnect</button>
+              ) : (
+                <button onClick={handleConnectIntegration}>Connect</button>
+              )}
+            </li>
+            <li>
+              <button onClick={() => handleIntegration('slack')}>Slack</button>
+              {isSlackConnected ? (
+                <button onClick={handleDisconnectIntegration}>Disconnect</button>
+              ) : (
+                <button onClick={handleConnectIntegration}>Connect</button>
+              )}
+            </li>
+            <li>
+              <button onClick={() => handleIntegration('microsoftTeams')}>Microsoft Teams</button>
+              {isMicrosoftTeamsConnected ? (
+                <button onClick={handleDisconnectIntegration}>Disconnect</button>
+              ) : (
+                <button onClick={handleConnectIntegration}>Connect</button>
+              )}
+            </li>
+          </ul>
+          {integrationStep === 1 && (
+            <div>
+              <h3>Connect {selectedIntegration}</h3>
+              <button onClick={handleConnectIntegration}>Connect</button>
+            </div>
           )}
-          {isOutlookCalendarConnected && (
-            <OutlookCalendar events={outlookCalendarEvents} onEventClick={(event) => console.log(event)} />
-          )}
-          {isAppleCalendarConnected && (
-            <AppleCalendar events={appleCalendarEvents} onEventClick={(event) => console.log(event)} />
-          )}
-          <Tooltip>
-            <button onClick={() => connectCalendar('google')}>Connect Google Calendar</button>
-            <button onClick={() => connectCalendar('outlook')}>Connect Outlook Calendar</button>
-            <button onClick={() => connectCalendar('apple')}>Connect Apple Calendar</button>
-          </Tooltip>
-        </Calendar>
+        </div>
       </DndProvider>
     </Layout>
   );

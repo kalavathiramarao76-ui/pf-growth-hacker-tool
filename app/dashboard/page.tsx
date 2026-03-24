@@ -80,16 +80,37 @@ export default function DashboardPage() {
             </ul>
             <div className="limited-time-offer">
               <h2>Limited Time Offer: Get 15% Off Your First Year!</h2>
-              <button className="upgrade-button" onClick={() => router.push('/upgrade-plan')}>Upgrade Now and Unlock Your Content's Full Potential</button>
             </div>
           </div>
         </div>
-      )
+      ),
     },
   ]);
 
+  const optimizedWidgets = widgets.map((widget) => {
+    if (widget.callToAction) {
+      return {
+        ...widget,
+        callToAction: (
+          <div className="lazy-loaded-call-to-action" onClick={() => {
+            const fullCallToAction = widget.callToAction;
+            setWidgets((prevWidgets) => {
+              const updatedWidgets = [...prevWidgets];
+              const index = updatedWidgets.findIndex((w) => w.id === widget.id);
+              updatedWidgets[index].callToAction = fullCallToAction;
+              return updatedWidgets;
+            });
+          }}>
+            <h2>Learn More</h2>
+          </div>
+        ),
+      };
+    }
+    return widget;
+  });
+
   return (
-    <div>
+    <div className="dashboard-page">
       <DashboardHeader />
       <NavigationMenu />
       <DndProvider>
@@ -97,7 +118,7 @@ export default function DashboardPage() {
           <Droppable droppableId="widgets">
             {(provided) => (
               <div {...provided.droppableProps} ref={provided.innerRef}>
-                {widgets.map((widget, index) => (
+                {optimizedWidgets.map((widget, index) => (
                   <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
                     {(provided) => (
                       <div
@@ -105,13 +126,7 @@ export default function DashboardPage() {
                         {...provided.dragHandleProps}
                         ref={provided.innerRef}
                       >
-                        <DashboardCard
-                          title={widget.title}
-                          icon={widget.icon}
-                          onClick={widget.onClick}
-                          description={widget.description}
-                          callToAction={widget.callToAction}
-                        />
+                        <DashboardCard widget={widget} />
                       </div>
                     )}
                   </Draggable>
@@ -122,6 +137,7 @@ export default function DashboardPage() {
           </Droppable>
         </DragDropContext>
       </DndProvider>
+      <WidgetSettings />
     </div>
   );
 }

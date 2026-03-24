@@ -16,6 +16,7 @@ import * as tf from '@tensorflow/tfjs';
 import { NlpManager } from 'node-nlp';
 import * as spacy from 'spacy';
 import { LanguageModel } from 'langchain';
+import { HuggingFaceHub } from 'huggingface-hub';
 
 const advancedContentAnalysis = async (analysis: any) => {
   const advancedAnalysis = {
@@ -23,7 +24,7 @@ const advancedContentAnalysis = async (analysis: any) => {
     readabilityScore: calculateReadabilityScore(analysis.text),
     fleschKincaidGradeLevel: calculateFleschKincaidGradeLevel(analysis.text),
     gunningFogIndex: calculateGunningFogIndex(analysis.text),
-    sentimentAnalysis: await performSentimentAnalysisWithSpacy(analysis.text),
+    sentimentAnalysis: await performSentimentAnalysisWithHuggingFace(analysis.text),
     entityRecognition: await performEntityRecognitionWithSpacy(analysis.text),
     topicModeling: await performTopicModeling(analysis.text),
   };
@@ -77,33 +78,34 @@ const countSyllables = (word: string) => {
   return syllableCount;
 };
 
-const performSentimentAnalysisWithSpacy = async (text: string) => {
-  const nlp = await LanguageModel.load('sentiment-analysis');
-  const result = await nlp(text);
-  return result;
+const performSentimentAnalysisWithHuggingFace = async (text: string) => {
+  const model = await HuggingFaceHub.loadModel('distilbert-base-uncased-finetuned-sst-2-english');
+  const sentiment = await model.predict(text);
+  return sentiment;
 };
 
 const performEntityRecognitionWithSpacy = async (text: string) => {
-  const nlp = await LanguageModel.load('entity-recognition');
-  const result = await nlp(text);
-  return result;
+  const nlp = await spacy.load('en_core_web_sm');
+  const doc = nlp(text);
+  const entities = doc.ents.map((ent) => ({ text: ent.text, label: ent.label_ }));
+  return entities;
 };
 
 const performTopicModeling = async (text: string) => {
-  const nlp = await LanguageModel.load('topic-modeling');
-  const result = await nlp(text);
-  return result;
+  const nlpManager = new NlpManager({ languages: ['en'] });
+  const topicModel = await nlpManager.topicModeling(text);
+  return topicModel;
 };
 
-const Page = () => {
+const ContentAnalyzerPage = () => {
   const [analysis, setAnalysis] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleAnalyze = async (text: string) => {
     setLoading(true);
-    const result = await advancedContentAnalysis({ text });
-    setAnalysis(result);
+    const analysis = await advancedContentAnalysis({ text });
+    setAnalysis(analysis);
     setLoading(false);
   };
 
@@ -111,7 +113,7 @@ const Page = () => {
     <div>
       <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
-      <ContentAnalyzerForm onAnalyze={handleAnalyze} loading={loading} />
+      <ContentAnalyzerForm onAnalyze={handleAnalyze} />
       {analysis && (
         <div>
           <OptimizationSuggestions analysis={analysis} />
@@ -119,8 +121,9 @@ const Page = () => {
           <AlternativeFormats analysis={analysis} />
         </div>
       )}
+      {loading && <p>Loading...</p>}
     </div>
   );
 };
 
-export default Page;
+export default ContentAnalyzerPage;
