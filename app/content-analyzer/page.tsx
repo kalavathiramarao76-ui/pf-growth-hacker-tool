@@ -73,50 +73,54 @@ const countSyllables = (word: string) => {
       lastCharWasVowel = false;
     }
   }
+  if (word.endsWith('e')) {
+    syllableCount--;
+  }
+  if (syllableCount === 0) {
+    syllableCount = 1;
+  }
   return syllableCount;
 };
 
-// Use the more advanced NLP library for sentiment analysis
 const performSentimentAnalysisWithHuggingFace = async (text: string) => {
   const sentimentPipeline = pipeline('sentiment-analysis');
   const result = await sentimentPipeline(text);
   return result;
 };
 
-// Use the more advanced NLP library for entity recognition
 const performEntityRecognitionWithSpacy = async (text: string) => {
-  const entityRecognitionPipeline = pipeline('ner');
-  const result = await entityRecognitionPipeline(text);
-  return result;
+  const spacyModel = await spacy.load('en_core_web_sm');
+  const doc = spacyModel(text);
+  const entities = doc.ents.map((ent) => ({ text: ent.text, label: ent.label_ }));
+  return entities;
 };
 
-// Use the more advanced NLP library for topic modeling
 const performTopicModeling = async (text: string) => {
-  const topicModelingPipeline = pipeline('topic-modeling');
-  const result = await topicModelingPipeline(text);
-  return result;
+  const languageModel = new LanguageModel();
+  const topics = await languageModel.getTopics(text);
+  return topics;
 };
 
-const Page = () => {
-  const router = useRouter();
+const ContentAnalyzerPage = () => {
   const [analysis, setAnalysis] = useState<any>({});
-  const [loading, setLoading] = useState(false);
+  const [text, setText] = useState('');
+  const router = useRouter();
 
-  const handleAnalyze = async (text: string) => {
-    setLoading(true);
-    const analysisResult = await advancedContentAnalysis({ text });
-    setAnalysis(analysisResult);
-    setLoading(false);
+  const handleAnalyze = async () => {
+    const advancedAnalysis = await advancedContentAnalysis({ text });
+    setAnalysis(advancedAnalysis);
   };
 
   return (
     <div>
       <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
-      <ContentAnalyzerForm onAnalyze={handleAnalyze} />
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
+      <ContentAnalyzerForm
+        text={text}
+        onChange={(text) => setText(text)}
+        onAnalyze={handleAnalyze}
+      />
+      {analysis && (
         <div>
           <OptimizationSuggestions analysis={analysis} />
           <EngagementTracker analysis={analysis} />
@@ -127,4 +131,4 @@ const Page = () => {
   );
 };
 
-export default Page;
+export default ContentAnalyzerPage;
