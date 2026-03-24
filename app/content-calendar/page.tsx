@@ -13,34 +13,27 @@ import { DraggableEvent, DroppableCalendar } from '../components/DraggableEvent'
 import { SlackIntegration, MicrosoftTeamsIntegration } from '../components/CommunicationIntegrations';
 import { Socket } from '../utils/socket';
 
+interface IntegrationState {
+  events: CalendarEvent[];
+  isConnected: boolean;
+  token: string | null;
+}
+
 const ContentCalendarPage = () => {
   const pathname = usePathname();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [draggedEvent, setDraggedEvent] = useState<CalendarEvent | null>(null);
   const [hoveredEvent, setHoveredEvent] = useState<CalendarEvent | null>(null);
-  const [googleCalendarEvents, setGoogleCalendarEvents] = useState<CalendarEvent[]>([]);
-  const [outlookCalendarEvents, setOutlookCalendarEvents] = useState<CalendarEvent[]>([]);
-  const [appleCalendarEvents, setAppleCalendarEvents] = useState<CalendarEvent[]>([]);
-  const [trelloEvents, setTrelloEvents] = useState<CalendarEvent[]>([]);
-  const [asanaEvents, setAsanaEvents] = useState<CalendarEvent[]>([]);
-  const [notionEvents, setNotionEvents] = useState<CalendarEvent[]>([]);
-  const [slackEvents, setSlackEvents] = useState<CalendarEvent[]>([]);
-  const [microsoftTeamsEvents, setMicrosoftTeamsEvents] = useState<CalendarEvent[]>([]);
-  const [isGoogleCalendarConnected, setIsGoogleCalendarConnected] = useState(false);
-  const [isOutlookCalendarConnected, setIsOutlookCalendarConnected] = useState(false);
-  const [isAppleCalendarConnected, setIsAppleCalendarConnected] = useState(false);
-  const [isTrelloConnected, setIsTrelloConnected] = useState(false);
-  const [isAsanaConnected, setIsAsanaConnected] = useState(false);
-  const [isNotionConnected, setIsNotionConnected] = useState(false);
-  const [isSlackConnected, setIsSlackConnected] = useState(false);
-  const [isMicrosoftTeamsConnected, setIsMicrosoftTeamsConnected] = useState(false);
-  const [integrationTokens, setIntegrationTokens] = useState({
-    googleCalendar: null,
-    outlookCalendar: null,
-    appleCalendar: null,
-    slack: null,
-    microsoftTeams: null,
+  const [integrationsState, setIntegrationsState] = useState({
+    googleCalendar: { events: [], isConnected: false, token: null },
+    outlookCalendar: { events: [], isConnected: false, token: null },
+    appleCalendar: { events: [], isConnected: false, token: null },
+    trello: { events: [], isConnected: false, token: null },
+    asana: { events: [], isConnected: false, token: null },
+    notion: { events: [], isConnected: false, token: null },
+    slack: { events: [], isConnected: false, token: null },
+    microsoftTeams: { events: [], isConnected: false, token: null },
   });
   const [ssoToken, setSsoToken] = useState<string | null>(null);
   const [collaborators, setCollaborators] = useState<string[]>([]);
@@ -48,86 +41,121 @@ const ContentCalendarPage = () => {
   const [selectedIntegration, setSelectedIntegration] = useState<string | null>(null);
 
   const integrations = [
-    { name: 'Google Calendar', component: <GoogleCalendar />, isConnected: isGoogleCalendarConnected },
-    { name: 'Outlook Calendar', component: <OutlookCalendar />, isConnected: isOutlookCalendarConnected },
-    { name: 'Apple Calendar', component: <AppleCalendar />, isConnected: isAppleCalendarConnected },
-    { name: 'Trello', component: <TrelloIntegration />, isConnected: isTrelloConnected },
-    { name: 'Asana', component: <AsanaIntegration />, isConnected: isAsanaConnected },
-    { name: 'Notion', component: <NotionIntegration />, isConnected: isNotionConnected },
-    { name: 'Slack', component: <SlackIntegration />, isConnected: isSlackConnected },
-    { name: 'Microsoft Teams', component: <MicrosoftTeamsIntegration />, isConnected: isMicrosoftTeamsConnected },
+    { name: 'Google Calendar', key: 'googleCalendar' },
+    { name: 'Outlook Calendar', key: 'outlookCalendar' },
+    { name: 'Apple Calendar', key: 'appleCalendar' },
+    { name: 'Trello', key: 'trello' },
+    { name: 'Asana', key: 'asana' },
+    { name: 'Notion', key: 'notion' },
+    { name: 'Slack', key: 'slack' },
+    { name: 'Microsoft Teams', key: 'microsoftTeams' },
   ];
 
-  const handleIntegrationClick = (integration: string) => {
-    setSelectedIntegration(integration);
+  const handleIntegrationChange = (key: string, isConnected: boolean, token: string | null) => {
+    setIntegrationsState((prevIntegrationsState) => ({
+      ...prevIntegrationsState,
+      [key]: { events: prevIntegrationsState[key].events, isConnected, token },
+    }));
   };
 
-  const handleConnectClick = (integration: string) => {
-    // Handle connection logic for each integration
-    if (integration === 'Google Calendar') {
-      setIsGoogleCalendarConnected(true);
-    } else if (integration === 'Outlook Calendar') {
-      setIsOutlookCalendarConnected(true);
-    } else if (integration === 'Apple Calendar') {
-      setIsAppleCalendarConnected(true);
-    } else if (integration === 'Trello') {
-      setIsTrelloConnected(true);
-    } else if (integration === 'Asana') {
-      setIsAsanaConnected(true);
-    } else if (integration === 'Notion') {
-      setIsNotionConnected(true);
-    } else if (integration === 'Slack') {
-      setIsSlackConnected(true);
-    } else if (integration === 'Microsoft Teams') {
-      setIsMicrosoftTeamsConnected(true);
-    }
+  const handleEventsChange = (key: string, events: CalendarEvent[]) => {
+    setIntegrationsState((prevIntegrationsState) => ({
+      ...prevIntegrationsState,
+      [key]: { events, isConnected: prevIntegrationsState[key].isConnected, token: prevIntegrationsState[key].token },
+    }));
   };
 
   return (
     <Layout>
       <SEO title="Content Calendar" />
       <DndProvider backend={HTML5Backend}>
-        <div className="flex flex-col h-screen">
-          <div className="flex flex-row justify-between items-center p-4 border-b border-gray-200">
-            <h1 className="text-2xl font-bold">Content Calendar</h1>
-            <div className="flex flex-row space-x-4">
-              {integrations.map((integration) => (
-                <button
-                  key={integration.name}
-                  className={`px-4 py-2 rounded-lg ${integration.isConnected ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-600'}`}
-                  onClick={() => handleIntegrationClick(integration.name)}
-                >
-                  {integration.name}
-                </button>
-              ))}
+        <Calendar
+          events={events}
+          selectedDate={selectedDate}
+          draggedEvent={draggedEvent}
+          hoveredEvent={hoveredEvent}
+          onDateChange={(date) => setSelectedDate(date)}
+          onEventDrag={(event) => setDraggedEvent(event)}
+          onEventHover={(event) => setHoveredEvent(event)}
+        />
+        <div>
+          {integrations.map((integration) => (
+            <div key={integration.key}>
+              <h2>{integration.name}</h2>
+              {integration.key === 'googleCalendar' && (
+                <GoogleCalendar
+                  isConnected={integrationsState.googleCalendar.isConnected}
+                  token={integrationsState.googleCalendar.token}
+                  events={integrationsState.googleCalendar.events}
+                  onChange={(isConnected, token) => handleIntegrationChange('googleCalendar', isConnected, token)}
+                  onEventsChange={(events) => handleEventsChange('googleCalendar', events)}
+                />
+              )}
+              {integration.key === 'outlookCalendar' && (
+                <OutlookCalendar
+                  isConnected={integrationsState.outlookCalendar.isConnected}
+                  token={integrationsState.outlookCalendar.token}
+                  events={integrationsState.outlookCalendar.events}
+                  onChange={(isConnected, token) => handleIntegrationChange('outlookCalendar', isConnected, token)}
+                  onEventsChange={(events) => handleEventsChange('outlookCalendar', events)}
+                />
+              )}
+              {integration.key === 'appleCalendar' && (
+                <AppleCalendar
+                  isConnected={integrationsState.appleCalendar.isConnected}
+                  token={integrationsState.appleCalendar.token}
+                  events={integrationsState.appleCalendar.events}
+                  onChange={(isConnected, token) => handleIntegrationChange('appleCalendar', isConnected, token)}
+                  onEventsChange={(events) => handleEventsChange('appleCalendar', events)}
+                />
+              )}
+              {integration.key === 'trello' && (
+                <TrelloIntegration
+                  isConnected={integrationsState.trello.isConnected}
+                  token={integrationsState.trello.token}
+                  events={integrationsState.trello.events}
+                  onChange={(isConnected, token) => handleIntegrationChange('trello', isConnected, token)}
+                  onEventsChange={(events) => handleEventsChange('trello', events)}
+                />
+              )}
+              {integration.key === 'asana' && (
+                <AsanaIntegration
+                  isConnected={integrationsState.asana.isConnected}
+                  token={integrationsState.asana.token}
+                  events={integrationsState.asana.events}
+                  onChange={(isConnected, token) => handleIntegrationChange('asana', isConnected, token)}
+                  onEventsChange={(events) => handleEventsChange('asana', events)}
+                />
+              )}
+              {integration.key === 'notion' && (
+                <NotionIntegration
+                  isConnected={integrationsState.notion.isConnected}
+                  token={integrationsState.notion.token}
+                  events={integrationsState.notion.events}
+                  onChange={(isConnected, token) => handleIntegrationChange('notion', isConnected, token)}
+                  onEventsChange={(events) => handleEventsChange('notion', events)}
+                />
+              )}
+              {integration.key === 'slack' && (
+                <SlackIntegration
+                  isConnected={integrationsState.slack.isConnected}
+                  token={integrationsState.slack.token}
+                  events={integrationsState.slack.events}
+                  onChange={(isConnected, token) => handleIntegrationChange('slack', isConnected, token)}
+                  onEventsChange={(events) => handleEventsChange('slack', events)}
+                />
+              )}
+              {integration.key === 'microsoftTeams' && (
+                <MicrosoftTeamsIntegration
+                  isConnected={integrationsState.microsoftTeams.isConnected}
+                  token={integrationsState.microsoftTeams.token}
+                  events={integrationsState.microsoftTeams.events}
+                  onChange={(isConnected, token) => handleIntegrationChange('microsoftTeams', isConnected, token)}
+                  onEventsChange={(events) => handleEventsChange('microsoftTeams', events)}
+                />
+              )}
             </div>
-          </div>
-          <div className="flex flex-row flex-grow p-4">
-            <div className="w-1/3">
-              {integrations.map((integration) => (
-                <div key={integration.name}>
-                  {integration.component}
-                  {!integration.isConnected && (
-                    <button
-                      className="px-4 py-2 rounded-lg bg-blue-500 text-white"
-                      onClick={() => handleConnectClick(integration.name)}
-                    >
-                      Connect
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-            <div className="w-2/3">
-              <Calendar
-                events={events}
-                selectedDate={selectedDate}
-                onDateChange={(date) => setSelectedDate(date)}
-                onEventDrop={(event) => setDraggedEvent(event)}
-                onEventHover={(event) => setHoveredEvent(event)}
-              />
-            </div>
-          </div>
+          ))}
         </div>
       </DndProvider>
     </Layout>

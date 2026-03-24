@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { AiOutlinePlus } from 'react-icons/ai';
 import { IoMdAnalytics } from 'react-icons/io';
@@ -80,50 +80,55 @@ export default function DashboardPage() {
             </ul>
             <div className="limited-time-offer">
               <h2>Limited Time Offer: Get 15% Off Your First Year!</h2>
-              <button className="upgrade-button" onClick={() => router.push('/upgrade-plan')}>Upgrade Now</button>
             </div>
           </div>
         </div>
-      )
+      ),
     },
   ]);
 
+  const memoizedWidgets = useMemo(() => widgets, [widgets]);
+
+  const handleWidgetClick = useCallback((widget: Widget) => {
+    widget.onClick();
+  }, []);
+
   return (
-    <div className="dashboard-page">
-      <DashboardHeader />
-      <NavigationMenu />
-      <div className="dashboard-content">
-        <DndProvider>
-          <DragDropContext>
-            <Droppable droppableId="widgets">
-              {(provided) => (
-                <div {...provided.droppableProps} ref={provided.innerRef}>
-                  {widgets.map((widget, index) => (
-                    <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
-                      {(provided) => (
-                        <div
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          ref={provided.innerRef}
-                        >
-                          <DashboardCard
-                            title={widget.title}
-                            icon={widget.icon}
-                            onClick={widget.onClick}
-                            description={widget.description}
-                            callToAction={widget.callToAction}
-                          />
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </DragDropContext>
-        </DndProvider>
-      </div>
-    </div>
+    <DndProvider>
+      <DragDropContext>
+        <Droppable droppableId="dashboard">
+          {(provided) => (
+            <div {...provided.droppableProps} ref={provided.innerRef}>
+              <DashboardHeader />
+              <NavigationMenu />
+              <div className="dashboard-content">
+                {memoizedWidgets.map((widget, index) => (
+                  <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+                    {(provided) => (
+                      <div
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        ref={provided.innerRef}
+                      >
+                        <DashboardCard
+                          title={widget.title}
+                          icon={widget.icon}
+                          onClick={() => handleWidgetClick(widget)}
+                          frequency={widget.frequency}
+                          description={widget.description}
+                          callToAction={widget.callToAction}
+                        />
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </div>
+              <WidgetSettings />
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
+    </DndProvider>
   );
 }

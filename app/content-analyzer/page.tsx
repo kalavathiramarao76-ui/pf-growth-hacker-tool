@@ -83,28 +83,32 @@ const countSyllables = (word: string) => {
 };
 
 const performSentimentAnalysisWithHuggingFace = async (text: string) => {
-  const sentimentPipeline = pipeline('sentiment-analysis');
-  const result = await sentimentPipeline(text);
+  const nlp = pipeline('sentiment-analysis');
+  const result = await nlp(text);
   return result;
 };
 
 const performEntityRecognitionWithSpacy = async (text: string) => {
-  const spacyModel = await spacy.load('en_core_web_sm');
-  const doc = spacyModel(text);
+  const nlp = await spacy.load('en_core_web_sm');
+  const doc = nlp(text);
   const entities = doc.ents.map((ent) => ({ text: ent.text, label: ent.label_ }));
   return entities;
 };
 
 const performTopicModeling = async (text: string) => {
-  const languageModel = new LanguageModel();
-  const topics = await languageModel.getTopics(text);
-  return topics;
+  const nlp = pipeline('topic-modeling');
+  const result = await nlp(text);
+  return result;
 };
 
 const ContentAnalyzerPage = () => {
+  const router = useRouter();
   const [analysis, setAnalysis] = useState<any>({});
   const [text, setText] = useState('');
-  const router = useRouter();
+
+  const handleTextChange = (event: any) => {
+    setText(event.target.value);
+  };
 
   const handleAnalyze = async () => {
     const advancedAnalysis = await advancedContentAnalysis({ text });
@@ -117,7 +121,7 @@ const ContentAnalyzerPage = () => {
       <PageHeader title="Content Analyzer" />
       <ContentAnalyzerForm
         text={text}
-        onChange={(text) => setText(text)}
+        onTextChange={handleTextChange}
         onAnalyze={handleAnalyze}
       />
       {analysis && (
