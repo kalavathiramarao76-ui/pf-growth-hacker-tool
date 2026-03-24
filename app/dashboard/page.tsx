@@ -80,7 +80,7 @@ export default function DashboardPage() {
             </ul>
             <div className="limited-time-offer">
               <h2>Limited Time Offer: Get 15% Off Your First Year</h2>
-              <p>Don't miss out on this amazing opportunity to upgrade your content creation experience. Sign up now and get 15% off your first year!</p>
+              <p>Don't miss out on this amazing opportunity to elevate your content creation. Sign up now and get 15% off your first year!</p>
             </div>
           </div>
         </div>
@@ -88,44 +88,49 @@ export default function DashboardPage() {
     },
   ]);
 
+  const [layout, setLayout] = useState<WidgetLayout>({
+    columns: 3,
+    rows: 2,
+    widgets: widgets,
+  });
+
   const handleDragEnd = (result: any) => {
     if (!result.destination) return;
 
     const { source, destination } = result;
-    const newWidgets = [...widgets];
+    const newWidgets = [...layout.widgets];
     const [removed] = newWidgets.splice(source.index, 1);
 
     newWidgets.splice(destination.index, 0, removed);
-    setWidgets(newWidgets);
+
+    setLayout({
+      ...layout,
+      widgets: newWidgets,
+    });
   };
 
   return (
-    <div className="dashboard-container">
+    <div className="dashboard-page">
       <DashboardHeader />
       <NavigationMenu />
       <DndProvider>
         <DragDropContext onDragEnd={handleDragEnd}>
-          <Droppable droppableId="widgets">
-            {(provided) => (
-              <div {...provided.droppableProps} ref={provided.innerRef} className="widget-grid">
-                {widgets.map((widget, index) => (
-                  <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
-                    {(provided) => (
-                      <div
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        ref={provided.innerRef}
-                        className="widget-card"
-                      >
-                        <DashboardCard widget={widget} />
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
+          <div className="widget-grid" style={{ gridTemplateColumns: `repeat(${layout.columns}, 1fr)` }}>
+            {layout.widgets.map((widget, index) => (
+              <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+                {(provided) => (
+                  <div
+                    ref={provided.innerRef}
+                    {...provided.draggableProps}
+                    {...provided.dragHandleProps}
+                    className="widget"
+                  >
+                    <DashboardCard widget={widget} />
+                  </div>
+                )}
+              </Draggable>
+            ))}
+          </div>
         </DragDropContext>
       </DndProvider>
       <WidgetSettings />

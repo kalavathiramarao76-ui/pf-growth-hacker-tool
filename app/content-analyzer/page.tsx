@@ -95,17 +95,22 @@ const performEntityRecognitionWithSpacy = async (text: string) => {
 };
 
 const performTopicModeling = async (text: string) => {
-  const topicModel = new LanguageModel('gpt2');
-  const topicModeling = await topicModel.generate(text);
+  const topicModelingPipeline = pipeline('topic-modeling');
+  const topicModeling = await topicModelingPipeline(text);
   return topicModeling;
 };
 
 const ContentAnalyzerPage = () => {
   const router = useRouter();
-  const [analysis, setAnalysis] = useState(null);
+  const [analysis, setAnalysis] = useState<any>({});
+  const [text, setText] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleAnalyzeContent = async (text: string) => {
+  const handleTextChange = (event: any) => {
+    setText(event.target.value);
+  };
+
+  const handleAnalyze = async () => {
     setLoading(true);
     const analysis = await advancedContentAnalysis({ text });
     setAnalysis(analysis);
@@ -116,7 +121,12 @@ const ContentAnalyzerPage = () => {
     <div>
       <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
-      <ContentAnalyzerForm onAnalyzeContent={handleAnalyzeContent} />
+      <ContentAnalyzerForm
+        text={text}
+        onTextChange={handleTextChange}
+        onAnalyze={handleAnalyze}
+        loading={loading}
+      />
       {analysis && (
         <div>
           <OptimizationSuggestions analysis={analysis} />
@@ -124,7 +134,6 @@ const ContentAnalyzerPage = () => {
           <AlternativeFormats analysis={analysis} />
         </div>
       )}
-      {loading && <p>Loading...</p>}
     </div>
   );
 };
