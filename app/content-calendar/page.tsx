@@ -5,7 +5,7 @@ import { Layout } from '../layout';
 import { SEO } from '../components/SEO';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { GoogleCalendar, OutlookCalendar, AppleCalendar } from '../components/CalendarIntegrations';
+import { GoogleCalendar, OutlookCalendar, AppleCalendar, ICalCalendar, ExchangeCalendar } from '../components/CalendarIntegrations';
 import { Tooltip } from '../components/Tooltip';
 import Image from 'next/image';
 import { TrelloIntegration, AsanaIntegration, NotionIntegration } from '../components/ProjectManagementIntegrations';
@@ -29,6 +29,8 @@ const ContentCalendarPage = () => {
     googleCalendar: { events: [], isConnected: false, token: null },
     outlookCalendar: { events: [], isConnected: false, token: null },
     appleCalendar: { events: [], isConnected: false, token: null },
+    iCalCalendar: { events: [], isConnected: false, token: null },
+    exchangeCalendar: { events: [], isConnected: false, token: null },
     trello: { events: [], isConnected: false, token: null },
     asana: { events: [], isConnected: false, token: null },
     notion: { events: [], isConnected: false, token: null },
@@ -44,6 +46,8 @@ const ContentCalendarPage = () => {
     { name: 'Google Calendar', key: 'googleCalendar' },
     { name: 'Outlook Calendar', key: 'outlookCalendar' },
     { name: 'Apple Calendar', key: 'appleCalendar' },
+    { name: 'iCal Calendar', key: 'iCalCalendar' },
+    { name: 'Exchange Calendar', key: 'exchangeCalendar' },
     { name: 'Trello', key: 'trello' },
     { name: 'Asana', key: 'asana' },
     { name: 'Notion', key: 'notion' },
@@ -65,84 +69,102 @@ const ContentCalendarPage = () => {
     }));
   };
 
-  const handleDragStart = (event: CalendarEvent) => {
-    setDraggedEvent(event);
-  };
-
-  const handleDragEnd = () => {
-    setDraggedEvent(null);
-  };
-
-  const handleDrop = (event: CalendarEvent, date: Date) => {
-    const newEvents = [...events];
-    const index = newEvents.findIndex((e) => e.id === event.id);
-    if (index !== -1) {
-      newEvents[index].startDate = date;
-      newEvents[index].endDate = new Date(date.getTime() + event.duration);
-    }
-    setEvents(newEvents);
-  };
-
-  const handleRealTimeEventChange = (event: CalendarEvent) => {
-    setRealTimeEvents((prevEvents) => {
-      const index = prevEvents.findIndex((e) => e.id === event.id);
-      if (index !== -1) {
-        prevEvents[index] = event;
-      } else {
-        prevEvents.push(event);
-      }
-      return prevEvents;
-    });
-  };
-
-  useEffect(() => {
-    const socket = new Socket();
-    socket.on('realTimeEventChange', handleRealTimeEventChange);
-    return () => {
-      socket.disconnect();
-    };
-  }, []);
-
   return (
     <Layout>
       <SEO title="Content Calendar" />
       <DndProvider backend={HTML5Backend}>
         <DroppableCalendar
           events={events}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-          onDrop={handleDrop}
+          selectedDate={selectedDate}
+          onDateChange={(date) => setSelectedDate(date)}
+          onEventDrop={(event) => setEvents((prevEvents) => [...prevEvents, event])}
         >
-          {events.map((event) => (
-            <DraggableEvent key={event.id} event={event} />
+          {integrations.map((integration) => (
+            <div key={integration.key}>
+              {integration.key === 'googleCalendar' && (
+                <GoogleCalendar
+                  isConnected={integrationsState.googleCalendar.isConnected}
+                  token={integrationsState.googleCalendar.token}
+                  onIntegrationChange={(isConnected, token) => handleIntegrationChange('googleCalendar', isConnected, token)}
+                  onEventsChange={(events) => handleEventsChange('googleCalendar', events)}
+                />
+              )}
+              {integration.key === 'outlookCalendar' && (
+                <OutlookCalendar
+                  isConnected={integrationsState.outlookCalendar.isConnected}
+                  token={integrationsState.outlookCalendar.token}
+                  onIntegrationChange={(isConnected, token) => handleIntegrationChange('outlookCalendar', isConnected, token)}
+                  onEventsChange={(events) => handleEventsChange('outlookCalendar', events)}
+                />
+              )}
+              {integration.key === 'appleCalendar' && (
+                <AppleCalendar
+                  isConnected={integrationsState.appleCalendar.isConnected}
+                  token={integrationsState.appleCalendar.token}
+                  onIntegrationChange={(isConnected, token) => handleIntegrationChange('appleCalendar', isConnected, token)}
+                  onEventsChange={(events) => handleEventsChange('appleCalendar', events)}
+                />
+              )}
+              {integration.key === 'iCalCalendar' && (
+                <ICalCalendar
+                  isConnected={integrationsState.iCalCalendar.isConnected}
+                  token={integrationsState.iCalCalendar.token}
+                  onIntegrationChange={(isConnected, token) => handleIntegrationChange('iCalCalendar', isConnected, token)}
+                  onEventsChange={(events) => handleEventsChange('iCalCalendar', events)}
+                />
+              )}
+              {integration.key === 'exchangeCalendar' && (
+                <ExchangeCalendar
+                  isConnected={integrationsState.exchangeCalendar.isConnected}
+                  token={integrationsState.exchangeCalendar.token}
+                  onIntegrationChange={(isConnected, token) => handleIntegrationChange('exchangeCalendar', isConnected, token)}
+                  onEventsChange={(events) => handleEventsChange('exchangeCalendar', events)}
+                />
+              )}
+              {integration.key === 'trello' && (
+                <TrelloIntegration
+                  isConnected={integrationsState.trello.isConnected}
+                  token={integrationsState.trello.token}
+                  onIntegrationChange={(isConnected, token) => handleIntegrationChange('trello', isConnected, token)}
+                  onEventsChange={(events) => handleEventsChange('trello', events)}
+                />
+              )}
+              {integration.key === 'asana' && (
+                <AsanaIntegration
+                  isConnected={integrationsState.asana.isConnected}
+                  token={integrationsState.asana.token}
+                  onIntegrationChange={(isConnected, token) => handleIntegrationChange('asana', isConnected, token)}
+                  onEventsChange={(events) => handleEventsChange('asana', events)}
+                />
+              )}
+              {integration.key === 'notion' && (
+                <NotionIntegration
+                  isConnected={integrationsState.notion.isConnected}
+                  token={integrationsState.notion.token}
+                  onIntegrationChange={(isConnected, token) => handleIntegrationChange('notion', isConnected, token)}
+                  onEventsChange={(events) => handleEventsChange('notion', events)}
+                />
+              )}
+              {integration.key === 'slack' && (
+                <SlackIntegration
+                  isConnected={integrationsState.slack.isConnected}
+                  token={integrationsState.slack.token}
+                  onIntegrationChange={(isConnected, token) => handleIntegrationChange('slack', isConnected, token)}
+                  onEventsChange={(events) => handleEventsChange('slack', events)}
+                />
+              )}
+              {integration.key === 'microsoftTeams' && (
+                <MicrosoftTeamsIntegration
+                  isConnected={integrationsState.microsoftTeams.isConnected}
+                  token={integrationsState.microsoftTeams.token}
+                  onIntegrationChange={(isConnected, token) => handleIntegrationChange('microsoftTeams', isConnected, token)}
+                  onEventsChange={(events) => handleEventsChange('microsoftTeams', events)}
+                />
+              )}
+            </div>
           ))}
         </DroppableCalendar>
       </DndProvider>
-      <div>
-        {integrations.map((integration) => (
-          <div key={integration.key}>
-            <h2>{integration.name}</h2>
-            <button onClick={() => handleIntegrationChange(integration.key, true, 'token')}>Connect</button>
-            <button onClick={() => handleIntegrationChange(integration.key, false, null)}>Disconnect</button>
-            {integration.key === 'googleCalendar' && <GoogleCalendar events={integrationsState.googleCalendar.events} />}
-            {integration.key === 'outlookCalendar' && <OutlookCalendar events={integrationsState.outlookCalendar.events} />}
-            {integration.key === 'appleCalendar' && <AppleCalendar events={integrationsState.appleCalendar.events} />}
-            {integration.key === 'trello' && <TrelloIntegration events={integrationsState.trello.events} />}
-            {integration.key === 'asana' && <AsanaIntegration events={integrationsState.asana.events} />}
-            {integration.key === 'notion' && <NotionIntegration events={integrationsState.notion.events} />}
-            {integration.key === 'slack' && <SlackIntegration events={integrationsState.slack.events} />}
-            {integration.key === 'microsoftTeams' && <MicrosoftTeamsIntegration events={integrationsState.microsoftTeams.events} />}
-          </div>
-        ))}
-      </div>
-      <div>
-        <h2>Real-time Events</h2>
-        <ul>
-          {realTimeEvents.map((event) => (
-            <li key={event.id}>{event.title}</li>
-          ))}
-        </ul>
-      </div>
     </Layout>
   );
 };

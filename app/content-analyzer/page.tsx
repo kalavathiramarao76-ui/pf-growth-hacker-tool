@@ -84,31 +84,32 @@ const countSyllables = (word: string) => {
 
 const performSentimentAnalysisWithHuggingFace = async (text: string) => {
   const sentimentPipeline = pipeline('sentiment-analysis');
-  const sentimentAnalysis = sentimentPipeline(text);
-  return sentimentAnalysis;
+  const result = await sentimentPipeline(text);
+  return result;
 };
 
 const performEntityRecognitionWithSpacy = async (text: string) => {
   const spacyModel = await spacy.load('en_core_web_sm');
-  const entityRecognition = spacyModel(text);
-  return entityRecognition;
+  const doc = spacyModel(text);
+  const entities = doc.ents.map((ent) => ({ text: ent.text, label: ent.label_ }));
+  return entities;
 };
 
 const performTopicModeling = async (text: string) => {
-  const topicModelingPipeline = pipeline('topic-modeling');
-  const topicModeling = topicModelingPipeline(text);
-  return topicModeling;
+  const languageModel = new LanguageModel();
+  const topics = await languageModel.getTopics(text);
+  return topics;
 };
 
-const Page = () => {
-  const [analysis, setAnalysis] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
+const ContentAnalyzerPage = () => {
   const router = useRouter();
+  const [analysis, setAnalysis] = useState<any>({});
+  const [loading, setLoading] = useState(false);
 
-  const handleAnalyze = async (text: string) => {
+  const handleAnalyzeContent = async (text: string) => {
     setLoading(true);
-    const analysis = await advancedContentAnalysis({ text });
-    setAnalysis(analysis);
+    const analysisResult = await advancedContentAnalysis({ text });
+    setAnalysis(analysisResult);
     setLoading(false);
   };
 
@@ -116,17 +117,18 @@ const Page = () => {
     <div>
       <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
-      <ContentAnalyzerForm onAnalyze={handleAnalyze} />
-      {analysis && (
+      <ContentAnalyzerForm onAnalyze={handleAnalyzeContent} />
+      {loading ? (
+        <p>Loading...</p>
+      ) : (
         <div>
           <OptimizationSuggestions analysis={analysis} />
           <EngagementTracker analysis={analysis} />
           <AlternativeFormats analysis={analysis} />
         </div>
       )}
-      {loading && <div>Loading...</div>}
     </div>
   );
 };
 
-export default Page;
+export default ContentAnalyzerPage;

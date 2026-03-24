@@ -80,41 +80,82 @@ export default function DashboardPage() {
             </ul>
             <div className="limited-time-offer">
               <h2>Limited Time Offer: Get 15% Off Your First Year</h2>
-              <p>Use code PREMIUM15 at checkout to redeem your discount.</p>
-              <button className="upgrade-button" onClick={() => router.push('/upgrade-plan')}>Upgrade Now</button>
             </div>
           </div>
         </div>
-      )
+      ),
     },
   ]);
+  const [layout, setLayout] = useState<WidgetLayout>({
+    columns: 2,
+    rows: 3,
+    widgets: widgets,
+  });
+  const [dragging, setDragging] = useState(false);
+
+  const handleDragStart = () => {
+    setDragging(true);
+  };
+
+  const handleDragEnd = () => {
+    setDragging(false);
+  };
+
+  const handleLayoutChange = (newLayout: WidgetLayout) => {
+    setLayout(newLayout);
+  };
 
   return (
     <div className="dashboard-page">
       <DashboardHeader />
       <NavigationMenu />
-      <div className="dashboard-content">
-        <DndProvider>
-          <DragDropContext>
-            <Droppable droppableId="widgets">
-              {(provided) => (
-                <div {...provided.droppableProps} ref={provided.innerRef}>
-                  {widgets.map((widget, index) => (
-                    <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+      <DndProvider>
+        <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+          <div className="dashboard-grid">
+            {Array.from({ length: layout.rows }, (_, row) => (
+              <div key={row} className="row">
+                {Array.from({ length: layout.columns }, (_, col) => (
+                  <div key={col} className="column">
+                    <Droppable droppableId={`row-${row}-col-${col}`}>
                       {(provided) => (
-                        <div {...provided.draggableProps} {...provided.dragHandleProps} ref={provided.innerRef}>
-                          <DashboardCard widget={widget} />
+                        <div ref={provided.innerRef} {...provided.droppableProps}>
+                          {layout.widgets
+                            .filter((widget) => widget.id === row * layout.columns + col + 1)
+                            .map((widget) => (
+                              <Draggable key={widget.id} draggableId={`widget-${widget.id}`}>
+                                {(provided) => (
+                                  <div
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                    {...provided.dragHandleProps}
+                                  >
+                                    <DashboardCard
+                                      title={widget.title}
+                                      icon={widget.icon}
+                                      onClick={widget.onClick}
+                                      description={widget.description}
+                                      callToAction={widget.callToAction}
+                                    />
+                                  </div>
+                                )}
+                              </Draggable>
+                            ))}
+                          {provided.placeholder}
                         </div>
                       )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </DragDropContext>
-        </DndProvider>
-      </div>
+                    </Droppable>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </DragDropContext>
+      </DndProvider>
+      <WidgetSettings
+        layout={layout}
+        onLayoutChange={handleLayoutChange}
+        widgets={widgets}
+      />
     </div>
   );
 }
