@@ -84,32 +84,31 @@ const countSyllables = (word: string) => {
 
 const performSentimentAnalysisWithHuggingFace = async (text: string) => {
   const sentimentPipeline = pipeline('sentiment-analysis');
-  const result = await sentimentPipeline(text);
-  return result;
+  const sentimentAnalysis = await sentimentPipeline(text);
+  return sentimentAnalysis;
 };
 
 const performEntityRecognitionWithSpacy = async (text: string) => {
   const spacyModel = await spacy.load('en_core_web_sm');
-  const doc = spacyModel(text);
-  const entities = doc.ents.map((ent) => ({ text: ent.text, label: ent.label_ }));
-  return entities;
+  const entityRecognition = await spacyModel(text);
+  return entityRecognition;
 };
 
 const performTopicModeling = async (text: string) => {
-  const languageModel = new LanguageModel();
-  const topics = await languageModel.getTopics(text);
-  return topics;
+  const topicModel = new LanguageModel('gpt2');
+  const topicModeling = await topicModel.generate(text);
+  return topicModeling;
 };
 
 const ContentAnalyzerPage = () => {
   const router = useRouter();
-  const [analysis, setAnalysis] = useState<any>({});
+  const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const handleAnalyzeContent = async (text: string) => {
     setLoading(true);
-    const analysisResult = await advancedContentAnalysis({ text });
-    setAnalysis(analysisResult);
+    const analysis = await advancedContentAnalysis({ text });
+    setAnalysis(analysis);
     setLoading(false);
   };
 
@@ -117,16 +116,15 @@ const ContentAnalyzerPage = () => {
     <div>
       <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
-      <ContentAnalyzerForm onAnalyze={handleAnalyzeContent} />
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
+      <ContentAnalyzerForm onAnalyzeContent={handleAnalyzeContent} />
+      {analysis && (
         <div>
           <OptimizationSuggestions analysis={analysis} />
           <EngagementTracker analysis={analysis} />
           <AlternativeFormats analysis={analysis} />
         </div>
       )}
+      {loading && <p>Loading...</p>}
     </div>
   );
 };

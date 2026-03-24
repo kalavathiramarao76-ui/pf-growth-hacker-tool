@@ -80,82 +80,55 @@ export default function DashboardPage() {
             </ul>
             <div className="limited-time-offer">
               <h2>Limited Time Offer: Get 15% Off Your First Year</h2>
+              <p>Don't miss out on this amazing opportunity to upgrade your content creation experience. Sign up now and get 15% off your first year!</p>
             </div>
           </div>
         </div>
       ),
     },
   ]);
-  const [layout, setLayout] = useState<WidgetLayout>({
-    columns: 2,
-    rows: 3,
-    widgets: widgets,
-  });
-  const [dragging, setDragging] = useState(false);
 
-  const handleDragStart = () => {
-    setDragging(true);
-  };
+  const handleDragEnd = (result: any) => {
+    if (!result.destination) return;
 
-  const handleDragEnd = () => {
-    setDragging(false);
-  };
+    const { source, destination } = result;
+    const newWidgets = [...widgets];
+    const [removed] = newWidgets.splice(source.index, 1);
 
-  const handleLayoutChange = (newLayout: WidgetLayout) => {
-    setLayout(newLayout);
+    newWidgets.splice(destination.index, 0, removed);
+    setWidgets(newWidgets);
   };
 
   return (
-    <div className="dashboard-page">
+    <div className="dashboard-container">
       <DashboardHeader />
       <NavigationMenu />
       <DndProvider>
-        <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-          <div className="dashboard-grid">
-            {Array.from({ length: layout.rows }, (_, row) => (
-              <div key={row} className="row">
-                {Array.from({ length: layout.columns }, (_, col) => (
-                  <div key={col} className="column">
-                    <Droppable droppableId={`row-${row}-col-${col}`}>
-                      {(provided) => (
-                        <div ref={provided.innerRef} {...provided.droppableProps}>
-                          {layout.widgets
-                            .filter((widget) => widget.id === row * layout.columns + col + 1)
-                            .map((widget) => (
-                              <Draggable key={widget.id} draggableId={`widget-${widget.id}`}>
-                                {(provided) => (
-                                  <div
-                                    ref={provided.innerRef}
-                                    {...provided.draggableProps}
-                                    {...provided.dragHandleProps}
-                                  >
-                                    <DashboardCard
-                                      title={widget.title}
-                                      icon={widget.icon}
-                                      onClick={widget.onClick}
-                                      description={widget.description}
-                                      callToAction={widget.callToAction}
-                                    />
-                                  </div>
-                                )}
-                              </Draggable>
-                            ))}
-                          {provided.placeholder}
-                        </div>
-                      )}
-                    </Droppable>
-                  </div>
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <Droppable droppableId="widgets">
+            {(provided) => (
+              <div {...provided.droppableProps} ref={provided.innerRef} className="widget-grid">
+                {widgets.map((widget, index) => (
+                  <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+                    {(provided) => (
+                      <div
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        ref={provided.innerRef}
+                        className="widget-card"
+                      >
+                        <DashboardCard widget={widget} />
+                      </div>
+                    )}
+                  </Draggable>
                 ))}
+                {provided.placeholder}
               </div>
-            ))}
-          </div>
+            )}
+          </Droppable>
         </DragDropContext>
       </DndProvider>
-      <WidgetSettings
-        layout={layout}
-        onLayoutChange={handleLayoutChange}
-        widgets={widgets}
-      />
+      <WidgetSettings />
     </div>
   );
 }
