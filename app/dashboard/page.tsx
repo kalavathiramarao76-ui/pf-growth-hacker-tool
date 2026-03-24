@@ -31,10 +31,30 @@ export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [widgets, setWidgets] = useState([
-    { id: 1, title: 'Create Content', icon: <AiOutlinePlus size={24} />, onClick: () => router.push('/content-analyzer') },
-    { id: 2, title: 'View Analytics', icon: <IoMdAnalytics size={24} />, onClick: () => router.push('/engagement-tracker') },
-    { id: 3, title: 'Content Calendar', icon: <FaRegCalendarAlt size={24} />, onClick: () => router.push('/content-calendar') },
-    { id: 4, title: 'Settings', icon: <MdSettings size={24} />, onClick: () => router.push('/settings') },
+    { 
+      id: 1, 
+      title: 'Create Content', 
+      icon: <AiOutlinePlus size={24} />, 
+      onClick: () => router.push('/content-analyzer') 
+    },
+    { 
+      id: 2, 
+      title: 'View Analytics', 
+      icon: <IoMdAnalytics size={24} />, 
+      onClick: () => router.push('/engagement-tracker') 
+    },
+    { 
+      id: 3, 
+      title: 'Content Calendar', 
+      icon: <FaRegCalendarAlt size={24} />, 
+      onClick: () => router.push('/content-calendar') 
+    },
+    { 
+      id: 4, 
+      title: 'Settings', 
+      icon: <MdSettings size={24} />, 
+      onClick: () => router.push('/settings') 
+    },
     { 
       id: 5, 
       title: 'Upgrade to Premium', 
@@ -66,6 +86,34 @@ export default function DashboardPage() {
           </div>
         </div>
       )
+    },
+    { 
+      id: 6, 
+      title: 'Advanced Analytics', 
+      icon: <IoMdAnalytics size={24} />, 
+      onClick: () => router.push('/advanced-analytics'), 
+      description: 'Get in-depth insights into your content performance with our advanced analytics tool.',
+      callToAction: (
+        <div className="premium-feature-call-to-action">
+          <h1>Unlock Advanced Analytics with Our Premium Plan</h1>
+          <p>Get detailed insights into your content performance, including engagement metrics, conversion rates, and more. Limited time offer: get 15% off your first year!</p>
+          <button className="upgrade-button" onClick={() => router.push('/upgrade-plan')}>Upgrade Now</button>
+        </div>
+      )
+    },
+    { 
+      id: 7, 
+      title: 'Priority Support', 
+      icon: <MdSettings size={24} />, 
+      onClick: () => router.push('/priority-support'), 
+      description: 'Get priority support from our expert team with our premium plan.',
+      callToAction: (
+        <div className="premium-feature-call-to-action">
+          <h1>Get Priority Support with Our Premium Plan</h1>
+          <p>Get help when you need it with our priority support feature. Limited time offer: get 15% off your first year!</p>
+          <button className="upgrade-button" onClick={() => router.push('/upgrade-plan')}>Upgrade Now</button>
+        </div>
+      )
     }
   ]);
 
@@ -74,21 +122,22 @@ export default function DashboardPage() {
       <DashboardHeader />
       <NavigationMenu />
       <div className="dashboard-content">
-        <div className="call-to-action-section">
-          <h1>Take Your Content to the Next Level</h1>
-          <p>Upgrade to our premium plan and unlock advanced features, priority support, and expert guidance to maximize your content's potential.</p>
-          <button className="upgrade-button" onClick={() => router.push('/upgrade-plan')}>Upgrade Now</button>
-        </div>
         <DndProvider>
           <DragDropContext>
             <Droppable droppableId="widgets">
               {(provided) => (
-                <div ref={provided.innerRef} {...provided.droppableProps}>
+                <div {...provided.droppableProps} ref={provided.innerRef}>
                   {widgets.map((widget, index) => (
                     <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
                       {(provided) => (
-                        <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
-                          <DashboardCard widget={widget} />
+                        <div {...provided.draggableProps} {...provided.dragHandleProps} ref={provided.innerRef}>
+                          <DashboardCard 
+                            title={widget.title} 
+                            icon={widget.icon} 
+                            onClick={widget.onClick} 
+                            description={widget.description} 
+                            callToAction={widget.callToAction}
+                          />
                         </div>
                       )}
                     </Draggable>

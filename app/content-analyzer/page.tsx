@@ -76,45 +76,48 @@ const countSyllables = (word: string) => {
   return syllableCount;
 };
 
-const performSentimentAnalysisWithSpacy = async (text: string) => {
-  const nlp = await spacy.load('en_core_web_sm');
-  const doc = nlp(text);
-  const sentiment = doc._.sentiment;
-  return sentiment;
+const getAISuggestions = async (text: string) => {
+  const response = await axios.post('/api/ai-suggestions', { text });
+  return response.data;
 };
 
-const performEntityRecognitionWithSpacy = async (text: string) => {
-  const nlp = await spacy.load('en_core_web_sm');
-  const doc = nlp(text);
-  const entities = doc.ents.map((ent) => ({ text: ent.text, label: ent.label_ }));
-  return entities;
-};
-
-const performTopicModeling = async (text: string) => {
-  const manager = new NlpManager({ languages: ['en'] });
-  const response = await manager.process('en', text);
-  const topics = response.topics;
-  return topics;
-};
-
-const ContentAnalyzerPage = () => {
-  const [analysis, setAnalysis] = useState<any>({});
-  const [text, setText] = useState('');
+const Page = () => {
   const router = useRouter();
+  const [analysis, setAnalysis] = useState({});
+  const [aiSuggestions, setAiSuggestions] = useState([]);
+  const [text, setText] = useState('');
 
-  const handleAnalyze = async (text: string) => {
-    const analysis = await advancedContentAnalysis({ text });
-    setAnalysis(analysis);
+  useEffect(() => {
+    const storedAnalysis = LocalStorage.get('analysis');
+    if (storedAnalysis) {
+      setAnalysis(storedAnalysis);
+    }
+  }, []);
+
+  const handleTextChange = (text: string) => {
+    setText(text);
+  };
+
+  const handleAnalyze = async () => {
+    const advancedAnalysis = await advancedContentAnalysis({ text });
+    setAnalysis(advancedAnalysis);
+    LocalStorage.set('analysis', advancedAnalysis);
+    const suggestions = await getAISuggestions(text);
+    setAiSuggestions(suggestions);
   };
 
   return (
     <div>
       <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
-      <ContentAnalyzerForm onAnalyze={handleAnalyze} />
-      {analysis && (
+      <ContentAnalyzerForm
+        text={text}
+        onTextChange={handleTextChange}
+        onAnalyze={handleAnalyze}
+      />
+      {analysis.text && (
         <div>
-          <OptimizationSuggestions analysis={analysis} />
+          <OptimizationSuggestions analysis={analysis} aiSuggestions={aiSuggestions} />
           <EngagementTracker analysis={analysis} />
           <AlternativeFormats analysis={analysis} />
         </div>
@@ -123,4 +126,4 @@ const ContentAnalyzerPage = () => {
   );
 };
 
-export default ContentAnalyzerPage;
+export default Page;
