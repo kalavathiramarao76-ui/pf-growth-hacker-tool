@@ -14,6 +14,7 @@ import { SlackIntegration, MicrosoftTeamsIntegration, DiscordIntegration, ZoomIn
 import { Socket } from '../utils/socket';
 import { FacebookIntegration, TwitterIntegration, LinkedInIntegration, InstagramIntegration } from '../components/SocialMediaIntegrations';
 import { MailchimpIntegration, ConstantContactIntegration, SendinblueIntegration } from '../components/EmailMarketingIntegrations';
+import { GoogleDriveIntegration, DropboxIntegration } from '../components/CloudStorageIntegrations';
 
 interface IntegrationState {
   events: CalendarEvent[];
@@ -46,6 +47,8 @@ const integrations: Integration[] = [
   { name: 'Microsoft Teams', key: 'microsoftTeams', component: MicrosoftTeamsIntegration, category: 'Communication' },
   { name: 'Discord', key: 'discord', component: DiscordIntegration, category: 'Communication' },
   { name: 'Zoom', key: 'zoom', component: ZoomIntegration, category: 'Communication' },
+  { name: 'Google Drive', key: 'googleDrive', component: GoogleDriveIntegration, category: 'Cloud Storage' },
+  { name: 'Dropbox', key: 'dropbox', component: DropboxIntegration, category: 'Cloud Storage' },
   { name: 'Facebook', key: 'facebook', component: FacebookIntegration, category: 'Social Media' },
   { name: 'Twitter', key: 'twitter', component: TwitterIntegration, category: 'Social Media' },
   { name: 'LinkedIn', key: 'linkedin', component: LinkedInIntegration, category: 'Social Media' },
@@ -55,67 +58,34 @@ const integrations: Integration[] = [
   { name: 'Sendinblue', key: 'sendinblue', component: SendinblueIntegration, category: 'Email Marketing' },
 ];
 
-const projectManagementIntegrations = integrations.filter((integration) => integration.category === 'Project Management');
-
 const ContentCalendarPage = () => {
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [isConnected, setIsConnected] = useState(false);
-  const [token, setToken] = useState<string | null>(null);
-  const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null);
+  const [integrationState, setIntegrationState] = useState<IntegrationState>({
+    events: [],
+    isConnected: false,
+    token: null,
+  });
 
-  const handleIntegrationClick = (integration: Integration) => {
-    setSelectedIntegration(integration);
+  const handleIntegrationConnect = (integration: Integration) => {
+    // Handle integration connection logic
   };
 
-  const handleConnectClick = () => {
-    if (selectedIntegration) {
-      // Connect to the selected integration
-      // This is a placeholder, you need to implement the actual connection logic
-      setIsConnected(true);
-    }
+  const handleIntegrationDisconnect = (integration: Integration) => {
+    // Handle integration disconnection logic
   };
-
-  const handleDisconnectClick = () => {
-    // Disconnect from the selected integration
-    // This is a placeholder, you need to implement the actual disconnection logic
-    setIsConnected(false);
-  };
-
-  useEffect(() => {
-    if (isConnected && selectedIntegration) {
-      // Fetch events from the selected integration
-      // This is a placeholder, you need to implement the actual event fetching logic
-      const fetchedEvents: CalendarEvent[] = [];
-      setEvents(fetchedEvents);
-    }
-  }, [isConnected, selectedIntegration]);
 
   return (
     <Layout>
       <SEO title="Content Calendar" />
       <DndProvider backend={HTML5Backend}>
-        <div>
-          <h1>Content Calendar</h1>
-          <div>
-            {projectManagementIntegrations.map((integration) => (
-              <div key={integration.key}>
-                <button onClick={() => handleIntegrationClick(integration)}>
-                  {integration.name}
-                </button>
-              </div>
-            ))}
-          </div>
-          {selectedIntegration && (
-            <div>
-              <button onClick={handleConnectClick}>Connect</button>
-              {isConnected && (
-                <button onClick={handleDisconnectClick}>Disconnect</button>
-              )}
-            </div>
-          )}
-          <Calendar events={events} />
-        </div>
+        <Calendar>
+          {integrations.map((integration) => (
+            <DroppableCalendar key={integration.key} integration={integration}>
+              {integration.component}
+            </DroppableCalendar>
+          ))}
+        </Calendar>
       </DndProvider>
+      <Socket />
     </Layout>
   );
 };
