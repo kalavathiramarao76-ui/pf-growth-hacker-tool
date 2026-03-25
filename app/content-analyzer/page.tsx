@@ -28,9 +28,11 @@ const calculateReadabilityScore = async (text: string) => {
 
   // Using a more advanced readability score calculation using a language model
   const complexityScore = await calculateComplexityScore(text)
+  const cohesionScore = await calculateCohesionScore(text)
+  const clarityScore = await calculateClarityScore(text)
 
-  // Combine the readability score and complexity score
-  const combinedScore = (readabilityScore + complexityScore) / 2
+  // Combine the readability score, complexity score, cohesion score, and clarity score
+  const combinedScore = (readabilityScore + complexityScore + cohesionScore + clarityScore) / 4
 
   return combinedScore
 }
@@ -71,6 +73,22 @@ const calculateComplexityScore = async (text: string) => {
   return complexityScore
 }
 
+const calculateCohesionScore = async (text: string) => {
+  const cohesionPipeline = pipeline('text-classification', model='bert-base-uncased')
+  const result = await cohesionPipeline(text)
+  const cohesionScore = result.score
+
+  return cohesionScore
+}
+
+const calculateClarityScore = async (text: string) => {
+  const clarityPipeline = pipeline('text-classification', model='roberta-base')
+  const result = await clarityPipeline(text)
+  const clarityScore = result.score
+
+  return clarityScore
+}
+
 const getPersonalizedSuggestions = async (text: string, readabilityScore: number) => {
   const suggestionsPipeline = pipeline('text-generation', model='t5-base')
   const result = await suggestionsPipeline(`Generate suggestions to improve the readability of the text: ${text} with a readability score of ${readabilityScore}`)
@@ -85,31 +103,6 @@ const Page = () => {
   const [language, setLanguage] = useState('en');
   const [readabilityScore, setReadabilityScore] = useState(0);
   const [suggestions, setSuggestions] = useState([]);
-  const [engagement, setEngagement] = useState(0);
-  const [alternativeFormats, setAlternativeFormats] = useState([]);
-
-  useEffect(() => {
-    const storedText = LocalStorage.get('text');
-    if (storedText) {
-      setText(storedText);
-    }
-  }, []);
-
-  const handleTextChange = (newText: string) => {
-    setText(newText);
-    LocalStorage.set('text', newText);
-  };
-
-  const handleLanguageChange = (newLanguage: string) => {
-    setLanguage(newLanguage);
-  };
-
-  const handleAnalyze = async () => {
-    const score = await calculateReadabilityScore(text);
-    setReadabilityScore(score);
-    const personalizedSuggestions = await getPersonalizedSuggestions(text, score);
-    setSuggestions(personalizedSuggestions);
-  };
 
   return (
     <div>
@@ -117,19 +110,17 @@ const Page = () => {
       <PageHeader title="AI-Powered Content Optimizer" />
       <ContentAnalyzerForm
         text={text}
+        setText={setText}
         language={language}
-        onTextChange={handleTextChange}
-        onLanguageChange={handleLanguageChange}
-        onAnalyze={handleAnalyze}
+        setLanguage={setLanguage}
+        calculateReadabilityScore={calculateReadabilityScore}
+        setReadabilityScore={setReadabilityScore}
+        getPersonalizedSuggestions={getPersonalizedSuggestions}
+        setSuggestions={setSuggestions}
       />
-      {readabilityScore > 0 && (
-        <OptimizationSuggestions
-          readabilityScore={readabilityScore}
-          suggestions={suggestions}
-        />
-      )}
-      <EngagementTracker engagement={engagement} />
-      <AlternativeFormats alternativeFormats={alternativeFormats} />
+      <OptimizationSuggestions suggestions={suggestions} />
+      <EngagementTracker />
+      <AlternativeFormats />
     </div>
   );
 };

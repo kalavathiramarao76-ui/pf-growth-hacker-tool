@@ -104,108 +104,66 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
     name: 'Yahoo Calendar',
     icon: 'https://cdn-icons-png.flaticon.com/512/281/281769.png',
   },
-  ZohoCalendar: {
-    connect: (token: string) => {
-      // Implement Zoho Calendar connection logic
-    },
-    getEvents: async () => {
-      // Implement Zoho Calendar event retrieval logic
-      return [];
-    },
-    disconnect: () => {
-      // Implement Zoho Calendar disconnection logic
-    },
-    name: 'Zoho Calendar',
-    icon: 'https://cdn-icons-png.flaticon.com/512/281/281770.png',
-  },
-  AnyDoCalendar: {
-    connect: (token: string) => {
-      // Implement AnyDo Calendar connection logic
-    },
-    getEvents: async () => {
-      // Implement AnyDo Calendar event retrieval logic
-      return [];
-    },
-    disconnect: () => {
-      // Implement AnyDo Calendar disconnection logic
-    },
-    name: 'AnyDo Calendar',
-    icon: 'https://cdn-icons-png.flaticon.com/512/281/281771.png',
-  },
 };
 
 const Page = () => {
-  const [selectedCalendar, setSelectedCalendar] = useState<CalendarIntegration | null>(null);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [connected, setConnected] = useState(false);
+  const [selectedCalendar, setSelectedCalendar] = useState<string>('');
+  const [draggedEvent, setDraggedEvent] = useState<CalendarEvent | null>(null);
+  const [droppedEvent, setDroppedEvent] = useState<CalendarEvent | null>(null);
 
-  const handleConnect = (calendar: CalendarIntegration) => {
-    calendar.connect('token');
+  const handleDragStart = (event: CalendarEvent) => {
+    setDraggedEvent(event);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedEvent(null);
+  };
+
+  const handleDrop = (event: CalendarEvent) => {
+    setDroppedEvent(event);
+  };
+
+  const handleCalendarChange = (calendar: string) => {
     setSelectedCalendar(calendar);
-    setConnected(true);
-  };
-
-  const handleDisconnect = () => {
-    if (selectedCalendar) {
-      selectedCalendar.disconnect();
-      setSelectedCalendar(null);
-      setConnected(false);
-    }
-  };
-
-  const handleGetEvents = async () => {
-    if (selectedCalendar) {
-      const events = await selectedCalendar.getEvents();
-      setEvents(events);
+    const integration = calendarIntegrations[calendar];
+    if (integration) {
+      integration.getEvents().then((events) => {
+        setEvents(events);
+      });
     }
   };
 
   useEffect(() => {
-    if (connected) {
-      handleGetEvents();
+    if (selectedCalendar) {
+      const integration = calendarIntegrations[selectedCalendar];
+      if (integration) {
+        integration.getEvents().then((events) => {
+          setEvents(events);
+        });
+      }
     }
-  }, [connected]);
+  }, [selectedCalendar]);
 
   return (
     <Layout>
       <SEO title="Content Calendar" />
       <DndProvider backend={HTML5Backend}>
-        <div className="flex flex-col h-screen">
-          <div className="flex justify-between items-center p-4 border-b border-gray-200">
-            <h1 className="text-2xl font-bold">Content Calendar</h1>
-            <div className="flex items-center">
-              {connected ? (
-                <button
-                  className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-                  onClick={handleDisconnect}
-                >
-                  Disconnect
-                </button>
-              ) : (
-                <div className="flex flex-wrap">
-                  {Object.values(calendarIntegrations).map((calendar) => (
-                    <button
-                      key={calendar.name}
-                      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2 mb-2"
-                      onClick={() => handleConnect(calendar)}
-                    >
-                      <Image src={calendar.icon} width={20} height={20} alt={calendar.name} />
-                      {calendar.name}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-          <div className="flex-1 p-4">
-            {connected ? (
-              <Calendar events={events} />
-            ) : (
-              <div className="text-center text-gray-500">
-                Please connect to a calendar to view events
-              </div>
-            )}
-          </div>
+        <Calendar
+          events={events}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          onDrop={handleDrop}
+          draggedEvent={draggedEvent}
+          droppedEvent={droppedEvent}
+        />
+        <div>
+          {Object.keys(calendarIntegrations).map((calendar) => (
+            <button key={calendar} onClick={() => handleCalendarChange(calendar)}>
+              <Image src={calendarIntegrations[calendar].icon} alt={calendarIntegrations[calendar].name} />
+              {calendarIntegrations[calendar].name}
+            </button>
+          ))}
         </div>
       </DndProvider>
     </Layout>
