@@ -14,6 +14,8 @@ interface CalendarIntegration {
   connect: (token: string) => void;
   getEvents: () => Promise<CalendarEvent[]>;
   disconnect: () => void;
+  name: string;
+  icon: string;
 }
 
 // Calendar Integrations
@@ -29,6 +31,8 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
     disconnect: () => {
       // Implement Google Calendar disconnection logic
     },
+    name: 'Google Calendar',
+    icon: 'https://cdn-icons-png.flaticon.com/512/281/281764.png',
   },
   OutlookCalendar: {
     connect: (token: string) => {
@@ -41,6 +45,8 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
     disconnect: () => {
       // Implement Outlook Calendar disconnection logic
     },
+    name: 'Outlook Calendar',
+    icon: 'https://cdn-icons-png.flaticon.com/512/281/281765.png',
   },
   AppleCalendar: {
     connect: (token: string) => {
@@ -53,6 +59,8 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
     disconnect: () => {
       // Implement Apple Calendar disconnection logic
     },
+    name: 'Apple Calendar',
+    icon: 'https://cdn-icons-png.flaticon.com/512/281/281766.png',
   },
   ICalCalendar: {
     connect: (token: string) => {
@@ -65,6 +73,8 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
     disconnect: () => {
       // Implement ICal Calendar disconnection logic
     },
+    name: 'iCal Calendar',
+    icon: 'https://cdn-icons-png.flaticon.com/512/281/281767.png',
   },
   ExchangeCalendar: {
     connect: (token: string) => {
@@ -77,6 +87,8 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
     disconnect: () => {
       // Implement Exchange Calendar disconnection logic
     },
+    name: 'Exchange Calendar',
+    icon: 'https://cdn-icons-png.flaticon.com/512/281/281768.png',
   },
   YahooCalendar: {
     connect: (token: string) => {
@@ -89,6 +101,8 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
     disconnect: () => {
       // Implement Yahoo Calendar disconnection logic
     },
+    name: 'Yahoo Calendar',
+    icon: 'https://cdn-icons-png.flaticon.com/512/281/281769.png',
   },
   ZohoCalendar: {
     connect: (token: string) => {
@@ -101,6 +115,8 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
     disconnect: () => {
       // Implement Zoho Calendar disconnection logic
     },
+    name: 'Zoho Calendar',
+    icon: 'https://cdn-icons-png.flaticon.com/512/281/281770.png',
   },
   AnyDoCalendar: {
     connect: (token: string) => {
@@ -113,55 +129,87 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
     disconnect: () => {
       // Implement AnyDo Calendar disconnection logic
     },
+    name: 'AnyDo Calendar',
+    icon: 'https://cdn-icons-png.flaticon.com/512/281/281771.png',
   },
 };
 
-const calendarIntegrationNames = Object.keys(calendarIntegrations);
-
-const CalendarPage = () => {
-  const [selectedCalendar, setSelectedCalendar] = useState(calendarIntegrationNames[0]);
+const Page = () => {
+  const [selectedCalendar, setSelectedCalendar] = useState<CalendarIntegration | null>(null);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [token, setToken] = useState('');
+  const [connected, setConnected] = useState(false);
 
-  const handleConnect = () => {
-    calendarIntegrations[selectedCalendar].connect(token);
-  };
-
-  const handleGetEvents = async () => {
-    const events = await calendarIntegrations[selectedCalendar].getEvents();
-    setEvents(events);
+  const handleConnect = (calendar: CalendarIntegration) => {
+    calendar.connect('token');
+    setSelectedCalendar(calendar);
+    setConnected(true);
   };
 
   const handleDisconnect = () => {
-    calendarIntegrations[selectedCalendar].disconnect();
+    if (selectedCalendar) {
+      selectedCalendar.disconnect();
+      setSelectedCalendar(null);
+      setConnected(false);
+    }
+  };
+
+  const handleGetEvents = async () => {
+    if (selectedCalendar) {
+      const events = await selectedCalendar.getEvents();
+      setEvents(events);
+    }
   };
 
   useEffect(() => {
-    handleGetEvents();
-  }, [selectedCalendar]);
+    if (connected) {
+      handleGetEvents();
+    }
+  }, [connected]);
 
   return (
     <Layout>
       <SEO title="Content Calendar" />
       <DndProvider backend={HTML5Backend}>
-        <Calendar events={events} />
-        <select value={selectedCalendar} onChange={(e) => setSelectedCalendar(e.target.value)}>
-          {calendarIntegrationNames.map((calendarName) => (
-            <option key={calendarName} value={calendarName}>
-              {calendarName}
-            </option>
-          ))}
-        </select>
-        <input type="text" value={token} onChange={(e) => setToken(e.target.value)} placeholder="Token" />
-        <button onClick={handleConnect}>Connect</button>
-        <button onClick={handleGetEvents}>Get Events</button>
-        <button onClick={handleDisconnect}>Disconnect</button>
-        <Tooltip>
-          <Image src="/calendar-icon.png" alt="Calendar Icon" width={20} height={20} />
-        </Tooltip>
+        <div className="flex flex-col h-screen">
+          <div className="flex justify-between items-center p-4 border-b border-gray-200">
+            <h1 className="text-2xl font-bold">Content Calendar</h1>
+            <div className="flex items-center">
+              {connected ? (
+                <button
+                  className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                  onClick={handleDisconnect}
+                >
+                  Disconnect
+                </button>
+              ) : (
+                <div className="flex flex-wrap">
+                  {Object.values(calendarIntegrations).map((calendar) => (
+                    <button
+                      key={calendar.name}
+                      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2 mb-2"
+                      onClick={() => handleConnect(calendar)}
+                    >
+                      <Image src={calendar.icon} width={20} height={20} alt={calendar.name} />
+                      {calendar.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="flex-1 p-4">
+            {connected ? (
+              <Calendar events={events} />
+            ) : (
+              <div className="text-center text-gray-500">
+                Please connect to a calendar to view events
+              </div>
+            )}
+          </div>
+        </div>
       </DndProvider>
     </Layout>
   );
 };
 
-export default CalendarPage;
+export default Page;

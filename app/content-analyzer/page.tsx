@@ -71,6 +71,14 @@ const calculateComplexityScore = async (text: string) => {
   return complexityScore
 }
 
+const getPersonalizedSuggestions = async (text: string, readabilityScore: number) => {
+  const suggestionsPipeline = pipeline('text-generation', model='t5-base')
+  const result = await suggestionsPipeline(`Generate suggestions to improve the readability of the text: ${text} with a readability score of ${readabilityScore}`)
+  const suggestions = result[0].generated_text.split('\n')
+
+  return suggestions
+}
+
 const Page = () => {
   const router = useRouter();
   const [text, setText] = useState('');
@@ -96,27 +104,32 @@ const Page = () => {
     setLanguage(newLanguage);
   };
 
-  useEffect(() => {
-    if (text) {
-      calculateReadabilityScore(text).then((score) => {
-        setReadabilityScore(score);
-      });
-    }
-  }, [text]);
+  const handleAnalyze = async () => {
+    const score = await calculateReadabilityScore(text);
+    setReadabilityScore(score);
+    const personalizedSuggestions = await getPersonalizedSuggestions(text, score);
+    setSuggestions(personalizedSuggestions);
+  };
 
   return (
     <div>
       <SEO title="AI-Powered Content Optimizer" />
-      <PageHeader />
+      <PageHeader title="AI-Powered Content Optimizer" />
       <ContentAnalyzerForm
         text={text}
         language={language}
         onTextChange={handleTextChange}
         onLanguageChange={handleLanguageChange}
+        onAnalyze={handleAnalyze}
       />
-      <OptimizationSuggestions suggestions={suggestions} />
+      {readabilityScore > 0 && (
+        <OptimizationSuggestions
+          readabilityScore={readabilityScore}
+          suggestions={suggestions}
+        />
+      )}
       <EngagementTracker engagement={engagement} />
-      <AlternativeFormats formats={alternativeFormats} />
+      <AlternativeFormats alternativeFormats={alternativeFormats} />
     </div>
   );
 };

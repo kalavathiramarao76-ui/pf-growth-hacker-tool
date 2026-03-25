@@ -102,55 +102,80 @@ const initialWidgets: Widget[] = [
       </div>
     )
   },
+  { 
+    id: 6, 
+    title: 'Premium Features', 
+    icon: <MdSettings size={24} />, 
+    onClick: () => {}, 
+    description: 'Get the most out of our platform with our premium features.',
+    callToAction: (
+      <div className="premium-features-call-to-action">
+        <h1>Premium Features</h1>
+        <ul>
+          <li>Advanced analytics and insights</li>
+          <li>Priority support and expert guidance</li>
+          <li>Enhanced security and backups</li>
+          <li>Access to new features before anyone else</li>
+        </ul>
+        <div className="upgrade-button">
+          <button>Learn More About Premium Features</button>
+        </div>
+      </div>
+    )
+  }
 ];
 
-const App = () => {
+const DashboardPage = () => {
   const router = useRouter();
   const [widgets, setWidgets] = useState(initialWidgets);
+  const [layout, setLayout] = useState<WidgetLayout>({ columns: 4, rows: 2, widgets: initialWidgets });
 
-  const handleWidgetClick = (widget: Widget) => {
-    widget.onClick();
+  const handleDragEnd = (result: any) => {
+    if (!result.destination) return;
+    const { source, destination } = result;
+    const newWidgets = [...widgets];
+    const [removed] = newWidgets.splice(source.index, 1);
+    newWidgets.splice(destination.index, 0, removed);
+    setWidgets(newWidgets);
   };
 
   return (
-    <div className="dashboard">
+    <div className="dashboard-page">
       <DashboardHeader />
       <NavigationMenu />
-      <div className="dashboard-content">
-        <DndProvider>
-          <DragDropContext>
-            <Droppable droppableId="widgets">
-              {(provided) => (
-                <div ref={provided.innerRef} {...provided.droppableProps}>
-                  {widgets.map((widget, index) => (
-                    <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
-                      {(provided) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          className="widget"
-                        >
-                          <DashboardCard
-                            title={widget.title}
-                            icon={widget.icon}
-                            onClick={() => handleWidgetClick(widget)}
-                            description={widget.description}
-                            callToAction={widget.callToAction}
-                          />
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </DragDropContext>
-        </DndProvider>
-      </div>
+      <DndProvider>
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <Droppable droppableId="widgets">
+            {(provided) => (
+              <div {...provided.droppableProps} ref={provided.innerRef}>
+                {widgets.map((widget, index) => (
+                  <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+                    {(provided) => (
+                      <div
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        ref={provided.innerRef}
+                      >
+                        <DashboardCard
+                          title={widget.title}
+                          icon={widget.icon}
+                          onClick={widget.onClick}
+                          description={widget.description}
+                          callToAction={widget.callToAction}
+                        />
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
+      </DndProvider>
+      <WidgetSettings />
     </div>
   );
 };
 
-export default App;
+export default DashboardPage;
