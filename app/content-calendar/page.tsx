@@ -106,64 +106,53 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
   },
 };
 
+const CalendarIntegrationCard = ({ integration }: { integration: CalendarIntegration }) => {
+  const [connected, setConnected] = useState(false);
+
+  const handleConnect = () => {
+    integration.connect('token');
+    setConnected(true);
+  };
+
+  const handleDisconnect = () => {
+    integration.disconnect();
+    setConnected(false);
+  };
+
+  return (
+    <div className="calendar-integration-card">
+      <Image src={integration.icon} alt={integration.name} />
+      <h3>{integration.name}</h3>
+      {connected ? (
+        <button onClick={handleDisconnect}>Disconnect</button>
+      ) : (
+        <button onClick={handleConnect}>Connect</button>
+      )}
+    </div>
+  );
+};
+
+const CalendarIntegrationList = () => {
+  return (
+    <div className="calendar-integration-list">
+      {Object.values(calendarIntegrations).map((integration) => (
+        <CalendarIntegrationCard key={integration.name} integration={integration} />
+      ))}
+    </div>
+  );
+};
+
 const Page = () => {
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [selectedCalendar, setSelectedCalendar] = useState<string>('');
-  const [draggedEvent, setDraggedEvent] = useState<CalendarEvent | null>(null);
-  const [droppedEvent, setDroppedEvent] = useState<CalendarEvent | null>(null);
-
-  const handleDragStart = (event: CalendarEvent) => {
-    setDraggedEvent(event);
-  };
-
-  const handleDragEnd = () => {
-    setDraggedEvent(null);
-  };
-
-  const handleDrop = (event: CalendarEvent) => {
-    setDroppedEvent(event);
-  };
-
-  const handleCalendarChange = (calendar: string) => {
-    setSelectedCalendar(calendar);
-    const integration = calendarIntegrations[calendar];
-    if (integration) {
-      integration.getEvents().then((events) => {
-        setEvents(events);
-      });
-    }
-  };
-
-  useEffect(() => {
-    if (selectedCalendar) {
-      const integration = calendarIntegrations[selectedCalendar];
-      if (integration) {
-        integration.getEvents().then((events) => {
-          setEvents(events);
-        });
-      }
-    }
-  }, [selectedCalendar]);
+  const pathname = usePathname();
 
   return (
     <Layout>
       <SEO title="Content Calendar" />
       <DndProvider backend={HTML5Backend}>
-        <Calendar
-          events={events}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-          onDrop={handleDrop}
-          draggedEvent={draggedEvent}
-          droppedEvent={droppedEvent}
-        />
-        <div>
-          {Object.keys(calendarIntegrations).map((calendar) => (
-            <button key={calendar} onClick={() => handleCalendarChange(calendar)}>
-              <Image src={calendarIntegrations[calendar].icon} alt={calendarIntegrations[calendar].name} />
-              {calendarIntegrations[calendar].name}
-            </button>
-          ))}
+        <div className="content-calendar-page">
+          <h1>Content Calendar</h1>
+          <CalendarIntegrationList />
+          <Calendar />
         </div>
       </DndProvider>
     </Layout>

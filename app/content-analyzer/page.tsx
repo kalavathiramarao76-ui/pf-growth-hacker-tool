@@ -89,40 +89,90 @@ const calculateClarityScore = async (text: string) => {
   return clarityScore
 }
 
-const getPersonalizedSuggestions = async (text: string, readabilityScore: number) => {
-  const suggestionsPipeline = pipeline('text-generation', model='t5-base')
-  const result = await suggestionsPipeline(`Generate suggestions to improve the readability of the text: ${text} with a readability score of ${readabilityScore}`)
-  const suggestions = result[0].generated_text.split('\n')
-
-  return suggestions
-}
-
-const Page = () => {
+const App = () => {
   const router = useRouter();
-  const [text, setText] = useState('');
-  const [language, setLanguage] = useState('en');
+  const [content, setContent] = useState('');
   const [readabilityScore, setReadabilityScore] = useState(0);
+  const [complexityScore, setComplexityScore] = useState(0);
+  const [cohesionScore, setCohesionScore] = useState(0);
+  const [clarityScore, setClarityScore] = useState(0);
   const [suggestions, setSuggestions] = useState([]);
+  const [engagement, setEngagement] = useState(0);
+  const [alternativeFormats, setAlternativeFormats] = useState([]);
+
+  useEffect(() => {
+    const storedContent = LocalStorage.get('content');
+    if (storedContent) {
+      setContent(storedContent);
+    }
+  }, []);
+
+  const handleContentChange = (newContent: string) => {
+    setContent(newContent);
+    LocalStorage.set('content', newContent);
+  };
+
+  const handleAnalyze = async () => {
+    const readability = await calculateReadabilityScore(content);
+    setReadabilityScore(readability);
+
+    const complexity = await calculateComplexityScore(content);
+    setComplexityScore(complexity);
+
+    const cohesion = await calculateCohesionScore(content);
+    setCohesionScore(cohesion);
+
+    const clarity = await calculateClarityScore(content);
+    setClarityScore(clarity);
+
+    const suggestions = await getOptimizationSuggestions(content);
+    setSuggestions(suggestions);
+
+    const engagement = await getEngagementScore(content);
+    setEngagement(engagement);
+
+    const alternativeFormats = await getAlternativeFormats(content);
+    setAlternativeFormats(alternativeFormats);
+  };
+
+  const getOptimizationSuggestions = async (text: string) => {
+    const suggestionsPipeline = pipeline('text-generation', model='t5-base')
+    const result = await suggestionsPipeline(text)
+    const suggestions = result.generated_text
+
+    return suggestions;
+  }
+
+  const getEngagementScore = async (text: string) => {
+    const engagementPipeline = pipeline('text-classification', model='distilbert-base-uncased-finetuned-sst-2-english')
+    const result = await engagementPipeline(text)
+    const engagementScore = result.score
+
+    return engagementScore;
+  }
+
+  const getAlternativeFormats = async (text: string) => {
+    const alternativeFormatsPipeline = pipeline('text-generation', model='t5-base')
+    const result = await alternativeFormatsPipeline(text)
+    const alternativeFormats = result.generated_text
+
+    return alternativeFormats;
+  }
 
   return (
     <div>
       <SEO title="AI-Powered Content Optimizer" />
-      <PageHeader title="AI-Powered Content Optimizer" />
+      <PageHeader />
       <ContentAnalyzerForm
-        text={text}
-        setText={setText}
-        language={language}
-        setLanguage={setLanguage}
-        calculateReadabilityScore={calculateReadabilityScore}
-        setReadabilityScore={setReadabilityScore}
-        getPersonalizedSuggestions={getPersonalizedSuggestions}
-        setSuggestions={setSuggestions}
+        content={content}
+        onChange={handleContentChange}
+        onAnalyze={handleAnalyze}
       />
       <OptimizationSuggestions suggestions={suggestions} />
-      <EngagementTracker />
-      <AlternativeFormats />
+      <EngagementTracker engagement={engagement} />
+      <AlternativeFormats formats={alternativeFormats} />
     </div>
   );
 };
 
-export default Page;
+export default App;
