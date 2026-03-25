@@ -21,119 +21,126 @@ import { Transformers } from 'transformers';
 
 import { pipeline } from 'transformers';
 
-const calculateReadabilityScore = (text: string, language: string) => {
-  let readabilityScore;
+const calculateReadabilityScore = (text: string) => {
   const words = text.split(' ');
   const sentences = text.split('.').filter((sentence) => sentence !== '');
   const syllables = words.reduce((acc, word) => acc + countSyllables(word), 0);
-  const complexityScore = calculateComplexityScore(text, language);
   const sentenceLength = words.length / sentences.length;
   const wordLength = syllables / words.length;
 
-  switch (language) {
-    case 'en':
-      readabilityScore = 206.835 - 1.015 * sentenceLength - 84.6 * wordLength;
-      break;
-    case 'es':
-      readabilityScore = 206.835 - 1.015 * sentenceLength - 84.6 * wordLength;
-      break;
-    case 'fr':
-      readabilityScore = 206.835 - 1.015 * sentenceLength - 84.6 * wordLength;
-      break;
-    case 'de':
-      readabilityScore = 180.0 - 58.5 * sentenceLength - 1.015 * wordLength;
-      break;
-    case 'it':
-      readabilityScore = 206.835 - 1.015 * sentenceLength - 84.6 * wordLength * 0.8;
-      break;
-    case 'pt':
-      readabilityScore = 206.835 - 1.015 * sentenceLength - 84.6 * wordLength * 0.9;
-      break;
-    case 'zh':
-      readabilityScore = 206.835 - 1.015 * sentenceLength - 84.6 * wordLength * 0.7;
-      break;
-    case 'nl':
-      readabilityScore = 180.0 - 58.5 * sentenceLength - 1.015 * wordLength;
-      break;
-    case 'ru':
-      readabilityScore = 206.835 - 1.015 * sentenceLength - 84.6 * wordLength * 0.85;
-      break;
-    case 'ar':
-      readabilityScore = 206.835 - 1.015 * sentenceLength - 84.6 * wordLength * 0.9;
-      break;
-    case 'he':
-      readabilityScore = 206.835 - 1.015 * sentenceLength - 84.6 * wordLength * 0.8;
-      break;
-    case 'hi':
-      readabilityScore = 206.835 - 1.015 * sentenceLength - 84.6 * wordLength * 0.7;
-      break;
-    case 'ja':
-      readabilityScore = 206.835 - 1.015 * sentenceLength - 84.6 * wordLength * 0.6;
-      break;
-    case 'ko':
-      readabilityScore = 206.835 - 1.015 * sentenceLength - 84.6 * wordLength * 0.65;
-      break;
-    default:
-      readabilityScore = 206.835 - 1.015 * sentenceLength - 84.6 * wordLength;
-      break;
-  }
+  // Using the Flesch-Kincaid Grade Level formula as a standardized readability score calculation
+  const readabilityScore = 206.835 - 1.015 * sentenceLength - 84.6 * wordLength;
+
   return readabilityScore;
-};
+}
 
-const calculateFleschKincaidGradeLevel = (text: string, language: string) => {
-  const words = text.split(' ');
-  const sentences = text.split('.').filter((sentence) => sentence !== '');
-  const syllables = words.reduce((acc, word) => acc + countSyllables(word), 0);
-  const sentenceLength = words.length / sentences.length;
-  const wordLength = syllables / words.length;
+const countSyllables = (word: string) => {
+  word = word.toLowerCase();
+  const vowels = 'aeiouy';
+  let count = 0;
+  let prev = false;
 
-  let fleschKincaidGradeLevel;
-  switch (language) {
-    case 'en':
-      fleschKincaidGradeLevel = 0.39 * sentenceLength + 0.11 * wordLength + 0.58;
-      break;
-    case 'es':
-      fleschKincaidGradeLevel = 0.39 * sentenceLength + 0.1 * wordLength + 0.58;
-      break;
-    case 'fr':
-      fleschKincaidGradeLevel = 0.39 * sentenceLength + 0.1 * wordLength + 0.58;
-      break;
-    case 'de':
-      fleschKincaidGradeLevel = 0.39 * sentenceLength + 0.1 * wordLength + 0.58;
-      break;
-    case 'it':
-      fleschKincaidGradeLevel = 0.39 * sentenceLength + 0.1 * wordLength + 0.58 * 0.8;
-      break;
-    case 'pt':
-      fleschKincaidGradeLevel = 0.39 * sentenceLength + 0.1 * wordLength + 0.58 * 0.9;
-      break;
-    case 'zh':
-      fleschKincaidGradeLevel = 0.39 * sentenceLength + 0.1 * wordLength + 0.58 * 0.7;
-      break;
-    case 'nl':
-      fleschKincaidGradeLevel = 0.39 * sentenceLength + 0.1 * wordLength + 0.58;
-      break;
-    case 'ru':
-      fleschKincaidGradeLevel = 0.39 * sentenceLength + 0.1 * wordLength + 0.58 * 0.85;
-      break;
-    case 'ar':
-      fleschKincaidGradeLevel = 0.39 * sentenceLength + 0.1 * wordLength + 0.58 * 0.9;
-      break;
-    case 'he':
-      fleschKincaidGradeLevel = 0.39 * sentenceLength + 0.1 * wordLength + 0.58 * 0.8;
-      break;
-    case 'hi':
-      fleschKincaidGradeLevel = 0.39 * sentenceLength + 0.1 * wordLength + 0.58 * 0.7;
-      break;
-    case 'ja':
-      fleschKincaidGradeLevel = 0.39 * sentenceLength + 0.1 * wordLength + 0.58 * 0.6;
-      break;
-    case 'ko':
-      fleschKincaidGradeLevel = 0.39 * sentenceLength + 0.1 * wordLength + 0.58 * 0.65;
-      break;
-    default:
-      fleschKincaidGradeLevel = 0.39 * sentenceLength + 0.11 * wordLength + 0.58;
-      break;
+  for (let i = 0; i < word.length; i++) {
+    if (vowels.indexOf(word[i]) !== -1) {
+      if (!prev) {
+        count++;
+      }
+      prev = true;
+    } else {
+      prev = false;
+    }
   }
-  return fleschKincaidGradeLevel;
+
+  if (word.endsWith('e')) {
+    count--;
+  }
+
+  if (count === 0) {
+    count = 1;
+  }
+
+  return count;
+}
+
+const Page = () => {
+  const router = useRouter();
+  const [text, setText] = useState('');
+  const [language, setLanguage] = useState('en');
+  const [readabilityScore, setReadabilityScore] = useState(0);
+  const [suggestions, setSuggestions] = useState([]);
+  const [engagement, setEngagement] = useState(0);
+  const [alternativeFormats, setAlternativeFormats] = useState([]);
+
+  useEffect(() => {
+    const storedText = LocalStorage.get('text');
+    if (storedText) {
+      setText(storedText);
+    }
+  }, []);
+
+  const handleTextChange = (newText: string) => {
+    setText(newText);
+    LocalStorage.set('text', newText);
+  };
+
+  const handleLanguageChange = (newLanguage: string) => {
+    setLanguage(newLanguage);
+  };
+
+  const calculateComplexityScore = (text: string) => {
+    // Calculate complexity score using a language model or other NLP techniques
+    // For simplicity, this example uses a basic calculation
+    const words = text.split(' ');
+    const uniqueWords = new Set(words);
+    return uniqueWords.size / words.length;
+  };
+
+  const analyzeText = () => {
+    const score = calculateReadabilityScore(text);
+    setReadabilityScore(score);
+    const complexityScore = calculateComplexityScore(text);
+    const suggestions = getOptimizationSuggestions(text, language);
+    setSuggestions(suggestions);
+    const engagement = calculateEngagement(text);
+    setEngagement(engagement);
+    const alternativeFormats = getAlternativeFormats(text, language);
+    setAlternativeFormats(alternativeFormats);
+  };
+
+  const getOptimizationSuggestions = (text: string, language: string) => {
+    // Use a language model or other NLP techniques to generate optimization suggestions
+    // For simplicity, this example returns a basic suggestion
+    return ['Use shorter sentences', 'Use simpler vocabulary'];
+  };
+
+  const calculateEngagement = (text: string) => {
+    // Calculate engagement using a language model or other NLP techniques
+    // For simplicity, this example returns a basic engagement score
+    return 0.5;
+  };
+
+  const getAlternativeFormats = (text: string, language: string) => {
+    // Use a language model or other NLP techniques to generate alternative formats
+    // For simplicity, this example returns a basic alternative format
+    return ['Summary', 'Outline'];
+  };
+
+  return (
+    <div>
+      <SEO title="Content Analyzer" />
+      <PageHeader title="Content Analyzer" />
+      <ContentAnalyzerForm
+        text={text}
+        language={language}
+        onTextChange={handleTextChange}
+        onLanguageChange={handleLanguageChange}
+        onAnalyze={analyzeText}
+      />
+      <OptimizationSuggestions suggestions={suggestions} />
+      <EngagementTracker engagement={engagement} />
+      <AlternativeFormats formats={alternativeFormats} />
+    </div>
+  );
 };
+
+export default Page;
