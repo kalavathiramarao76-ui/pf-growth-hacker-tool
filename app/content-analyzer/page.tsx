@@ -21,17 +21,18 @@ import { Transformers } from 'transformers';
 
 import { pipeline } from 'transformers';
 
-const calculateReadabilityScore = (text: string) => {
-  const words = text.split(' ');
-  const sentences = text.split('.').filter((sentence) => sentence !== '');
-  const syllables = words.reduce((acc, word) => acc + countSyllables(word), 0);
-  const sentenceLength = words.length / sentences.length;
-  const wordLength = syllables / words.length;
+const calculateReadabilityScore = async (text: string) => {
+  const readabilityPipeline = pipeline('text-classification', model='distilbert-base-uncased-finetuned-sst-2-english')
+  const result = await readabilityPipeline(text)
+  const readabilityScore = result.score
 
-  // Using the Flesch-Kincaid Grade Level formula as a standardized readability score calculation
-  const readabilityScore = 206.835 - 1.015 * sentenceLength - 84.6 * wordLength;
+  // Using a more advanced readability score calculation using a language model
+  const complexityScore = await calculateComplexityScore(text)
 
-  return readabilityScore;
+  // Combine the readability score and complexity score
+  const combinedScore = (readabilityScore + complexityScore) / 2
+
+  return combinedScore
 }
 
 const countSyllables = (word: string) => {
@@ -62,6 +63,14 @@ const countSyllables = (word: string) => {
   return count;
 }
 
+const calculateComplexityScore = async (text: string) => {
+  const complexityPipeline = pipeline('question-answering', model='distilbert-base-uncased-distilled-squad')
+  const result = await complexityPipeline({ question: 'What is the complexity of the text?', context: text })
+  const complexityScore = result.score
+
+  return complexityScore
+}
+
 const Page = () => {
   const router = useRouter();
   const [text, setText] = useState('');
@@ -87,54 +96,23 @@ const Page = () => {
     setLanguage(newLanguage);
   };
 
-  const calculateComplexityScore = (text: string) => {
-    // Calculate complexity score using a language model or other NLP techniques
-    // For simplicity, this example uses a basic calculation
-    const words = text.split(' ');
-    const uniqueWords = new Set(words);
-    return uniqueWords.size / words.length;
-  };
-
-  const analyzeText = () => {
-    const score = calculateReadabilityScore(text);
-    setReadabilityScore(score);
-    const complexityScore = calculateComplexityScore(text);
-    const suggestions = getOptimizationSuggestions(text, language);
-    setSuggestions(suggestions);
-    const engagement = calculateEngagement(text);
-    setEngagement(engagement);
-    const alternativeFormats = getAlternativeFormats(text, language);
-    setAlternativeFormats(alternativeFormats);
-  };
-
-  const getOptimizationSuggestions = (text: string, language: string) => {
-    // Use a language model or other NLP techniques to generate optimization suggestions
-    // For simplicity, this example returns a basic suggestion
-    return ['Use shorter sentences', 'Use simpler vocabulary'];
-  };
-
-  const calculateEngagement = (text: string) => {
-    // Calculate engagement using a language model or other NLP techniques
-    // For simplicity, this example returns a basic engagement score
-    return 0.5;
-  };
-
-  const getAlternativeFormats = (text: string, language: string) => {
-    // Use a language model or other NLP techniques to generate alternative formats
-    // For simplicity, this example returns a basic alternative format
-    return ['Summary', 'Outline'];
-  };
+  useEffect(() => {
+    if (text) {
+      calculateReadabilityScore(text).then((score) => {
+        setReadabilityScore(score);
+      });
+    }
+  }, [text]);
 
   return (
     <div>
-      <SEO title="Content Analyzer" />
-      <PageHeader title="Content Analyzer" />
+      <SEO title="AI-Powered Content Optimizer" />
+      <PageHeader />
       <ContentAnalyzerForm
         text={text}
         language={language}
         onTextChange={handleTextChange}
         onLanguageChange={handleLanguageChange}
-        onAnalyze={analyzeText}
       />
       <OptimizationSuggestions suggestions={suggestions} />
       <EngagementTracker engagement={engagement} />

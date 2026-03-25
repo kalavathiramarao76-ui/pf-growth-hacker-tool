@@ -91,94 +91,52 @@ const initialWidgets: Widget[] = [
               <tr>
                 <td>Yearly</td>
                 <td>$99.99 (save 20% compared to monthly)</td>
-                <td>Advanced features, priority support</td>
+                <td>Advanced features, priority support, expert guidance</td>
               </tr>
             </tbody>
           </table>
         </div>
+        <div className="upgrade-button">
+          <button>Upgrade to Premium Now</button>
+        </div>
       </div>
     )
-  }
+  },
 ];
 
-const initialLayout: WidgetLayout = {
-  columns: 2,
-  rows: 3,
-  widgets: initialWidgets
-};
+const App = () => {
+  const router = useRouter();
+  const [widgets, setWidgets] = useState(initialWidgets);
 
-const Page = () => {
-  const [layout, setLayout] = useState(initialLayout);
-  const [dragging, setDragging] = useState(false);
-
-  const onDragEnd = (result: any) => {
-    if (!result.destination) return;
-
-    const { source, destination } = result;
-    const newLayout = { ...layout };
-    const widgets = [...newLayout.widgets];
-
-    const [removed] = widgets.splice(source.index, 1);
-    widgets.splice(destination.index, 0, removed);
-
-    setLayout({ ...newLayout, widgets });
-  };
-
-  const handleAddWidget = () => {
-    const newWidget: Widget = {
-      id: layout.widgets.length + 1,
-      title: 'New Widget',
-      icon: <AiOutlinePlus size={24} />,
-      onClick: () => {}
-    };
-
-    setLayout({ ...layout, widgets: [...layout.widgets, newWidget] });
-  };
-
-  const handleRemoveWidget = (id: number) => {
-    const newLayout = { ...layout };
-    const widgets = newLayout.widgets.filter((widget) => widget.id !== id);
-
-    setLayout({ ...newLayout, widgets });
-  };
-
-  const handleResize = (event: any) => {
-    const newColumns = Math.floor(event.target.clientWidth / 250);
-    const newRows = Math.floor(event.target.clientHeight / 150);
-
-    setLayout({ ...layout, columns: newColumns, rows: newRows });
+  const handleWidgetClick = (widget: Widget) => {
+    widget.onClick();
   };
 
   return (
-    <div className="dashboard-page">
+    <div className="dashboard">
       <DashboardHeader />
       <NavigationMenu />
-      <div className="dashboard-content" onResize={handleResize}>
+      <div className="dashboard-content">
         <DndProvider>
-          <DragDropContext onDragEnd={onDragEnd}>
+          <DragDropContext>
             <Droppable droppableId="widgets">
               {(provided) => (
-                <div
-                  {...provided.droppableProps}
-                  ref={provided.innerRef}
-                  className="widget-grid"
-                >
-                  {layout.widgets.map((widget, index) => (
+                <div ref={provided.innerRef} {...provided.droppableProps}>
+                  {widgets.map((widget, index) => (
                     <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
                       {(provided) => (
                         <div
+                          ref={provided.innerRef}
                           {...provided.draggableProps}
                           {...provided.dragHandleProps}
-                          ref={provided.innerRef}
                           className="widget"
                         >
                           <DashboardCard
                             title={widget.title}
                             icon={widget.icon}
-                            onClick={widget.onClick}
+                            onClick={() => handleWidgetClick(widget)}
                             description={widget.description}
                             callToAction={widget.callToAction}
-                            onRemove={() => handleRemoveWidget(widget.id)}
                           />
                         </div>
                       )}
@@ -190,13 +148,9 @@ const Page = () => {
             </Droppable>
           </DragDropContext>
         </DndProvider>
-        <button className="add-widget-button" onClick={handleAddWidget}>
-          Add Widget
-        </button>
       </div>
-      <WidgetSettings />
     </div>
   );
 };
 
-export default Page;
+export default App;
