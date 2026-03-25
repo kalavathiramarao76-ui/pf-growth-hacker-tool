@@ -91,90 +91,72 @@ const initialWidgets = [
               <tr>
                 <td>Yearly</td>
                 <td>$99.99 (save 20% compared to monthly)</td>
-                <td>Advanced features, priority support, expert guidance</td>
+                <td>Advanced features, priority support</td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div className="upgrade-button">
-          <button>Upgrade Now</button>
-        </div>
       </div>
     )
   },
-  {
-    id: 6,
-    title: 'Premium Features',
-    icon: <MdSettings size={24} />,
-    onClick: () => {},
-    description: 'Learn more about the advanced features and benefits of our premium plan.',
-    callToAction: (
-      <div className="premium-features-call-to-action">
-        <h1>Advanced Features and Benefits</h1>
-        <p>Our premium plan includes a range of advanced features and benefits to help you take your content to the next level.</p>
-        <div className="features-list">
-          <h2>Features:</h2>
-          <ul>
-            <li>Advanced analytics and insights</li>
-            <li>AI-powered content optimization</li>
-            <li>Priority support and expert guidance</li>
-            <li>Enhanced security and backups</li>
-          </ul>
-        </div>
-        <div className="call-to-action-button">
-          <button>Learn More</button>
-        </div>
-      </div>
-    )
-  }
 ];
 
-const DashboardPage = () => {
+const Page = () => {
   const router = useRouter();
   const [widgets, setWidgets] = useState(initialWidgets);
 
-  const handleWidgetClick = (id: number) => {
-    const widget = widgets.find((widget) => widget.id === id);
-    if (widget && widget.onClick) {
-      widget.onClick();
-    }
+  const handleDragEnd = (result: any) => {
+    if (!result.destination) return;
+
+    const newWidgets = [...widgets];
+    const [reorderedItem] = newWidgets.splice(result.source.index, 1);
+
+    newWidgets.splice(result.destination.index, 0, reorderedItem);
+
+    setWidgets(newWidgets);
   };
 
   return (
-    <div className="dashboard-page">
+    <div className="dashboard-container">
       <DashboardHeader />
-      <NavigationMenu />
-      <div className="dashboard-content">
-        <DndProvider>
-          <DragDropContext>
-            <Droppable droppableId="widgets">
-              {(provided) => (
-                <div ref={provided.innerRef} {...provided.droppableProps}>
-                  {widgets.map((widget, index) => (
-                    <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
-                      {(provided) => (
-                        <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
-                          <DashboardCard
-                            title={widget.title}
-                            icon={widget.icon}
-                            onClick={() => handleWidgetClick(widget.id)}
-                            description={widget.description}
-                            callToAction={widget.callToAction}
-                          />
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </DragDropContext>
-        </DndProvider>
+      <div className="dashboard-body">
+        <NavigationMenu />
+        <div className="dashboard-main">
+          <DndProvider>
+            <DragDropContext onDragEnd={handleDragEnd}>
+              <Droppable droppableId="widgets">
+                {(provided) => (
+                  <div {...provided.droppableProps} ref={provided.innerRef} className="widgets-container">
+                    {widgets.map((widget, index) => (
+                      <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+                        {(provided) => (
+                          <div
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            ref={provided.innerRef}
+                            className="widget"
+                          >
+                            <DashboardCard
+                              title={widget.title}
+                              icon={widget.icon}
+                              onClick={widget.onClick}
+                              description={widget.description}
+                              callToAction={widget.callToAction}
+                            />
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
+          </DndProvider>
+        </div>
       </div>
-      <WidgetSettings />
     </div>
   );
 };
 
-export default DashboardPage;
+export default Page;

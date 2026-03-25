@@ -52,6 +52,27 @@ const calculateReadabilityScore = (text: string, language: string) => {
     case 'zh':
       readabilityScore = 206.835 - 1.015 * sentenceLength - 84.6 * wordLength * 0.7;
       break;
+    case 'nl':
+      readabilityScore = 180.0 - 58.5 * sentenceLength - 1.015 * wordLength;
+      break;
+    case 'ru':
+      readabilityScore = 206.835 - 1.015 * sentenceLength - 84.6 * wordLength * 0.85;
+      break;
+    case 'ar':
+      readabilityScore = 206.835 - 1.015 * sentenceLength - 84.6 * wordLength * 0.9;
+      break;
+    case 'he':
+      readabilityScore = 206.835 - 1.015 * sentenceLength - 84.6 * wordLength * 0.8;
+      break;
+    case 'hi':
+      readabilityScore = 206.835 - 1.015 * sentenceLength - 84.6 * wordLength * 0.7;
+      break;
+    case 'ja':
+      readabilityScore = 206.835 - 1.015 * sentenceLength - 84.6 * wordLength * 0.6;
+      break;
+    case 'ko':
+      readabilityScore = 206.835 - 1.015 * sentenceLength - 84.6 * wordLength * 0.65;
+      break;
     default:
       readabilityScore = 206.835 - 1.015 * sentenceLength - 84.6 * wordLength;
       break;
@@ -72,22 +93,43 @@ const calculateFleschKincaidGradeLevel = (text: string, language: string) => {
       fleschKincaidGradeLevel = 0.39 * sentenceLength + 0.11 * wordLength + 0.58;
       break;
     case 'es':
-      fleschKincaidGradeLevel = 0.39 * sentenceLength + 0.11 * wordLength + 0.58;
+      fleschKincaidGradeLevel = 0.39 * sentenceLength + 0.1 * wordLength + 0.58;
       break;
     case 'fr':
-      fleschKincaidGradeLevel = 0.39 * sentenceLength + 0.11 * wordLength + 0.58;
+      fleschKincaidGradeLevel = 0.39 * sentenceLength + 0.1 * wordLength + 0.58;
       break;
     case 'de':
-      fleschKincaidGradeLevel = 0.39 * sentenceLength + 0.11 * wordLength + 0.58;
+      fleschKincaidGradeLevel = 0.39 * sentenceLength + 0.1 * wordLength + 0.58;
       break;
     case 'it':
-      fleschKincaidGradeLevel = 0.39 * sentenceLength + 0.11 * wordLength + 0.58;
+      fleschKincaidGradeLevel = 0.39 * sentenceLength + 0.1 * wordLength + 0.58 * 0.8;
       break;
     case 'pt':
-      fleschKincaidGradeLevel = 0.39 * sentenceLength + 0.11 * wordLength + 0.58;
+      fleschKincaidGradeLevel = 0.39 * sentenceLength + 0.1 * wordLength + 0.58 * 0.9;
       break;
     case 'zh':
-      fleschKincaidGradeLevel = 0.39 * sentenceLength + 0.11 * wordLength + 0.58;
+      fleschKincaidGradeLevel = 0.39 * sentenceLength + 0.1 * wordLength + 0.58 * 0.7;
+      break;
+    case 'nl':
+      fleschKincaidGradeLevel = 0.39 * sentenceLength + 0.1 * wordLength + 0.58;
+      break;
+    case 'ru':
+      fleschKincaidGradeLevel = 0.39 * sentenceLength + 0.1 * wordLength + 0.58 * 0.85;
+      break;
+    case 'ar':
+      fleschKincaidGradeLevel = 0.39 * sentenceLength + 0.1 * wordLength + 0.58 * 0.9;
+      break;
+    case 'he':
+      fleschKincaidGradeLevel = 0.39 * sentenceLength + 0.1 * wordLength + 0.58 * 0.8;
+      break;
+    case 'hi':
+      fleschKincaidGradeLevel = 0.39 * sentenceLength + 0.1 * wordLength + 0.58 * 0.7;
+      break;
+    case 'ja':
+      fleschKincaidGradeLevel = 0.39 * sentenceLength + 0.1 * wordLength + 0.58 * 0.6;
+      break;
+    case 'ko':
+      fleschKincaidGradeLevel = 0.39 * sentenceLength + 0.1 * wordLength + 0.58 * 0.65;
       break;
     default:
       fleschKincaidGradeLevel = 0.39 * sentenceLength + 0.11 * wordLength + 0.58;
@@ -95,151 +137,3 @@ const calculateFleschKincaidGradeLevel = (text: string, language: string) => {
   }
   return fleschKincaidGradeLevel;
 };
-
-const calculateGunningFogIndex = (text: string, language: string) => {
-  const words = text.split(' ');
-  const sentences = text.split('.').filter((sentence) => sentence !== '');
-  const complexWords = words.filter((word) => countSyllables(word) >= 3);
-  const percentageComplexWords = (complexWords.length / words.length) * 100;
-  const averageSentenceLength = words.length / sentences.length;
-
-  let gunningFogIndex;
-  switch (language) {
-    case 'en':
-      gunningFogIndex = 0.4 * (averageSentenceLength + percentageComplexWords);
-      break;
-    case 'es':
-      gunningFogIndex = 0.4 * (averageSentenceLength + percentageComplexWords);
-      break;
-    case 'fr':
-      gunningFogIndex = 0.4 * (averageSentenceLength + percentageComplexWords);
-      break;
-    case 'de':
-      gunningFogIndex = 0.4 * (averageSentenceLength + percentageComplexWords);
-      break;
-    case 'it':
-      gunningFogIndex = 0.4 * (averageSentenceLength + percentageComplexWords);
-      break;
-    case 'pt':
-      gunningFogIndex = 0.4 * (averageSentenceLength + percentageComplexWords);
-      break;
-    case 'zh':
-      gunningFogIndex = 0.4 * (averageSentenceLength + percentageComplexWords);
-      break;
-    default:
-      gunningFogIndex = 0.4 * (averageSentenceLength + percentageComplexWords);
-      break;
-  }
-  return gunningFogIndex;
-};
-
-const countSyllables = (word: string) => {
-  word = word.toLowerCase();
-  const vowels = 'aeiouy';
-  let syllableCount = 0;
-  let prevVowel = false;
-
-  for (let i = 0; i < word.length; i++) {
-    if (vowels.includes(word[i])) {
-      if (!prevVowel) {
-        syllableCount++;
-      }
-      prevVowel = true;
-    } else {
-      prevVowel = false;
-    }
-  }
-
-  if (word.endsWith('e')) {
-    syllableCount--;
-  }
-
-  if (syllableCount === 0) {
-    syllableCount = 1;
-  }
-
-  return syllableCount;
-};
-
-const calculateComplexityScore = (text: string, language: string) => {
-  const words = text.split(' ');
-  const complexWords = words.filter((word) => countSyllables(word) >= 3);
-  const percentageComplexWords = (complexWords.length / words.length) * 100;
-  return percentageComplexWords;
-};
-
-const performSentimentAnalysisWithHuggingFace = async (text: string) => {
-  const pipeline = await pipeline('sentiment-analysis');
-  const result = await pipeline(text);
-  return result;
-};
-
-const performEntityRecognitionWithSpacy = async (text: string) => {
-  const nlp = await spacy.load('en_core_web_sm');
-  const doc = nlp(text);
-  const entities = doc.ents;
-  return entities;
-};
-
-const performTopicModeling = async (text: string) => {
-  const nlp = new NlpManager({ languages: ['en'] });
-  const result = await nlp.process('en', text);
-  return result;
-};
-
-const suggestAlternativeFormats = (readabilityScore: number, sentimentAnalysis: any) => {
-  const suggestions = [];
-  if (readabilityScore < 60) {
-    suggestions.push('Consider rewriting the text to make it more readable.');
-  }
-  if (sentimentAnalysis.score < 0.5) {
-    suggestions.push('Consider rewriting the text to make it more positive.');
-  }
-  return suggestions;
-};
-
-const advancedContentAnalysis = async (analysis: any) => {
-  const advancedAnalysis = {
-    ...analysis,
-    readabilityScore: calculateReadabilityScore(analysis.text, analysis.language),
-    fleschKincaidGradeLevel: calculateFleschKincaidGradeLevel(analysis.text, analysis.language),
-    gunningFogIndex: calculateGunningFogIndex(analysis.text, analysis.language),
-    sentimentAnalysis: await performSentimentAnalysisWithHuggingFace(analysis.text),
-    entityRecognition: await performEntityRecognitionWithSpacy(analysis.text),
-    topicModeling: await performTopicModeling(analysis.text),
-    suggestedAlternativeFormats: suggestAlternativeFormats(analysis.readabilityScore, analysis.sentimentAnalysis),
-  };
-  return advancedAnalysis;
-};
-
-const Page = () => {
-  const router = useRouter();
-  const [analysis, setAnalysis] = useState<any>({});
-  const [loading, setLoading] = useState(false);
-
-  const handleAnalyze = async (text: string, language: string) => {
-    setLoading(true);
-    const result = await advancedContentAnalysis({ text, language });
-    setAnalysis(result);
-    setLoading(false);
-  };
-
-  return (
-    <div>
-      <SEO title="AI-Powered Content Optimizer" />
-      <PageHeader title="AI-Powered Content Optimizer" />
-      <ContentAnalyzerForm onAnalyze={handleAnalyze} />
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        <div>
-          <OptimizationSuggestions analysis={analysis} />
-          <EngagementTracker analysis={analysis} />
-          <AlternativeFormats analysis={analysis} />
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default Page;
