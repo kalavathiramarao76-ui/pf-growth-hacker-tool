@@ -13,7 +13,7 @@ import {
   ExchangeCalendar, 
   YahooCalendar, 
   ZohoCalendar, 
-  Any.doCalendar, 
+  AnyDoCalendar, 
   TodoistCalendar, 
   Microsoft365Calendar, 
   FastmailCalendar 
@@ -75,78 +75,82 @@ interface Integration {
   key: string;
   component: any;
   category: string;
+  popularity: number;
 }
 
 const integrations: Integration[] = [
-  { name: 'Google Calendar', key: 'googleCalendar', component: GoogleCalendar, category: 'Calendar' },
-  { name: 'Outlook Calendar', key: 'outlookCalendar', component: OutlookCalendar, category: 'Calendar' },
-  { name: 'Apple Calendar', key: 'appleCalendar', component: AppleCalendar, category: 'Calendar' },
-  { name: 'iCal Calendar', key: 'iCalCalendar', component: ICalCalendar, category: 'Calendar' },
-  { name: 'Exchange Calendar', key: 'exchangeCalendar', component: ExchangeCalendar, category: 'Calendar' },
-  { name: 'Yahoo Calendar', key: 'yahooCalendar', component: YahooCalendar, category: 'Calendar' },
-  { name: 'Zoho Calendar', key: 'zohoCalendar', component: ZohoCalendar, category: 'Calendar' },
-  { name: 'Any.do Calendar', key: 'anyDoCalendar', component: Any.doCalendar, category: 'Calendar' },
-  { name: 'Todoist Calendar', key: 'todoistCalendar', component: TodoistCalendar, category: 'Calendar' },
-  { name: 'Microsoft 365 Calendar', key: 'microsoft365Calendar', component: Microsoft365Calendar, category: 'Calendar' },
-  { name: 'Fastmail Calendar', key: 'fastmailCalendar', component: FastmailCalendar, category: 'Calendar' },
-  { name: 'Trello', key: 'trello', component: TrelloIntegration, category: 'Project Management' },
-  { name: 'Asana', key: 'asana', component: AsanaIntegration, category: 'Project Management' },
-  { name: 'Notion', key: 'notion', component: NotionIntegration, category: 'Project Management' },
-  { name: 'Jira', key: 'jira', component: JiraIntegration, category: 'Project Management' },
-  { name: 'Basecamp', key: 'basecamp', component: BasecampIntegration, category: 'Project Management' },
-  { name: 'Wrike', key: 'wrike', component: WrikeIntegration, category: 'Project Management' },
-  { name: 'ClickUp', key: 'clickUp', component: ClickUpIntegration, category: 'Project Management' },
-  { name: 'Monday', key: 'monday', component: MondayIntegration, category: 'Project Management' },
-  { name: 'Smartsheet', key: 'smartsheet', component: SmartsheetIntegration, category: 'Project Management' },
-  { name: 'Slack', key: 'slack', component: SlackIntegration, category: 'Communication' },
-  { name: 'Microsoft Teams', key: 'microsoftTeams', component: MicrosoftTeamsIntegration, category: 'Communication' },
-  { name: 'Discord', key: 'discord', component: DiscordIntegration, category: 'Communication' },
-  { name: 'Zoom', key: 'zoom', component: ZoomIntegration, category: 'Communication' },
-  { name: 'Skype', key: 'skype', component: SkypeIntegration, category: 'Communication' },
-  { name: 'Google Meet', key: 'googleMeet', component: GoogleMeetIntegration, category: 'Communication' },
-  { name: 'Facebook', key: 'facebook', component: FacebookIntegration, category: 'Social Media' },
-  { name: 'Twitter', key: 'twitter', component: TwitterIntegration, category: 'Social Media' },
-  { name: 'LinkedIn', key: 'linkedin', component: LinkedInIntegration, category: 'Social Media' },
-  { name: 'Instagram', key: 'instagram', component: InstagramIntegration, category: 'Social Media' },
-  { name: 'TikTok', key: 'tikTok', component: TikTokIntegration, category: 'Social Media' },
-  { name: 'Pinterest', key: 'pinterest', component: PinterestIntegration, category: 'Social Media' },
-  { name: 'Mailchimp', key: 'mailchimp', component: MailchimpIntegration, category: 'Email Marketing' },
-  { name: 'Constant Contact', key: 'constantContact', component: ConstantContactIntegration, category: 'Email Marketing' },
-  { name: 'Sendinblue', key: 'sendinblue', component: SendinblueIntegration, category: 'Email Marketing' },
-  { name: 'Klaviyo', key: 'klaviyo', component: KlaviyoIntegration, category: 'Email Marketing' },
-  { name: 'Hubspot', key: 'hubspot', component: HubspotIntegration, category: 'Email Marketing' },
-  { name: 'Google Drive', key: 'googleDrive', component: GoogleDriveIntegration, category: 'Cloud Storage' },
-  { name: 'Dropbox', key: 'dropbox', component: DropboxIntegration, category: 'Cloud Storage' },
-  { name: 'OneDrive', key: 'oneDrive', component: OneDriveIntegration, category: 'Cloud Storage' },
-  { name: 'Box', key: 'box', component: BoxIntegration, category: 'Cloud Storage' },
-  { name: 'pCloud', key: 'pCloud', component: pCloudIntegration, category: 'Cloud Storage' }
+  { name: 'Google Calendar', key: 'googleCalendar', component: GoogleCalendar, category: 'Calendar', popularity: 9 },
+  { name: 'Outlook Calendar', key: 'outlookCalendar', component: OutlookCalendar, category: 'Calendar', popularity: 8 },
+  { name: 'Apple Calendar', key: 'appleCalendar', component: AppleCalendar, category: 'Calendar', popularity: 7 },
+  { name: 'iCal Calendar', key: 'iCalCalendar', component: ICalCalendar, category: 'Calendar', popularity: 6 },
+  { name: 'Exchange Calendar', key: 'exchangeCalendar', component: ExchangeCalendar, category: 'Calendar', popularity: 5 },
+  { name: 'Yahoo Calendar', key: 'yahooCalendar', component: YahooCalendar, category: 'Calendar', popularity: 4 },
+  { name: 'Zoho Calendar', key: 'zohoCalendar', component: ZohoCalendar, category: 'Calendar', popularity: 3 },
+  { name: 'Any.do Calendar', key: 'anyDoCalendar', component: AnyDoCalendar, category: 'Calendar', popularity: 2 },
+  { name: 'Todoist Calendar', key: 'todoistCalendar', component: TodoistCalendar, category: 'Calendar', popularity: 1 },
+  { name: 'Microsoft 365 Calendar', key: 'microsoft365Calendar', component: Microsoft365Calendar, category: 'Calendar', popularity: 8 },
+  { name: 'Fastmail Calendar', key: 'fastmailCalendar', component: FastmailCalendar, category: 'Calendar', popularity: 6 },
+  { name: 'Trello Integration', key: 'trelloIntegration', component: TrelloIntegration, category: 'Project Management', popularity: 9 },
+  { name: 'Asana Integration', key: 'asanaIntegration', component: AsanaIntegration, category: 'Project Management', popularity: 8 },
+  { name: 'Notion Integration', key: 'notionIntegration', component: NotionIntegration, category: 'Project Management', popularity: 7 },
+  { name: 'Jira Integration', key: 'jiraIntegration', component: JiraIntegration, category: 'Project Management', popularity: 6 },
+  { name: 'Basecamp Integration', key: 'basecampIntegration', component: BasecampIntegration, category: 'Project Management', popularity: 5 },
+  { name: 'Wrike Integration', key: 'wrikeIntegration', component: WrikeIntegration, category: 'Project Management', popularity: 4 },
+  { name: 'ClickUp Integration', key: 'clickUpIntegration', component: ClickUpIntegration, category: 'Project Management', popularity: 3 },
+  { name: 'Monday Integration', key: 'mondayIntegration', component: MondayIntegration, category: 'Project Management', popularity: 2 },
+  { name: 'Smartsheet Integration', key: 'smartsheetIntegration', component: SmartsheetIntegration, category: 'Project Management', popularity: 1 },
+  { name: 'Slack Integration', key: 'slackIntegration', component: SlackIntegration, category: 'Communication', popularity: 9 },
+  { name: 'Microsoft Teams Integration', key: 'microsoftTeamsIntegration', component: MicrosoftTeamsIntegration, category: 'Communication', popularity: 8 },
+  { name: 'Discord Integration', key: 'discordIntegration', component: DiscordIntegration, category: 'Communication', popularity: 7 },
+  { name: 'Zoom Integration', key: 'zoomIntegration', component: ZoomIntegration, category: 'Communication', popularity: 6 },
+  { name: 'Skype Integration', key: 'skypeIntegration', component: SkypeIntegration, category: 'Communication', popularity: 5 },
+  { name: 'Google Meet Integration', key: 'googleMeetIntegration', component: GoogleMeetIntegration, category: 'Communication', popularity: 4 },
+  { name: 'Facebook Integration', key: 'facebookIntegration', component: FacebookIntegration, category: 'Social Media', popularity: 9 },
+  { name: 'Twitter Integration', key: 'twitterIntegration', component: TwitterIntegration, category: 'Social Media', popularity: 8 },
+  { name: 'LinkedIn Integration', key: 'linkedinIntegration', component: LinkedInIntegration, category: 'Social Media', popularity: 7 },
+  { name: 'Instagram Integration', key: 'instagramIntegration', component: InstagramIntegration, category: 'Social Media', popularity: 6 },
+  { name: 'TikTok Integration', key: 'tikTokIntegration', component: TikTokIntegration, category: 'Social Media', popularity: 5 },
+  { name: 'Pinterest Integration', key: 'pinterestIntegration', component: PinterestIntegration, category: 'Social Media', popularity: 4 },
+  { name: 'Mailchimp Integration', key: 'mailchimpIntegration', component: MailchimpIntegration, category: 'Email Marketing', popularity: 9 },
+  { name: 'Constant Contact Integration', key: 'constantContactIntegration', component: ConstantContactIntegration, category: 'Email Marketing', popularity: 8 },
+  { name: 'Sendinblue Integration', key: 'sendinblueIntegration', component: SendinblueIntegration, category: 'Email Marketing', popularity: 7 },
+  { name: 'Klaviyo Integration', key: 'klaviyoIntegration', component: KlaviyoIntegration, category: 'Email Marketing', popularity: 6 },
+  { name: 'Hubspot Integration', key: 'hubspotIntegration', component: HubspotIntegration, category: 'Email Marketing', popularity: 5 },
+  { name: 'Google Drive Integration', key: 'googleDriveIntegration', component: GoogleDriveIntegration, category: 'Cloud Storage', popularity: 9 },
+  { name: 'Dropbox Integration', key: 'dropboxIntegration', component: DropboxIntegration, category: 'Cloud Storage', popularity: 8 },
+  { name: 'OneDrive Integration', key: 'oneDriveIntegration', component: OneDriveIntegration, category: 'Cloud Storage', popularity: 7 },
+  { name: 'Box Integration', key: 'boxIntegration', component: BoxIntegration, category: 'Cloud Storage', popularity: 6 },
+  { name: 'pCloud Integration', key: 'pCloudIntegration', component: pCloudIntegration, category: 'Cloud Storage', popularity: 5 },
 ];
 
-const ContentCalendarPage = () => {
-  const [integrationState, setIntegrationState] = useState<IntegrationState>({
-    events: [],
-    isConnected: false,
-    token: null
-  });
+const popularIntegrations = integrations.filter((integration) => integration.popularity > 5);
+const lessPopularIntegrations = integrations.filter((integration) => integration.popularity <= 5);
 
-  const handleIntegration = (integration: Integration) => {
-    // Handle integration logic here
-  };
+const Page = () => {
+  const [isLessPopularIntegrationsVisible, setIsLessPopularIntegrationsVisible] = useState(false);
 
   return (
     <Layout>
       <SEO title="Content Calendar" />
       <DndProvider backend={HTML5Backend}>
         <Calendar>
-          {integrations.map((integration) => (
-            <DroppableCalendar key={integration.key} integration={integration}>
-              <integration.component />
-            </DroppableCalendar>
+          {popularIntegrations.map((integration) => (
+            <DraggableEvent key={integration.key} integration={integration} />
           ))}
+          {isLessPopularIntegrationsVisible && (
+            <div>
+              {lessPopularIntegrations.map((integration) => (
+                <DraggableEvent key={integration.key} integration={integration} />
+              ))}
+            </div>
+          )}
+          <button onClick={() => setIsLessPopularIntegrationsVisible(!isLessPopularIntegrationsVisible)}>
+            {isLessPopularIntegrationsVisible ? 'Hide less popular integrations' : 'Show less popular integrations'}
+          </button>
         </Calendar>
       </DndProvider>
     </Layout>
   );
 };
 
-export default ContentCalendarPage;
+export default Page;
