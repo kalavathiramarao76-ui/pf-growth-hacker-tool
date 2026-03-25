@@ -100,70 +100,57 @@ const initialWidgets: Widget[] = [
       </div>
     )
   },
-  { 
-    id: 6, 
-    title: 'Get Started with Premium', 
-    icon: <MdSettings size={24} />, 
-    onClick: () => {}, 
-    description: 'Start your premium journey today and unlock the full potential of our AI-Powered Content Optimizer.',
-    callToAction: (
-      <div className="premium-get-started-call-to-action">
-        <h1>Get Started with Our Premium Plan Today</h1>
-        <p>Experience the power of our AI-Powered Content Optimizer with our premium plan. Limited time offer: get 15% off your first year!</p>
-        <button className="get-started-button">Get Started</button>
-      </div>
-    )
-  }
 ];
 
 const DashboardPage = () => {
   const router = useRouter();
   const [widgets, setWidgets] = useState(initialWidgets);
-  const [dragging, setDragging] = useState(false);
 
-  const handleDragStart = () => {
-    setDragging(true);
-  };
-
-  const handleDragEnd = () => {
-    setDragging(false);
-  };
-
-  const handleWidgetClick = (widget: Widget) => {
-    widget.onClick();
+  const handleUpgradeClick = () => {
+    // Add logic to handle upgrade click
   };
 
   return (
     <div className="dashboard-page">
       <DashboardHeader />
       <NavigationMenu />
-      <DndProvider>
-        <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-          <Droppable droppableId="widgets">
-            {(provided) => (
-              <div ref={provided.innerRef} {...provided.droppableProps}>
-                {widgets.map((widget, index) => (
-                  <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
-                    {(provided) => (
-                      <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
-                        <DashboardCard
-                          title={widget.title}
-                          icon={widget.icon}
-                          onClick={() => handleWidgetClick(widget)}
-                          description={widget.description}
-                          callToAction={widget.callToAction}
-                        />
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-        </DragDropContext>
-      </DndProvider>
-      <WidgetSettings />
+      <div className="dashboard-content">
+        <DndProvider>
+          <DragDropContext>
+            <Droppable droppableId="widgets">
+              {(provided) => (
+                <div {...provided.droppableProps} ref={provided.innerRef}>
+                  {widgets.map((widget, index) => (
+                    <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+                      {(provided) => (
+                        <div
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                          ref={provided.innerRef}
+                        >
+                          <DashboardCard
+                            title={widget.title}
+                            icon={widget.icon}
+                            onClick={widget.onClick}
+                            description={widget.description}
+                            callToAction={widget.callToAction}
+                          />
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
+        </DndProvider>
+        <div className="premium-upgrade-cta">
+          <h2>Unlock Your Content's Full Potential</h2>
+          <p>Upgrade to our premium plan and get access to advanced features, priority support, and expert guidance.</p>
+          <button className="upgrade-button" onClick={handleUpgradeClick}>Upgrade Now</button>
+        </div>
+      </div>
     </div>
   );
 };

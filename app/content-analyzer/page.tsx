@@ -30,9 +30,12 @@ const calculateReadabilityScore = async (text: string) => {
   const complexityScore = await calculateComplexityScore(text)
   const cohesionScore = await calculateCohesionScore(text)
   const clarityScore = await calculateClarityScore(text)
+  const sentenceLengthScore = await calculateSentenceLengthScore(text)
+  const wordLengthScore = await calculateWordLengthScore(text)
+  const syllableCountScore = await calculateSyllableCountScore(text)
 
-  // Combine the readability score, complexity score, cohesion score, and clarity score
-  const combinedScore = (readabilityScore + complexityScore + cohesionScore + clarityScore) / 4
+  // Combine the readability score, complexity score, cohesion score, clarity score, sentence length score, word length score, and syllable count score
+  const combinedScore = (readabilityScore + complexityScore + cohesionScore + clarityScore + sentenceLengthScore + wordLengthScore + syllableCountScore) / 7
 
   return combinedScore
 }
@@ -62,7 +65,7 @@ const countSyllables = (word: string) => {
     count = 1;
   }
 
-  return count;
+  return count
 }
 
 const calculateComplexityScore = async (text: string) => {
@@ -89,90 +92,81 @@ const calculateClarityScore = async (text: string) => {
   return clarityScore
 }
 
-const App = () => {
+const calculateSentenceLengthScore = async (text: string) => {
+  const sentences = text.split('.').filter(sentence => sentence.trim() !== '');
+  const averageSentenceLength = sentences.reduce((acc, sentence) => acc + sentence.split(' ').length, 0) / sentences.length;
+  const sentenceLengthScore = 1 - (averageSentenceLength / 20);
+
+  return sentenceLengthScore
+}
+
+const calculateWordLengthScore = async (text: string) => {
+  const words = text.split(' ');
+  const averageWordLength = words.reduce((acc, word) => acc + word.length, 0) / words.length;
+  const wordLengthScore = 1 - (averageWordLength / 10);
+
+  return wordLengthScore
+}
+
+const calculateSyllableCountScore = async (text: string) => {
+  const words = text.split(' ');
+  const totalSyllableCount = words.reduce((acc, word) => acc + countSyllables(word), 0);
+  const averageSyllableCount = totalSyllableCount / words.length;
+  const syllableCountScore = 1 - (averageSyllableCount / 2);
+
+  return syllableCountScore
+}
+
+const ContentAnalyzerPage = () => {
   const router = useRouter();
-  const [content, setContent] = useState('');
+  const [text, setText] = useState('');
   const [readabilityScore, setReadabilityScore] = useState(0);
   const [complexityScore, setComplexityScore] = useState(0);
   const [cohesionScore, setCohesionScore] = useState(0);
   const [clarityScore, setClarityScore] = useState(0);
-  const [suggestions, setSuggestions] = useState([]);
-  const [engagement, setEngagement] = useState(0);
-  const [alternativeFormats, setAlternativeFormats] = useState([]);
+  const [sentenceLengthScore, setSentenceLengthScore] = useState(0);
+  const [wordLengthScore, setWordLengthScore] = useState(0);
+  const [syllableCountScore, setSyllableCountScore] = useState(0);
 
   useEffect(() => {
-    const storedContent = LocalStorage.get('content');
-    if (storedContent) {
-      setContent(storedContent);
+    const storedText = LocalStorage.getItem('text');
+    if (storedText) {
+      setText(storedText);
     }
   }, []);
 
-  const handleContentChange = (newContent: string) => {
-    setContent(newContent);
-    LocalStorage.set('content', newContent);
+  const handleTextChange = (event: any) => {
+    setText(event.target.value);
+    LocalStorage.setItem('text', event.target.value);
   };
 
   const handleAnalyze = async () => {
-    const readability = await calculateReadabilityScore(content);
-    setReadabilityScore(readability);
-
-    const complexity = await calculateComplexityScore(content);
-    setComplexityScore(complexity);
-
-    const cohesion = await calculateCohesionScore(content);
-    setCohesionScore(cohesion);
-
-    const clarity = await calculateClarityScore(content);
-    setClarityScore(clarity);
-
-    const suggestions = await getOptimizationSuggestions(content);
-    setSuggestions(suggestions);
-
-    const engagement = await getEngagementScore(content);
-    setEngagement(engagement);
-
-    const alternativeFormats = await getAlternativeFormats(content);
-    setAlternativeFormats(alternativeFormats);
+    const readabilityScoreResult = await calculateReadabilityScore(text);
+    setReadabilityScore(readabilityScoreResult);
+    const complexityScoreResult = await calculateComplexityScore(text);
+    setComplexityScore(complexityScoreResult);
+    const cohesionScoreResult = await calculateCohesionScore(text);
+    setCohesionScore(cohesionScoreResult);
+    const clarityScoreResult = await calculateClarityScore(text);
+    setClarityScore(clarityScoreResult);
+    const sentenceLengthScoreResult = await calculateSentenceLengthScore(text);
+    setSentenceLengthScore(sentenceLengthScoreResult);
+    const wordLengthScoreResult = await calculateWordLengthScore(text);
+    setWordLengthScore(wordLengthScoreResult);
+    const syllableCountScoreResult = await calculateSyllableCountScore(text);
+    setSyllableCountScore(syllableCountScoreResult);
   };
-
-  const getOptimizationSuggestions = async (text: string) => {
-    const suggestionsPipeline = pipeline('text-generation', model='t5-base')
-    const result = await suggestionsPipeline(text)
-    const suggestions = result.generated_text
-
-    return suggestions;
-  }
-
-  const getEngagementScore = async (text: string) => {
-    const engagementPipeline = pipeline('text-classification', model='distilbert-base-uncased-finetuned-sst-2-english')
-    const result = await engagementPipeline(text)
-    const engagementScore = result.score
-
-    return engagementScore;
-  }
-
-  const getAlternativeFormats = async (text: string) => {
-    const alternativeFormatsPipeline = pipeline('text-generation', model='t5-base')
-    const result = await alternativeFormatsPipeline(text)
-    const alternativeFormats = result.generated_text
-
-    return alternativeFormats;
-  }
 
   return (
     <div>
-      <SEO title="AI-Powered Content Optimizer" />
-      <PageHeader />
-      <ContentAnalyzerForm
-        content={content}
-        onChange={handleContentChange}
-        onAnalyze={handleAnalyze}
-      />
-      <OptimizationSuggestions suggestions={suggestions} />
-      <EngagementTracker engagement={engagement} />
-      <AlternativeFormats formats={alternativeFormats} />
+      <SEO title="Content Analyzer" />
+      <PageHeader title="Content Analyzer" />
+      <ContentAnalyzerForm text={text} onChange={handleTextChange} onAnalyze={handleAnalyze} />
+      <OptimizationSuggestions readabilityScore={readabilityScore} complexityScore={complexityScore} cohesionScore={cohesionScore} clarityScore={clarityScore} sentenceLengthScore={sentenceLengthScore} wordLengthScore={wordLengthScore} syllableCountScore={syllableCountScore} />
+      <EngagementTracker />
+      <AlternativeFormats />
     </div>
   );
 };
 
-export default App;
+export default ContentAnalyzerPage;
