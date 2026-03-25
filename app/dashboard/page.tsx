@@ -96,51 +96,85 @@ const initialWidgets = [
             </tbody>
           </table>
         </div>
-        <div className="limited-time-offer">
-          <h2>Limited Time Offer: Get 15% Off Your First Year</h2>
-          <p>Try our premium plan risk-free with a 14-day free trial. Cancel anytime.</p>
-          <button>Start Free Trial</button>
-        </div>
-        <div className="demo-request">
-          <h2>Request a Demo</h2>
-          <p>See our premium plan in action and learn how it can help you achieve your content goals.</p>
-          <button>Request Demo</button>
+        <div className="upgrade-button">
+          <button>Upgrade Now</button>
         </div>
       </div>
     )
   },
+  {
+    id: 6,
+    title: 'Premium Features',
+    icon: <MdSettings size={24} />,
+    onClick: () => {},
+    description: 'Learn more about the advanced features and benefits of our premium plan.',
+    callToAction: (
+      <div className="premium-features-call-to-action">
+        <h1>Advanced Features and Benefits</h1>
+        <p>Our premium plan includes a range of advanced features and benefits to help you take your content to the next level.</p>
+        <div className="features-list">
+          <h2>Features:</h2>
+          <ul>
+            <li>Advanced analytics and insights</li>
+            <li>AI-powered content optimization</li>
+            <li>Priority support and expert guidance</li>
+            <li>Enhanced security and backups</li>
+          </ul>
+        </div>
+        <div className="call-to-action-button">
+          <button>Learn More</button>
+        </div>
+      </div>
+    )
+  }
 ];
 
-const Page = () => {
+const DashboardPage = () => {
   const router = useRouter();
+  const [widgets, setWidgets] = useState(initialWidgets);
+
+  const handleWidgetClick = (id: number) => {
+    const widget = widgets.find((widget) => widget.id === id);
+    if (widget && widget.onClick) {
+      widget.onClick();
+    }
+  };
 
   return (
-    <div>
+    <div className="dashboard-page">
       <DashboardHeader />
       <NavigationMenu />
-      <DndProvider>
-        <DragDropContext>
-          <Droppable droppableId="widgets">
-            {(provided) => (
-              <div ref={provided.innerRef} {...provided.droppableProps}>
-                {initialWidgets.map((widget, index) => (
-                  <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
-                    {(provided) => (
-                      <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
-                        <DashboardCard widget={widget} />
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-        </DragDropContext>
-      </DndProvider>
+      <div className="dashboard-content">
+        <DndProvider>
+          <DragDropContext>
+            <Droppable droppableId="widgets">
+              {(provided) => (
+                <div ref={provided.innerRef} {...provided.droppableProps}>
+                  {widgets.map((widget, index) => (
+                    <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+                      {(provided) => (
+                        <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                          <DashboardCard
+                            title={widget.title}
+                            icon={widget.icon}
+                            onClick={() => handleWidgetClick(widget.id)}
+                            description={widget.description}
+                            callToAction={widget.callToAction}
+                          />
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
+        </DndProvider>
+      </div>
       <WidgetSettings />
     </div>
   );
 };
 
-export default Page;
+export default DashboardPage;

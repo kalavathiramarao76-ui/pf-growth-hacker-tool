@@ -21,20 +21,6 @@ import { Transformers } from 'transformers';
 
 import { pipeline } from 'transformers';
 
-const advancedContentAnalysis = async (analysis: any) => {
-  const advancedAnalysis = {
-    ...analysis,
-    readabilityScore: calculateReadabilityScore(analysis.text, analysis.language),
-    fleschKincaidGradeLevel: calculateFleschKincaidGradeLevel(analysis.text, analysis.language),
-    gunningFogIndex: calculateGunningFogIndex(analysis.text, analysis.language),
-    sentimentAnalysis: await performSentimentAnalysisWithHuggingFace(analysis.text),
-    entityRecognition: await performEntityRecognitionWithSpacy(analysis.text),
-    topicModeling: await performTopicModeling(analysis.text),
-    suggestedAlternativeFormats: suggestAlternativeFormats(analysis.readabilityScore, analysis.sentimentAnalysis),
-  };
-  return advancedAnalysis;
-};
-
 const calculateReadabilityScore = (text: string, language: string) => {
   let readabilityScore;
   const words = text.split(' ');
@@ -65,27 +51,6 @@ const calculateReadabilityScore = (text: string, language: string) => {
       break;
     case 'zh':
       readabilityScore = 206.835 - 1.015 * sentenceLength - 84.6 * wordLength * 0.7;
-      break;
-    case 'nl':
-      readabilityScore = 206.835 - 1.015 * sentenceLength - 84.6 * wordLength * 0.85;
-      break;
-    case 'ru':
-      readabilityScore = 206.835 - 1.015 * sentenceLength - 84.6 * wordLength * 0.75;
-      break;
-    case 'ar':
-      readabilityScore = 206.835 - 1.015 * sentenceLength - 84.6 * wordLength * 0.65;
-      break;
-    case 'he':
-      readabilityScore = 206.835 - 1.015 * sentenceLength - 84.6 * wordLength * 0.6;
-      break;
-    case 'hi':
-      readabilityScore = 206.835 - 1.015 * sentenceLength - 84.6 * wordLength * 0.55;
-      break;
-    case 'ja':
-      readabilityScore = 206.835 - 1.015 * sentenceLength - 84.6 * wordLength * 0.5;
-      break;
-    case 'ko':
-      readabilityScore = 206.835 - 1.015 * sentenceLength - 84.6 * wordLength * 0.45;
       break;
     default:
       readabilityScore = 206.835 - 1.015 * sentenceLength - 84.6 * wordLength;
@@ -134,53 +99,54 @@ const calculateFleschKincaidGradeLevel = (text: string, language: string) => {
 const calculateGunningFogIndex = (text: string, language: string) => {
   const words = text.split(' ');
   const sentences = text.split('.').filter((sentence) => sentence !== '');
-  const complexWords = words.filter((word) => countSyllables(word) > 2);
-  const sentenceLength = words.length / sentences.length;
-  const complexWordPercentage = complexWords.length / words.length;
+  const complexWords = words.filter((word) => countSyllables(word) >= 3);
+  const percentageComplexWords = (complexWords.length / words.length) * 100;
+  const averageSentenceLength = words.length / sentences.length;
 
   let gunningFogIndex;
   switch (language) {
     case 'en':
-      gunningFogIndex = 0.4 * (sentenceLength + complexWordPercentage);
+      gunningFogIndex = 0.4 * (averageSentenceLength + percentageComplexWords);
       break;
     case 'es':
-      gunningFogIndex = 0.4 * (sentenceLength + complexWordPercentage);
+      gunningFogIndex = 0.4 * (averageSentenceLength + percentageComplexWords);
       break;
     case 'fr':
-      gunningFogIndex = 0.4 * (sentenceLength + complexWordPercentage);
+      gunningFogIndex = 0.4 * (averageSentenceLength + percentageComplexWords);
       break;
     case 'de':
-      gunningFogIndex = 0.4 * (sentenceLength + complexWordPercentage);
+      gunningFogIndex = 0.4 * (averageSentenceLength + percentageComplexWords);
       break;
     case 'it':
-      gunningFogIndex = 0.4 * (sentenceLength + complexWordPercentage);
+      gunningFogIndex = 0.4 * (averageSentenceLength + percentageComplexWords);
       break;
     case 'pt':
-      gunningFogIndex = 0.4 * (sentenceLength + complexWordPercentage);
+      gunningFogIndex = 0.4 * (averageSentenceLength + percentageComplexWords);
       break;
     case 'zh':
-      gunningFogIndex = 0.4 * (sentenceLength + complexWordPercentage);
+      gunningFogIndex = 0.4 * (averageSentenceLength + percentageComplexWords);
       break;
     default:
-      gunningFogIndex = 0.4 * (sentenceLength + complexWordPercentage);
+      gunningFogIndex = 0.4 * (averageSentenceLength + percentageComplexWords);
       break;
   }
   return gunningFogIndex;
 };
 
 const countSyllables = (word: string) => {
+  word = word.toLowerCase();
   const vowels = 'aeiouy';
   let syllableCount = 0;
-  let isVowel = false;
+  let prevVowel = false;
 
   for (let i = 0; i < word.length; i++) {
-    if (vowels.includes(word[i].toLowerCase())) {
-      if (!isVowel) {
+    if (vowels.includes(word[i])) {
+      if (!prevVowel) {
         syllableCount++;
-        isVowel = true;
       }
+      prevVowel = true;
     } else {
-      isVowel = false;
+      prevVowel = false;
     }
   }
 
@@ -197,37 +163,9 @@ const countSyllables = (word: string) => {
 
 const calculateComplexityScore = (text: string, language: string) => {
   const words = text.split(' ');
-  const complexWords = words.filter((word) => countSyllables(word) > 2);
-  const complexWordPercentage = complexWords.length / words.length;
-
-  let complexityScore;
-  switch (language) {
-    case 'en':
-      complexityScore = complexWordPercentage * 100;
-      break;
-    case 'es':
-      complexityScore = complexWordPercentage * 100;
-      break;
-    case 'fr':
-      complexityScore = complexWordPercentage * 100;
-      break;
-    case 'de':
-      complexityScore = complexWordPercentage * 100;
-      break;
-    case 'it':
-      complexityScore = complexWordPercentage * 100;
-      break;
-    case 'pt':
-      complexityScore = complexWordPercentage * 100;
-      break;
-    case 'zh':
-      complexityScore = complexWordPercentage * 100;
-      break;
-    default:
-      complexityScore = complexWordPercentage * 100;
-      break;
-  }
-  return complexityScore;
+  const complexWords = words.filter((word) => countSyllables(word) >= 3);
+  const percentageComplexWords = (complexWords.length / words.length) * 100;
+  return percentageComplexWords;
 };
 
 const performSentimentAnalysisWithHuggingFace = async (text: string) => {
@@ -244,47 +182,64 @@ const performEntityRecognitionWithSpacy = async (text: string) => {
 };
 
 const performTopicModeling = async (text: string) => {
-  const nlp = await spacy.load('en_core_web_sm');
-  const doc = nlp(text);
-  const topics = doc.cats;
-  return topics;
+  const nlp = new NlpManager({ languages: ['en'] });
+  const result = await nlp.process('en', text);
+  return result;
 };
 
 const suggestAlternativeFormats = (readabilityScore: number, sentimentAnalysis: any) => {
   const suggestions = [];
-
-  if (readabilityScore > 70) {
-    suggestions.push('Simplify the language to improve readability');
+  if (readabilityScore < 60) {
+    suggestions.push('Consider rewriting the text to make it more readable.');
   }
-
   if (sentimentAnalysis.score < 0.5) {
-    suggestions.push('Improve the tone to make it more positive');
+    suggestions.push('Consider rewriting the text to make it more positive.');
   }
-
   return suggestions;
 };
 
-export default function ContentAnalyzerPage() {
-  const [analysis, setAnalysis] = useState(null);
+const advancedContentAnalysis = async (analysis: any) => {
+  const advancedAnalysis = {
+    ...analysis,
+    readabilityScore: calculateReadabilityScore(analysis.text, analysis.language),
+    fleschKincaidGradeLevel: calculateFleschKincaidGradeLevel(analysis.text, analysis.language),
+    gunningFogIndex: calculateGunningFogIndex(analysis.text, analysis.language),
+    sentimentAnalysis: await performSentimentAnalysisWithHuggingFace(analysis.text),
+    entityRecognition: await performEntityRecognitionWithSpacy(analysis.text),
+    topicModeling: await performTopicModeling(analysis.text),
+    suggestedAlternativeFormats: suggestAlternativeFormats(analysis.readabilityScore, analysis.sentimentAnalysis),
+  };
+  return advancedAnalysis;
+};
+
+const Page = () => {
   const router = useRouter();
+  const [analysis, setAnalysis] = useState<any>({});
+  const [loading, setLoading] = useState(false);
 
   const handleAnalyze = async (text: string, language: string) => {
+    setLoading(true);
     const result = await advancedContentAnalysis({ text, language });
     setAnalysis(result);
+    setLoading(false);
   };
 
   return (
     <div>
-      <SEO title="Content Analyzer" />
-      <PageHeader title="Content Analyzer" />
+      <SEO title="AI-Powered Content Optimizer" />
+      <PageHeader title="AI-Powered Content Optimizer" />
       <ContentAnalyzerForm onAnalyze={handleAnalyze} />
-      {analysis && (
+      {loading ? (
+        <p>Loading...</p>
+      ) : (
         <div>
-          <OptimizationSuggestions suggestions={analysis.suggestedAlternativeFormats} />
-          <EngagementTracker readabilityScore={analysis.readabilityScore} sentimentAnalysis={analysis.sentimentAnalysis} />
-          <AlternativeFormats formats={analysis.suggestedAlternativeFormats} />
+          <OptimizationSuggestions analysis={analysis} />
+          <EngagementTracker analysis={analysis} />
+          <AlternativeFormats analysis={analysis} />
         </div>
       )}
     </div>
   );
-}
+};
+
+export default Page;
