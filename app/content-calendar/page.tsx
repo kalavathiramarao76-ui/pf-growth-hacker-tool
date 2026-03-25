@@ -88,8 +88,8 @@ const integrations: Integration[] = [
   { name: 'Zoho Calendar', key: 'zohoCalendar', component: ZohoCalendar, category: 'Calendar', popularity: 3 },
   { name: 'Any.do Calendar', key: 'anyDoCalendar', component: AnyDoCalendar, category: 'Calendar', popularity: 2 },
   { name: 'Todoist Calendar', key: 'todoistCalendar', component: TodoistCalendar, category: 'Calendar', popularity: 1 },
-  { name: 'Microsoft 365 Calendar', key: 'microsoft365Calendar', component: Microsoft365Calendar, category: 'Calendar', popularity: 8 },
-  { name: 'Fastmail Calendar', key: 'fastmailCalendar', component: FastmailCalendar, category: 'Calendar', popularity: 6 },
+  { name: 'Microsoft 365 Calendar', key: 'microsoft365Calendar', component: Microsoft365Calendar, category: 'Calendar', popularity: 10 },
+  { name: 'Fastmail Calendar', key: 'fastmailCalendar', component: FastmailCalendar, category: 'Calendar', popularity: 11 },
   { name: 'Trello Integration', key: 'trelloIntegration', component: TrelloIntegration, category: 'Project Management', popularity: 9 },
   { name: 'Asana Integration', key: 'asanaIntegration', component: AsanaIntegration, category: 'Project Management', popularity: 8 },
   { name: 'Notion Integration', key: 'notionIntegration', component: NotionIntegration, category: 'Project Management', popularity: 7 },
@@ -109,7 +109,7 @@ const integrations: Integration[] = [
   { name: 'Twitter Integration', key: 'twitterIntegration', component: TwitterIntegration, category: 'Social Media', popularity: 8 },
   { name: 'LinkedIn Integration', key: 'linkedinIntegration', component: LinkedInIntegration, category: 'Social Media', popularity: 7 },
   { name: 'Instagram Integration', key: 'instagramIntegration', component: InstagramIntegration, category: 'Social Media', popularity: 6 },
-  { name: 'TikTok Integration', key: 'tikTokIntegration', component: TikTokIntegration, category: 'Social Media', popularity: 5 },
+  { name: 'TikTok Integration', key: 'tiktokIntegration', component: TikTokIntegration, category: 'Social Media', popularity: 5 },
   { name: 'Pinterest Integration', key: 'pinterestIntegration', component: PinterestIntegration, category: 'Social Media', popularity: 4 },
   { name: 'Mailchimp Integration', key: 'mailchimpIntegration', component: MailchimpIntegration, category: 'Email Marketing', popularity: 9 },
   { name: 'Constant Contact Integration', key: 'constantContactIntegration', component: ConstantContactIntegration, category: 'Email Marketing', popularity: 8 },
@@ -120,35 +120,56 @@ const integrations: Integration[] = [
   { name: 'Dropbox Integration', key: 'dropboxIntegration', component: DropboxIntegration, category: 'Cloud Storage', popularity: 8 },
   { name: 'OneDrive Integration', key: 'oneDriveIntegration', component: OneDriveIntegration, category: 'Cloud Storage', popularity: 7 },
   { name: 'Box Integration', key: 'boxIntegration', component: BoxIntegration, category: 'Cloud Storage', popularity: 6 },
-  { name: 'pCloud Integration', key: 'pCloudIntegration', component: pCloudIntegration, category: 'Cloud Storage', popularity: 5 },
+  { name: 'pCloud Integration', key: 'pcloudIntegration', component: pCloudIntegration, category: 'Cloud Storage', popularity: 5 },
 ];
 
-const popularIntegrations = integrations.filter((integration) => integration.popularity > 5);
-const lessPopularIntegrations = integrations.filter((integration) => integration.popularity <= 5);
+const categories = Array.from(new Set(integrations.map((integration) => integration.category)));
 
 const Page = () => {
-  const [isLessPopularIntegrationsVisible, setIsLessPopularIntegrationsVisible] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
+
+  const filteredIntegrations = integrations.filter((integration) => {
+    const nameMatches = integration.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const categoryMatches = selectedCategory === '' || integration.category === selectedCategory;
+    return nameMatches && categoryMatches;
+  });
 
   return (
     <Layout>
       <SEO title="Content Calendar" />
-      <DndProvider backend={HTML5Backend}>
-        <Calendar>
-          {popularIntegrations.map((integration) => (
-            <DraggableEvent key={integration.key} integration={integration} />
-          ))}
-          {isLessPopularIntegrationsVisible && (
-            <div>
-              {lessPopularIntegrations.map((integration) => (
-                <DraggableEvent key={integration.key} integration={integration} />
-              ))}
+      <div className="flex flex-col items-center justify-center h-screen">
+        <h1 className="text-3xl font-bold mb-4">Content Calendar</h1>
+        <div className="flex flex-col items-center justify-center mb-4">
+          <input
+            type="search"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search integrations..."
+            className="px-4 py-2 border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="px-4 py-2 border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mt-4"
+          >
+            <option value="">All categories</option>
+            {categories.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredIntegrations.map((integration) => (
+            <div key={integration.key} className="bg-white p-4 rounded-lg shadow-md">
+              <h2 className="text-lg font-bold mb-2">{integration.name}</h2>
+              <integration.component />
             </div>
-          )}
-          <button onClick={() => setIsLessPopularIntegrationsVisible(!isLessPopularIntegrationsVisible)}>
-            {isLessPopularIntegrationsVisible ? 'Hide less popular integrations' : 'Show less popular integrations'}
-          </button>
-        </Calendar>
-      </DndProvider>
+          ))}
+        </div>
+      </div>
     </Layout>
   );
 };
