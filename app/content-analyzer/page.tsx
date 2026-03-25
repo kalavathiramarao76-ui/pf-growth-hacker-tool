@@ -85,7 +85,7 @@ const calculateCohesionScore = async (text: string) => {
 }
 
 const calculateClarityScore = async (text: string) => {
-  const clarityPipeline = pipeline('text-classification', model='roberta-base')
+  const clarityPipeline = pipeline('text-classification', model='distilbert-base-uncased-finetuned-sst-2-english')
   const result = await clarityPipeline(text)
   const clarityScore = result.score
 
@@ -94,7 +94,7 @@ const calculateClarityScore = async (text: string) => {
 
 const calculateSentenceLengthScore = async (text: string) => {
   const sentences = text.split('.').filter(sentence => sentence.trim() !== '');
-  const averageSentenceLength = sentences.reduce((acc, sentence) => acc + sentence.split(' ').length, 0) / sentences.length;
+  const averageSentenceLength = sentences.reduce((sum, sentence) => sum + sentence.split(' ').length, 0) / sentences.length;
   const sentenceLengthScore = 1 - (averageSentenceLength / 20);
 
   return sentenceLengthScore
@@ -102,7 +102,7 @@ const calculateSentenceLengthScore = async (text: string) => {
 
 const calculateWordLengthScore = async (text: string) => {
   const words = text.split(' ');
-  const averageWordLength = words.reduce((acc, word) => acc + word.length, 0) / words.length;
+  const averageWordLength = words.reduce((sum, word) => sum + word.length, 0) / words.length;
   const wordLengthScore = 1 - (averageWordLength / 10);
 
   return wordLengthScore
@@ -110,14 +110,14 @@ const calculateWordLengthScore = async (text: string) => {
 
 const calculateSyllableCountScore = async (text: string) => {
   const words = text.split(' ');
-  const totalSyllableCount = words.reduce((acc, word) => acc + countSyllables(word), 0);
-  const averageSyllableCount = totalSyllableCount / words.length;
-  const syllableCountScore = 1 - (averageSyllableCount / 2);
+  const totalSyllables = words.reduce((sum, word) => sum + countSyllables(word), 0);
+  const averageSyllablesPerWord = totalSyllables / words.length;
+  const syllableCountScore = 1 - (averageSyllablesPerWord / 2);
 
   return syllableCountScore
 }
 
-const ContentAnalyzerPage = () => {
+const Page = () => {
   const router = useRouter();
   const [text, setText] = useState('');
   const [readabilityScore, setReadabilityScore] = useState(0);
@@ -128,40 +128,33 @@ const ContentAnalyzerPage = () => {
   const [wordLengthScore, setWordLengthScore] = useState(0);
   const [syllableCountScore, setSyllableCountScore] = useState(0);
 
-  useEffect(() => {
-    const storedText = LocalStorage.getItem('text');
-    if (storedText) {
-      setText(storedText);
-    }
-  }, []);
-
   const handleTextChange = (event: any) => {
     setText(event.target.value);
-    LocalStorage.setItem('text', event.target.value);
   };
 
   const handleAnalyze = async () => {
-    const readabilityScoreResult = await calculateReadabilityScore(text);
-    setReadabilityScore(readabilityScoreResult);
-    const complexityScoreResult = await calculateComplexityScore(text);
-    setComplexityScore(complexityScoreResult);
-    const cohesionScoreResult = await calculateCohesionScore(text);
-    setCohesionScore(cohesionScoreResult);
-    const clarityScoreResult = await calculateClarityScore(text);
-    setClarityScore(clarityScoreResult);
-    const sentenceLengthScoreResult = await calculateSentenceLengthScore(text);
-    setSentenceLengthScore(sentenceLengthScoreResult);
-    const wordLengthScoreResult = await calculateWordLengthScore(text);
-    setWordLengthScore(wordLengthScoreResult);
-    const syllableCountScoreResult = await calculateSyllableCountScore(text);
-    setSyllableCountScore(syllableCountScoreResult);
+    const readabilityScore = await calculateReadabilityScore(text);
+    const complexityScore = await calculateComplexityScore(text);
+    const cohesionScore = await calculateCohesionScore(text);
+    const clarityScore = await calculateClarityScore(text);
+    const sentenceLengthScore = await calculateSentenceLengthScore(text);
+    const wordLengthScore = await calculateWordLengthScore(text);
+    const syllableCountScore = await calculateSyllableCountScore(text);
+
+    setReadabilityScore(readabilityScore);
+    setComplexityScore(complexityScore);
+    setCohesionScore(cohesionScore);
+    setClarityScore(clarityScore);
+    setSentenceLengthScore(sentenceLengthScore);
+    setWordLengthScore(wordLengthScore);
+    setSyllableCountScore(syllableCountScore);
   };
 
   return (
     <div>
       <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
-      <ContentAnalyzerForm text={text} onChange={handleTextChange} onAnalyze={handleAnalyze} />
+      <ContentAnalyzerForm text={text} onTextChange={handleTextChange} onAnalyze={handleAnalyze} />
       <OptimizationSuggestions readabilityScore={readabilityScore} complexityScore={complexityScore} cohesionScore={cohesionScore} clarityScore={clarityScore} sentenceLengthScore={sentenceLengthScore} wordLengthScore={wordLengthScore} syllableCountScore={syllableCountScore} />
       <EngagementTracker />
       <AlternativeFormats />
@@ -169,4 +162,4 @@ const ContentAnalyzerPage = () => {
   );
 };
 
-export default ContentAnalyzerPage;
+export default Page;
