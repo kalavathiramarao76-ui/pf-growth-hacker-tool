@@ -93,23 +93,26 @@ const initialWidgets = [
   },
 ];
 
-const Page = () => {
+const DashboardPage = () => {
   const router = useRouter();
   const [widgets, setWidgets] = useState(initialWidgets);
+  const [layout, setLayout] = useState<WidgetLayout>({ columns: 2, rows: 3, widgets: initialWidgets });
+
+  const handleWidgetClick = (widget: Widget) => {
+    widget.onClick();
+  };
 
   const handleDragEnd = (result: any) => {
     if (!result.destination) return;
-
+    const { source, destination } = result;
     const newWidgets = [...widgets];
-    const [reorderedItem] = newWidgets.splice(result.source.index, 1);
-
-    newWidgets.splice(result.destination.index, 0, reorderedItem);
-
+    const [removed] = newWidgets.splice(source.index, 1);
+    newWidgets.splice(destination.index, 0, removed);
     setWidgets(newWidgets);
   };
 
   return (
-    <div className="dashboard-container">
+    <div className="dashboard-page">
       <DashboardHeader />
       <NavigationMenu />
       <div className="dashboard-content">
@@ -117,11 +120,7 @@ const Page = () => {
           <DragDropContext onDragEnd={handleDragEnd}>
             <Droppable droppableId="widgets">
               {(provided) => (
-                <div
-                  {...provided.droppableProps}
-                  ref={provided.innerRef}
-                  className="widgets-container"
-                >
+                <div {...provided.droppableProps} ref={provided.innerRef}>
                   {widgets.map((widget, index) => (
                     <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
                       {(provided) => (
@@ -129,12 +128,12 @@ const Page = () => {
                           {...provided.draggableProps}
                           {...provided.dragHandleProps}
                           ref={provided.innerRef}
-                          className="widget-card"
+                          className="widget"
                         >
                           <DashboardCard
                             title={widget.title}
                             icon={widget.icon}
-                            onClick={widget.onClick}
+                            onClick={() => handleWidgetClick(widget)}
                             description={widget.description}
                             callToAction={widget.callToAction}
                           />
@@ -153,4 +152,4 @@ const Page = () => {
   );
 };
 
-export default Page;
+export default DashboardPage;
