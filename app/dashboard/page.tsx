@@ -93,118 +93,146 @@ const initialWidgets = [
   },
 ];
 
-const availableWidgets = [
-  { 
-    id: 6, 
-    title: 'Content Insights', 
-    icon: <IoMdAnalytics size={24} />, 
-    onClick: () => {} 
-  },
-  { 
-    id: 7, 
-    title: 'SEO Optimizer', 
-    icon: <FaRegCalendarAlt size={24} />, 
-    onClick: () => {} 
-  },
-  { 
-    id: 8, 
-    title: 'Social Media Manager', 
-    icon: <MdSettings size={24} />, 
-    onClick: () => {} 
-  },
-];
+const DashboardPage = () => {
+  const [widgets, setWidgets] = useState(initialWidgets);
+  const [layout, setLayout] = useState<WidgetLayout>({ columns: 3, rows: 2, widgets: [] });
 
-const initialLayout: WidgetLayout = {
-  columns: 2,
-  rows: 2,
-  widgets: initialWidgets,
-};
+  const handleWidgetClick = (widget: Widget) => {
+    widget.onClick();
+  };
 
-const Page = () => {
-  const [layout, setLayout] = useState<WidgetLayout>(initialLayout);
-  const [dragging, setDragging] = useState(false);
-  const [addWidget, setAddWidget] = useState(false);
-
-  const onDragEnd = (result: any) => {
+  const handleWidgetDragEnd = (result: any) => {
     if (!result.destination) return;
-    const { source, destination } = result;
-    const newWidgets = [...layout.widgets];
-    const [removed] = newWidgets.splice(source.index, 1);
-    newWidgets.splice(destination.index, 0, removed);
-    setLayout({ ...layout, widgets: newWidgets });
+
+    const newWidgets = [...widgets];
+    const [reorderedWidget] = newWidgets.splice(result.source.index, 1);
+    newWidgets.splice(result.destination.index, 0, reorderedWidget);
+
+    setWidgets(newWidgets);
   };
 
-  const handleAddWidget = (widget: Widget) => {
-    setLayout({ ...layout, widgets: [...layout.widgets, widget] });
-    setAddWidget(false);
-  };
-
-  const handleRemoveWidget = (id: number) => {
-    setLayout({ ...layout, widgets: layout.widgets.filter((widget) => widget.id !== id) });
-  };
+  useEffect(() => {
+    setLayout({ columns: 3, rows: 2, widgets: initialWidgets });
+  }, []);
 
   return (
-    <DndProvider>
+    <div className="dashboard-page">
       <DashboardHeader />
       <NavigationMenu />
-      <div className="dashboard-container">
-        <div className="dashboard-header">
-          <h1>AI-Powered Content Optimizer</h1>
-          <button onClick={() => setAddWidget(true)}>Add Widget</button>
+      <div className="dashboard-content">
+        <div className="widget-categories">
+          <h2>Content Creation</h2>
+          <DndProvider>
+            <DragDropContext onDragEnd={handleWidgetDragEnd}>
+              <Droppable droppableId="content-creation">
+                {(provided) => (
+                  <div ref={provided.innerRef} {...provided.droppableProps}>
+                    {widgets.filter((widget) => widget.title === 'Create Content').map((widget, index) => (
+                      <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+                        {(provided) => (
+                          <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                            <DashboardCard
+                              title={widget.title}
+                              icon={widget.icon}
+                              onClick={() => handleWidgetClick(widget)}
+                            />
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
+          </DndProvider>
         </div>
-        <DragDropContext onDragEnd={onDragEnd}>
-          <Droppable droppableId="dashboard">
-            {(provided) => (
-              <div
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                className="dashboard"
-              >
-                {layout.widgets.map((widget, index) => (
-                  <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
-                    {(provided) => (
-                      <div
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        ref={provided.innerRef}
-                        className="widget"
-                      >
-                        <DashboardCard
-                          title={widget.title}
-                          icon={widget.icon}
-                          onClick={widget.onClick}
-                          frequency={widget.frequency}
-                          description={widget.description}
-                          callToAction={widget.callToAction}
-                          onRemove={() => handleRemoveWidget(widget.id)}
-                        />
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-        </DragDropContext>
-        {addWidget && (
-          <div className="add-widget-modal">
-            <h2>Add Widget</h2>
-            <ul>
-              {availableWidgets.map((widget) => (
-                <li key={widget.id}>
-                  <button onClick={() => handleAddWidget(widget)}>
-                    {widget.title}
-                  </button>
-                </li>
-              ))}
-            </ul>
-            <button onClick={() => setAddWidget(false)}>Cancel</button>
-          </div>
-        )}
+        <div className="widget-categories">
+          <h2>Content Analysis</h2>
+          <DndProvider>
+            <DragDropContext onDragEnd={handleWidgetDragEnd}>
+              <Droppable droppableId="content-analysis">
+                {(provided) => (
+                  <div ref={provided.innerRef} {...provided.droppableProps}>
+                    {widgets.filter((widget) => widget.title === 'View Analytics').map((widget, index) => (
+                      <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+                        {(provided) => (
+                          <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                            <DashboardCard
+                              title={widget.title}
+                              icon={widget.icon}
+                              onClick={() => handleWidgetClick(widget)}
+                            />
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
+          </DndProvider>
+        </div>
+        <div className="widget-categories">
+          <h2>Content Planning</h2>
+          <DndProvider>
+            <DragDropContext onDragEnd={handleWidgetDragEnd}>
+              <Droppable droppableId="content-planning">
+                {(provided) => (
+                  <div ref={provided.innerRef} {...provided.droppableProps}>
+                    {widgets.filter((widget) => widget.title === 'Content Calendar').map((widget, index) => (
+                      <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+                        {(provided) => (
+                          <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                            <DashboardCard
+                              title={widget.title}
+                              icon={widget.icon}
+                              onClick={() => handleWidgetClick(widget)}
+                            />
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
+          </DndProvider>
+        </div>
+        <div className="widget-categories">
+          <h2>Settings and Upgrades</h2>
+          <DndProvider>
+            <DragDropContext onDragEnd={handleWidgetDragEnd}>
+              <Droppable droppableId="settings-and-upgrades">
+                {(provided) => (
+                  <div ref={provided.innerRef} {...provided.droppableProps}>
+                    {widgets.filter((widget) => widget.title === 'Settings' || widget.title === 'Upgrade to Premium').map((widget, index) => (
+                      <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+                        {(provided) => (
+                          <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                            <DashboardCard
+                              title={widget.title}
+                              icon={widget.icon}
+                              onClick={() => handleWidgetClick(widget)}
+                              description={widget.description}
+                              callToAction={widget.callToAction}
+                            />
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
+          </DndProvider>
+        </div>
       </div>
-    </DndProvider>
+    </div>
   );
 };
 
-export default Page;
+export default DashboardPage;

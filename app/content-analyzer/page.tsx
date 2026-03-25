@@ -30,6 +30,7 @@ const advancedContentAnalysis = async (analysis: any) => {
     sentimentAnalysis: await performSentimentAnalysisWithHuggingFace(analysis.text),
     entityRecognition: await performEntityRecognitionWithSpacy(analysis.text),
     topicModeling: await performTopicModeling(analysis.text),
+    suggestedAlternativeFormats: suggestAlternativeFormats(analysis.readabilityScore, analysis.sentimentAnalysis),
   };
   return advancedAnalysis;
 };
@@ -76,37 +77,35 @@ const calculateReadabilityScore = (text: string, language: string) => {
   readabilityScore += (syllables / words.length) * 0.1;
 
   // Apply complexity-based adjustment
-  readabilityScore += complexityScore * 0.2;
+  readabilityScore += complexityScore * 0.1;
 
   return readabilityScore;
 };
 
-const calculateComplexityScore = (text: string, language: string) => {
-  const complexityScore = 0;
-  const sentences = text.split('.').filter((sentence) => sentence !== '');
-  const sentenceLengths = sentences.map((sentence) => sentence.split(' ').length);
-  const averageSentenceLength = sentenceLengths.reduce((acc, length) => acc + length, 0) / sentenceLengths.length;
-  const sentenceComplexity = sentenceLengths.map((length) => length / averageSentenceLength);
-  const complexityScoreValue = sentenceComplexity.reduce((acc, score) => acc + score, 0) / sentenceComplexity.length;
+const suggestAlternativeFormats = (readabilityScore: number, sentimentAnalysis: any) => {
+  const suggestedFormats = [];
 
-  switch (language) {
-    case 'en':
-      return complexityScoreValue * 1.0; // English
-    case 'es':
-      return complexityScoreValue * 0.95; // Spanish
-    case 'fr':
-      return complexityScoreValue * 0.9; // French
-    default:
-      return complexityScoreValue * 1.0; // Default adjustment
+  if (readabilityScore < 60) {
+    suggestedFormats.push('Video script');
   }
+
+  if (sentimentAnalysis.score < 0.5) {
+    suggestedFormats.push('Podcast script');
+  }
+
+  if (readabilityScore > 80) {
+    suggestedFormats.push('Infographic');
+  }
+
+  return suggestedFormats;
 };
 
 const calculateFleschKincaidGradeLevel = (text: string, language: string) => {
-  let fleschKincaidGradeLevel;
   const words = text.split(' ');
   const sentences = text.split('.').filter((sentence) => sentence !== '');
   const syllables = words.reduce((acc, word) => acc + countSyllables(word), 0);
 
+  let fleschKincaidGradeLevel;
   switch (language) {
     case 'en':
       fleschKincaidGradeLevel = 0.39 * (words.length / sentences.length) + 0.11 * (syllables / words.length) + 0.58;
@@ -126,20 +125,20 @@ const calculateFleschKincaidGradeLevel = (text: string, language: string) => {
 };
 
 const calculateGunningFogIndex = (text: string, language: string) => {
-  let gunningFogIndex;
   const words = text.split(' ');
   const sentences = text.split('.').filter((sentence) => sentence !== '');
-  const complexWords = words.filter((word) => countSyllables(word) >= 3);
+  const complexWords = words.filter((word) => countSyllables(word) > 2);
 
+  let gunningFogIndex;
   switch (language) {
     case 'en':
-      gunningFogIndex = 0.4 * (words.length / sentences.length + complexWords.length / words.length);
+      gunningFogIndex = 0.4 * ((words.length / sentences.length) + (complexWords.length / words.length));
       break;
     case 'es':
-      gunningFogIndex = 0.4 * (words.length / sentences.length + complexWords.length / words.length);
+      gunningFogIndex = 0.4 * ((words.length / sentences.length) + (complexWords.length / words.length));
       break;
     case 'fr':
-      gunningFogIndex = 0.4 * (words.length / sentences.length + complexWords.length / words.length);
+      gunningFogIndex = 0.4 * ((words.length / sentences.length) + (complexWords.length / words.length));
       break;
     default:
       gunningFogIndex = 0;
@@ -152,23 +151,19 @@ const calculateGunningFogIndex = (text: string, language: string) => {
 const countSyllables = (word: string) => {
   word = word.toLowerCase();
   const vowels = 'aeiouy';
-  const diphthongs = ['ai', 'au', 'ay', 'ea', 'ee', 'ei', 'eu', 'ew', 'ey', 'ie', 'oi', 'oo', 'ou', 'oy', 'ua', 'ue', 'ui', 'uo', 'uy'];
   let syllableCount = 0;
-  let vowelCount = 0;
+  let prevVowel = false;
 
   for (let i = 0; i < word.length; i++) {
     if (vowels.includes(word[i])) {
-      vowelCount++;
+      if (!prevVowel) {
+        syllableCount++;
+      }
+      prevVowel = true;
+    } else {
+      prevVowel = false;
     }
   }
-
-  for (let i = 0; i < diphthongs.length; i++) {
-    if (word.includes(diphthongs[i])) {
-      vowelCount--;
-    }
-  }
-
-  syllableCount = vowelCount;
 
   if (word.endsWith('e')) {
     syllableCount--;
@@ -181,6 +176,29 @@ const countSyllables = (word: string) => {
   return syllableCount;
 };
 
+const calculateComplexityScore = (text: string, language: string) => {
+  const words = text.split(' ');
+  const complexWords = words.filter((word) => countSyllables(word) > 2);
+
+  let complexityScore;
+  switch (language) {
+    case 'en':
+      complexityScore = complexWords.length / words.length;
+      break;
+    case 'es':
+      complexityScore = complexWords.length / words.length;
+      break;
+    case 'fr':
+      complexityScore = complexWords.length / words.length;
+      break;
+    default:
+      complexityScore = 0;
+      break;
+  }
+
+  return complexityScore;
+};
+
 const performSentimentAnalysisWithHuggingFace = async (text: string) => {
   const pipeline = await pipeline('sentiment-analysis');
   const result = await pipeline(text);
@@ -190,37 +208,48 @@ const performSentimentAnalysisWithHuggingFace = async (text: string) => {
 const performEntityRecognitionWithSpacy = async (text: string) => {
   const nlp = await spacy.load('en_core_web_sm');
   const doc = nlp(text);
-  const entities = doc.ents;
+  const entities = doc.ents.map((ent) => ({ text: ent.text, label: ent.label_ }));
   return entities;
 };
 
 const performTopicModeling = async (text: string) => {
   const nlp = await spacy.load('en_core_web_sm');
   const doc = nlp(text);
-  const topics = doc.vector;
+  const topics = doc.ents.map((ent) => ent.label_);
   return topics;
 };
 
-export default function Page() {
-  const router = useRouter();
+const Page = () => {
   const [analysis, setAnalysis] = useState<any>({});
-  const [loading, setLoading] = useState(false);
+  const [text, setText] = useState('');
+  const [language, setLanguage] = useState('en');
+  const router = useRouter();
 
-  const handleAnalyze = async (text: string, language: string) => {
-    setLoading(true);
+  const handleTextChange = (event: any) => {
+    setText(event.target.value);
+  };
+
+  const handleLanguageChange = (event: any) => {
+    setLanguage(event.target.value);
+  };
+
+  const handleAnalyze = async () => {
     const analysisResult = await advancedContentAnalysis({ text, language });
     setAnalysis(analysisResult);
-    setLoading(false);
   };
 
   return (
     <div>
       <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
-      <ContentAnalyzerForm onAnalyze={handleAnalyze} />
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
+      <ContentAnalyzerForm
+        text={text}
+        language={language}
+        onTextChange={handleTextChange}
+        onLanguageChange={handleLanguageChange}
+        onAnalyze={handleAnalyze}
+      />
+      {analysis && (
         <div>
           <OptimizationSuggestions analysis={analysis} />
           <EngagementTracker analysis={analysis} />
@@ -229,4 +258,6 @@ export default function Page() {
       )}
     </div>
   );
-}
+};
+
+export default Page;

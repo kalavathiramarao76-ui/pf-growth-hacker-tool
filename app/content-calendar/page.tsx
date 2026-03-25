@@ -55,50 +55,69 @@ const integrations: Integration[] = [
   { name: 'Sendinblue', key: 'sendinblue', component: SendinblueIntegration, category: 'Email Marketing' },
 ];
 
-const categories = [
-  { name: 'Calendar', integrations: integrations.filter(i => i.category === 'Calendar') },
-  { name: 'Project Management', integrations: integrations.filter(i => i.category === 'Project Management') },
-  { name: 'Communication', integrations: integrations.filter(i => i.category === 'Communication') },
-  { name: 'Social Media', integrations: integrations.filter(i => i.category === 'Social Media') },
-  { name: 'Email Marketing', integrations: integrations.filter(i => i.category === 'Email Marketing') },
-];
+const projectManagementIntegrations = integrations.filter((integration) => integration.category === 'Project Management');
 
-const Page = () => {
-  const [integrationState, setIntegrationState] = useState<IntegrationState>({
-    events: [],
-    isConnected: false,
-    token: null,
-  });
+const ContentCalendarPage = () => {
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [isConnected, setIsConnected] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
+  const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null);
 
-  const handleConnect = (integration: Integration) => {
-    // Handle connection to integration
+  const handleIntegrationClick = (integration: Integration) => {
+    setSelectedIntegration(integration);
   };
 
-  const handleDisconnect = (integration: Integration) => {
-    // Handle disconnection from integration
+  const handleConnectClick = () => {
+    if (selectedIntegration) {
+      // Connect to the selected integration
+      // This is a placeholder, you need to implement the actual connection logic
+      setIsConnected(true);
+    }
   };
+
+  const handleDisconnectClick = () => {
+    // Disconnect from the selected integration
+    // This is a placeholder, you need to implement the actual disconnection logic
+    setIsConnected(false);
+  };
+
+  useEffect(() => {
+    if (isConnected && selectedIntegration) {
+      // Fetch events from the selected integration
+      // This is a placeholder, you need to implement the actual event fetching logic
+      const fetchedEvents: CalendarEvent[] = [];
+      setEvents(fetchedEvents);
+    }
+  }, [isConnected, selectedIntegration]);
 
   return (
     <Layout>
       <SEO title="Content Calendar" />
       <DndProvider backend={HTML5Backend}>
-        <Calendar>
-          {categories.map(category => (
-            <div key={category.name}>
-              <h2>{category.name}</h2>
-              {category.integrations.map(integration => (
-                <div key={integration.key}>
-                  <integration.component />
-                  <button onClick={() => handleConnect(integration)}>Connect</button>
-                  <button onClick={() => handleDisconnect(integration)}>Disconnect</button>
-                </div>
-              ))}
+        <div>
+          <h1>Content Calendar</h1>
+          <div>
+            {projectManagementIntegrations.map((integration) => (
+              <div key={integration.key}>
+                <button onClick={() => handleIntegrationClick(integration)}>
+                  {integration.name}
+                </button>
+              </div>
+            ))}
+          </div>
+          {selectedIntegration && (
+            <div>
+              <button onClick={handleConnectClick}>Connect</button>
+              {isConnected && (
+                <button onClick={handleDisconnectClick}>Disconnect</button>
+              )}
             </div>
-          ))}
-        </Calendar>
+          )}
+          <Calendar events={events} />
+        </div>
       </DndProvider>
     </Layout>
   );
 };
 
-export default Page;
+export default ContentCalendarPage;
