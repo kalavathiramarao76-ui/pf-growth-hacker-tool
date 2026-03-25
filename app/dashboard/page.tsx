@@ -83,7 +83,9 @@ const initialWidgets = [
           <div className="demo-request">
             <h2>Request a Demo</h2>
             <p>See our premium plan in action and learn how it can help you achieve your content goals.</p>
-            <button>Request Demo</button>
+            <button>
+              Request Demo
+            </button>
           </div>
         </div>
       </div>
@@ -91,55 +93,90 @@ const initialWidgets = [
   },
 ];
 
-const PremiumCallToAction = () => {
-  return (
-    <div className="premium-call-to-action">
-      <h1>Upgrade to Premium Today!</h1>
-      <p>Unlock the full potential of our AI-Powered Content Optimizer with our premium plan. Get 20% more engagement, 30% more conversions, and expert guidance to take your content to the next level.</p>
-      <button>Upgrade Now</button>
-    </div>
-  );
+const availableWidgets = [
+  { 
+    id: 6, 
+    title: 'Content Insights', 
+    icon: <IoMdAnalytics size={24} />, 
+    onClick: () => {} 
+  },
+  { 
+    id: 7, 
+    title: 'SEO Optimizer', 
+    icon: <FaRegCalendarAlt size={24} />, 
+    onClick: () => {} 
+  },
+  { 
+    id: 8, 
+    title: 'Social Media Manager', 
+    icon: <MdSettings size={24} />, 
+    onClick: () => {} 
+  },
+];
+
+const initialLayout: WidgetLayout = {
+  columns: 2,
+  rows: 2,
+  widgets: initialWidgets,
 };
 
-const Dashboard = () => {
-  const [widgets, setWidgets] = useState(initialWidgets);
-  const [layout, setLayout] = useState<WidgetLayout>({ columns: 4, rows: 2, widgets: initialWidgets });
+const Page = () => {
+  const [layout, setLayout] = useState<WidgetLayout>(initialLayout);
+  const [dragging, setDragging] = useState(false);
+  const [addWidget, setAddWidget] = useState(false);
 
   const onDragEnd = (result: any) => {
     if (!result.destination) return;
-
     const { source, destination } = result;
-    const newWidgets = [...widgets];
+    const newWidgets = [...layout.widgets];
     const [removed] = newWidgets.splice(source.index, 1);
-
     newWidgets.splice(destination.index, 0, removed);
+    setLayout({ ...layout, widgets: newWidgets });
+  };
 
-    setWidgets(newWidgets);
+  const handleAddWidget = (widget: Widget) => {
+    setLayout({ ...layout, widgets: [...layout.widgets, widget] });
+    setAddWidget(false);
+  };
+
+  const handleRemoveWidget = (id: number) => {
+    setLayout({ ...layout, widgets: layout.widgets.filter((widget) => widget.id !== id) });
   };
 
   return (
-    <div className="dashboard">
+    <DndProvider>
       <DashboardHeader />
       <NavigationMenu />
-      <DndProvider>
+      <div className="dashboard-container">
+        <div className="dashboard-header">
+          <h1>AI-Powered Content Optimizer</h1>
+          <button onClick={() => setAddWidget(true)}>Add Widget</button>
+        </div>
         <DragDropContext onDragEnd={onDragEnd}>
-          <Droppable droppableId="widgets">
+          <Droppable droppableId="dashboard">
             {(provided) => (
-              <div {...provided.droppableProps} ref={provided.innerRef}>
-                {widgets.map((widget, index) => (
+              <div
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                className="dashboard"
+              >
+                {layout.widgets.map((widget, index) => (
                   <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
                     {(provided) => (
                       <div
                         {...provided.draggableProps}
                         {...provided.dragHandleProps}
                         ref={provided.innerRef}
+                        className="widget"
                       >
                         <DashboardCard
                           title={widget.title}
                           icon={widget.icon}
                           onClick={widget.onClick}
+                          frequency={widget.frequency}
                           description={widget.description}
                           callToAction={widget.callToAction}
+                          onRemove={() => handleRemoveWidget(widget.id)}
                         />
                       </div>
                     )}
@@ -150,10 +187,24 @@ const Dashboard = () => {
             )}
           </Droppable>
         </DragDropContext>
-      </DndProvider>
-      <PremiumCallToAction />
-    </div>
+        {addWidget && (
+          <div className="add-widget-modal">
+            <h2>Add Widget</h2>
+            <ul>
+              {availableWidgets.map((widget) => (
+                <li key={widget.id}>
+                  <button onClick={() => handleAddWidget(widget)}>
+                    {widget.title}
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <button onClick={() => setAddWidget(false)}>Cancel</button>
+          </div>
+        )}
+      </div>
+    </DndProvider>
   );
 };
 
-export default Dashboard;
+export default Page;
