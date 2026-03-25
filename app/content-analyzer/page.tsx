@@ -78,39 +78,25 @@ const calculateReadabilityScore = (text: string, language: string) => {
 };
 
 const calculateFleschKincaidGradeLevel = (text: string, language: string) => {
-  let fleschKincaidGradeLevel;
   const words = text.split(' ');
   const sentences = text.split('.').filter((sentence) => sentence !== '');
   const syllables = words.reduce((acc, word) => acc + countSyllables(word), 0);
+  const averageSentenceLength = words.length / sentences.length;
+  const averageSyllablesPerWord = syllables / words.length;
 
+  let fleschKincaidGradeLevel;
   switch (language) {
     case 'en':
-      fleschKincaidGradeLevel = 0.39 * (words.length / sentences.length) + 0.11 * (syllables / words.length) + 0.58;
+      fleschKincaidGradeLevel = 0.39 * averageSentenceLength + 0.11 * averageSyllablesPerWord + 0.58;
       break;
     case 'es':
-      fleschKincaidGradeLevel = 0.39 * (words.length / sentences.length) + 0.11 * (syllables / words.length) + 0.58;
+      fleschKincaidGradeLevel = 0.39 * averageSentenceLength + 0.11 * averageSyllablesPerWord + 0.58;
       break;
     case 'fr':
-      fleschKincaidGradeLevel = 0.39 * (words.length / sentences.length) + 0.11 * (syllables / words.length) + 0.58;
+      fleschKincaidGradeLevel = 0.39 * averageSentenceLength + 0.11 * averageSyllablesPerWord + 0.58;
       break;
     default:
       fleschKincaidGradeLevel = 0;
-      break;
-  }
-
-  // Apply language-specific adjustments
-  switch (language) {
-    case 'en':
-      fleschKincaidGradeLevel *= 1.0; // English
-      break;
-    case 'es':
-      fleschKincaidGradeLevel *= 0.95; // Spanish
-      break;
-    case 'fr':
-      fleschKincaidGradeLevel *= 0.9; // French
-      break;
-    default:
-      fleschKincaidGradeLevel *= 1.0; // Default adjustment
       break;
   }
 
@@ -118,39 +104,25 @@ const calculateFleschKincaidGradeLevel = (text: string, language: string) => {
 };
 
 const calculateGunningFogIndex = (text: string, language: string) => {
-  let gunningFogIndex;
   const words = text.split(' ');
   const sentences = text.split('.').filter((sentence) => sentence !== '');
   const complexWords = words.filter((word) => countSyllables(word) >= 3);
+  const percentageComplexWords = (complexWords.length / words.length) * 100;
+  const averageSentenceLength = words.length / sentences.length;
 
+  let gunningFogIndex;
   switch (language) {
     case 'en':
-      gunningFogIndex = 0.4 * ((words.length / sentences.length) + (complexWords.length / words.length));
+      gunningFogIndex = 0.4 * (averageSentenceLength + percentageComplexWords);
       break;
     case 'es':
-      gunningFogIndex = 0.4 * ((words.length / sentences.length) + (complexWords.length / words.length));
+      gunningFogIndex = 0.4 * (averageSentenceLength + percentageComplexWords);
       break;
     case 'fr':
-      gunningFogIndex = 0.4 * ((words.length / sentences.length) + (complexWords.length / words.length));
+      gunningFogIndex = 0.4 * (averageSentenceLength + percentageComplexWords);
       break;
     default:
       gunningFogIndex = 0;
-      break;
-  }
-
-  // Apply language-specific adjustments
-  switch (language) {
-    case 'en':
-      gunningFogIndex *= 1.0; // English
-      break;
-    case 'es':
-      gunningFogIndex *= 0.95; // Spanish
-      break;
-    case 'fr':
-      gunningFogIndex *= 0.9; // French
-      break;
-    default:
-      gunningFogIndex *= 1.0; // Default adjustment
       break;
   }
 
@@ -160,33 +132,33 @@ const calculateGunningFogIndex = (text: string, language: string) => {
 const countSyllables = (word: string) => {
   word = word.toLowerCase();
   const vowels = 'aeiouy';
-  let count = 0;
-  let prevVowel = false;
+  let syllableCount = 0;
+  let prevCharWasVowel = false;
 
   for (let i = 0; i < word.length; i++) {
     if (vowels.includes(word[i])) {
-      if (!prevVowel) {
-        count++;
+      if (!prevCharWasVowel) {
+        syllableCount++;
       }
-      prevVowel = true;
+      prevCharWasVowel = true;
     } else {
-      prevVowel = false;
+      prevCharWasVowel = false;
     }
   }
 
   if (word.endsWith('e')) {
-    count--;
+    syllableCount--;
   }
 
-  if (count === 0) {
-    count = 1;
+  if (syllableCount === 0) {
+    syllableCount = 1;
   }
 
-  return count;
+  return syllableCount;
 };
 
 const performSentimentAnalysisWithHuggingFace = async (text: string) => {
-  const pipeline = await transformers.pipeline('sentiment-analysis');
+  const pipeline = await pipeline('sentiment-analysis');
   const result = await pipeline(text);
   return result;
 };
@@ -199,17 +171,16 @@ const performEntityRecognitionWithSpacy = async (text: string) => {
 };
 
 const performTopicModeling = async (text: string) => {
-  const nlp = await spacy.load('en_core_web_sm');
-  const doc = nlp(text);
-  const topics = doc.vector;
-  return topics;
+  const nlp = new NlpManager({ languages: ['en'] });
+  const result = await nlp.process('en', text);
+  return result;
 };
 
-export default function ContentAnalyzerPage() {
+const ContentAnalyzerPage = () => {
+  const router = useRouter();
   const [analysis, setAnalysis] = useState<any>({});
   const [text, setText] = useState('');
   const [language, setLanguage] = useState('en');
-  const router = useRouter();
 
   const handleTextChange = (event: any) => {
     setText(event.target.value);
@@ -220,8 +191,8 @@ export default function ContentAnalyzerPage() {
   };
 
   const handleAnalyze = async () => {
-    const analysisResult = await advancedContentAnalysis({ text, language });
-    setAnalysis(analysisResult);
+    const result = await advancedContentAnalysis({ text, language });
+    setAnalysis(result);
   };
 
   return (
@@ -244,4 +215,6 @@ export default function ContentAnalyzerPage() {
       )}
     </div>
   );
-}
+};
+
+export default ContentAnalyzerPage;

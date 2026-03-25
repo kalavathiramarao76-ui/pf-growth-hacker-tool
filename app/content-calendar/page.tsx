@@ -52,115 +52,79 @@ const categories = [
   { name: 'Communication', integrations: integrations.filter(integration => integration.category === 'Communication') },
 ];
 
-const steps = [
-  {
-    title: 'Step 1: Choose a Category',
-    description: 'Select the category of integration you want to connect.',
-  },
-  {
-    title: 'Step 2: Choose an Integration',
-    description: 'Select the integration you want to connect from the chosen category.',
-  },
-  {
-    title: 'Step 3: Authenticate',
-    description: 'Authenticate with the chosen integration to grant access to your data.',
-  },
-  {
-    title: 'Step 4: Configure',
-    description: 'Configure the integration settings to customize the data synchronization.',
-  },
-  {
-    title: 'Step 5: Confirm',
-    description: 'Confirm the integration and start using the AI-Powered Content Optimizer.',
-  },
-];
+const Page = () => {
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [isConnected, setIsConnected] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
+  const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null);
 
-const [currentStep, setCurrentStep] = useState(0);
-const [selectedCategory, setSelectedCategory] = useState(null);
-const [selectedIntegration, setSelectedIntegration] = useState(null);
+  const handleDragStart = (event: any) => {
+    console.log('Drag started:', event);
+  };
 
-const handleCategorySelect = (category) => {
-  setSelectedCategory(category);
-  setCurrentStep(1);
-};
+  const handleDragEnd = (event: any) => {
+    console.log('Drag ended:', event);
+  };
 
-const handleIntegrationSelect = (integration) => {
-  setSelectedIntegration(integration);
-  setCurrentStep(2);
-};
+  const handleDrop = (event: any) => {
+    console.log('Dropped:', event);
+  };
 
-const handleAuthenticate = () => {
-  // Authenticate with the chosen integration
-  setCurrentStep(3);
-};
+  const handleConnect = (integration: Integration) => {
+    setSelectedIntegration(integration);
+    // Connect to the selected integration
+    // ...
+  };
 
-const handleConfigure = () => {
-  // Configure the integration settings
-  setCurrentStep(4);
-};
+  const handleDisconnect = () => {
+    setIsConnected(false);
+    setToken(null);
+  };
 
-const handleConfirm = () => {
-  // Confirm the integration and start using the AI-Powered Content Optimizer
-  setCurrentStep(5);
-};
-
-export default function ContentCalendarPage() {
   return (
     <Layout>
       <SEO title="Content Calendar" />
       <DndProvider backend={HTML5Backend}>
-        <div className="content-calendar-page">
+        <div className="container">
           <h1>Content Calendar</h1>
-          {currentStep === 0 && (
-            <div>
-              <h2>Step 1: Choose a Category</h2>
-              <ul>
-                {categories.map(category => (
-                  <li key={category.name}>
-                    <button onClick={() => handleCategorySelect(category)}>{category.name}</button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {currentStep === 1 && (
-            <div>
-              <h2>Step 2: Choose an Integration</h2>
-              <ul>
-                {selectedCategory.integrations.map(integration => (
-                  <li key={integration.name}>
-                    <button onClick={() => handleIntegrationSelect(integration)}>{integration.name}</button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {currentStep === 2 && (
-            <div>
-              <h2>Step 3: Authenticate</h2>
-              <button onClick={handleAuthenticate}>Authenticate</button>
-            </div>
-          )}
-          {currentStep === 3 && (
-            <div>
-              <h2>Step 4: Configure</h2>
-              <button onClick={handleConfigure}>Configure</button>
-            </div>
-          )}
-          {currentStep === 4 && (
-            <div>
-              <h2>Step 5: Confirm</h2>
-              <button onClick={handleConfirm}>Confirm</button>
-            </div>
-          )}
-          {currentStep === 5 && (
-            <div>
-              <h2>Integration Successful</h2>
-              <p>You have successfully integrated with {selectedIntegration.name}.</p>
+          <div className="calendar-container">
+            <DroppableCalendar
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+              onDrop={handleDrop}
+            >
+              {events.map((event, index) => (
+                <DraggableEvent key={index} event={event} />
+              ))}
+            </DroppableCalendar>
+          </div>
+          <div className="integrations-container">
+            {categories.map(category => (
+              <div key={category.name}>
+                <h2>{category.name}</h2>
+                <ul>
+                  {category.integrations.map(integration => (
+                    <li key={integration.key}>
+                      <button onClick={() => handleConnect(integration)}>
+                        {integration.name}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+          {selectedIntegration && (
+            <div className="connection-container">
+              <h2>Connect to {selectedIntegration.name}</h2>
+              {selectedIntegration.component}
+              <button onClick={handleDisconnect}>Disconnect</button>
             </div>
           )}
         </div>
       </DndProvider>
     </Layout>
   );
-}
+};
+
+export default Page;
