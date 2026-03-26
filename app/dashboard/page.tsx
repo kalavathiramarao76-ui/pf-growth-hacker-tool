@@ -96,65 +96,104 @@ const initialWidgets: Widget[] = [
             </tbody>
           </table>
         </div>
-        <div className="call-to-action-button">
-          <button>Upgrade Now</button>
-        </div>
       </div>
     )
   },
 ];
 
-const DashboardPage = () => {
-  const router = useRouter();
-  const [widgets, setWidgets] = useState(initialWidgets);
-  const [layout, setLayout] = useState<WidgetLayout>({ columns: 2, rows: 3, widgets: [] });
+const initialLayout: WidgetLayout = {
+  columns: 2,
+  rows: 3,
+  widgets: initialWidgets,
+};
 
-  useEffect(() => {
-    setLayout({ columns: 2, rows: 3, widgets: initialWidgets });
-  }, []);
+const App = () => {
+  const [layout, setLayout] = useState(initialLayout);
+  const [dragging, setDragging] = useState(false);
 
   const onDragEnd = (result: any) => {
     if (!result.destination) return;
     const { source, destination } = result;
-    const newWidgets = [...widgets];
+    const newWidgets = [...layout.widgets];
     const [removed] = newWidgets.splice(source.index, 1);
     newWidgets.splice(destination.index, 0, removed);
-    setWidgets(newWidgets);
+    setLayout({ ...layout, widgets: newWidgets });
+  };
+
+  const handleAddWidget = () => {
+    const newWidget: Widget = {
+      id: layout.widgets.length + 1,
+      title: 'New Widget',
+      icon: <AiOutlinePlus size={24} />,
+      onClick: () => {},
+    };
+    setLayout({ ...layout, widgets: [...layout.widgets, newWidget] });
+  };
+
+  const handleRemoveWidget = (id: number) => {
+    const newWidgets = layout.widgets.filter((widget) => widget.id !== id);
+    setLayout({ ...layout, widgets: newWidgets });
+  };
+
+  const handleEditWidget = (id: number, title: string) => {
+    const newWidgets = layout.widgets.map((widget) => {
+      if (widget.id === id) {
+        return { ...widget, title };
+      }
+      return widget;
+    });
+    setLayout({ ...layout, widgets: newWidgets });
   };
 
   return (
-    <div className="dashboard-page">
+    <DndProvider>
       <DashboardHeader />
       <NavigationMenu />
-      <DndProvider>
+      <div className="dashboard-container">
+        <div className="widget-settings">
+          <WidgetSettings
+            layout={layout}
+            onAddWidget={handleAddWidget}
+            onRemoveWidget={handleRemoveWidget}
+            onEditWidget={handleEditWidget}
+          />
+        </div>
         <DragDropContext onDragEnd={onDragEnd}>
-          <div className="dashboard-widgets">
-            {layout.widgets.map((widget, index) => (
-              <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
-                {(provided) => (
-                  <div
-                    ref={provided.innerRef}
-                    {...provided.draggableProps}
-                    {...provided.dragHandleProps}
-                    className="dashboard-widget"
-                  >
-                    <DashboardCard
-                      title={widget.title}
-                      icon={widget.icon}
-                      onClick={widget.onClick}
-                      description={widget.description}
-                      callToAction={widget.callToAction}
-                    />
-                  </div>
-                )}
-              </Draggable>
-            ))}
-          </div>
+          <Droppable droppableId="widgets">
+            {(provided) => (
+              <div
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                className="widget-grid"
+              >
+                {layout.widgets.map((widget, index) => (
+                  <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+                    {(provided) => (
+                      <div
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        ref={provided.innerRef}
+                        className="widget"
+                      >
+                        <DashboardCard
+                          title={widget.title}
+                          icon={widget.icon}
+                          onClick={widget.onClick}
+                          description={widget.description}
+                          callToAction={widget.callToAction}
+                        />
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
         </DragDropContext>
-      </DndProvider>
-      <WidgetSettings />
-    </div>
+      </div>
+    </DndProvider>
   );
 };
 
-export default DashboardPage;
+export default App;

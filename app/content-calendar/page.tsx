@@ -84,7 +84,7 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
       localStorage.removeItem('outlookCalendarToken');
     },
     name: 'Outlook Calendar',
-    icon: 'https://cdn-icons-png.flaticon.com/512/281/281766.png',
+    icon: 'https://cdn-icons-png.flaticon.com/512/281/281765.png',
     description: 'Connect your Outlook Calendar to view and manage your events',
     authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
   },
@@ -97,13 +97,13 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
       // Implement Apple Calendar event retrieval logic
       const token = localStorage.getItem('appleCalendarToken');
       if (token) {
-        const response = await fetch('https://www.icloud.com/ical/api/2/calendars', {
+        const response = await fetch('https://api.apple.com/calendars/v1/events', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
         const data = await response.json();
-        return data.calendars.map((event: any) => ({
+        return data.data.map((event: any) => ({
           id: event.id,
           title: event.title,
           start: new Date(event.startDate),
@@ -117,7 +117,7 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
       localStorage.removeItem('appleCalendarToken');
     },
     name: 'Apple Calendar',
-    icon: 'https://cdn-icons-png.flaticon.com/512/281/281765.png',
+    icon: 'https://cdn-icons-png.flaticon.com/512/281/281766.png',
     description: 'Connect your Apple Calendar to view and manage your events',
     authUrl: 'https://id.apple.com/auth/authorize',
   },
@@ -158,19 +158,21 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
 
 const Page = () => {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [selectedCalendar, setSelectedCalendar] = useState<string>('');
+  const [selectedCalendar, setSelectedCalendar] = useState<string>('GoogleCalendar');
 
-  const handleConnect = (calendar: string, token: string) => {
-    calendarIntegrations[calendar].connect(token);
-  };
+  useEffect(() => {
+    const fetchEvents = async () => {
+      const calendarIntegration = calendarIntegrations[selectedCalendar];
+      if (calendarIntegration) {
+        const events = await calendarIntegration.getEvents();
+        setEvents(events);
+      }
+    };
+    fetchEvents();
+  }, [selectedCalendar]);
 
-  const handleGetEvents = async (calendar: string) => {
-    const events = await calendarIntegrations[calendar].getEvents();
-    setEvents(events);
-  };
-
-  const handleDisconnect = (calendar: string) => {
-    calendarIntegrations[calendar].disconnect();
+  const handleCalendarChange = (calendar: string) => {
+    setSelectedCalendar(calendar);
   };
 
   return (
@@ -181,15 +183,15 @@ const Page = () => {
         <div>
           {Object.keys(calendarIntegrations).map((calendar) => (
             <div key={calendar}>
-              <Image src={calendarIntegrations[calendar].icon} alt={calendarIntegrations[calendar].name} />
+              <Image src={calendarIntegrations[calendar].icon} width={20} height={20} />
               <span>{calendarIntegrations[calendar].name}</span>
-              <button onClick={() => handleConnect(calendar, '')}>Connect</button>
-              <button onClick={() => handleGetEvents(calendar)}>Get Events</button>
-              <button onClick={() => handleDisconnect(calendar)}>Disconnect</button>
+              <button onClick={() => handleCalendarChange(calendar)}>Connect</button>
             </div>
           ))}
         </div>
+        <Tooltip />
       </DndProvider>
+      <Socket />
     </Layout>
   );
 };

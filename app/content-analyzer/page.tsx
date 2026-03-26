@@ -56,80 +56,75 @@ const calculateReadabilityScore = async (text: string) => {
   // Apply a weighted average to the combined scores
   const weightedScore = (0.4 * combinedScore) + (0.6 * combinedScoreAdvanced);
 
-  // Calculate a more intuitive readability score
-  const intuitiveReadabilityScore = Math.round(weightedScore * 100);
+  return weightedScore;
+}
 
-  // Display the readability score in a user-friendly format
-  const readabilityLevel = getReadabilityLevel(intuitiveReadabilityScore);
+const calculateComplexityScore = async (text: string) => {
+  // Calculate complexity score using a language model
+  const languageModel = new LanguageModel('en');
+  const complexityScore = await languageModel.calculateComplexity(text);
+  return complexityScore;
+}
 
-  return {
-    intuitiveReadabilityScore,
-    readabilityLevel,
-  };
-};
+const calculateCohesionScore = async (text: string) => {
+  // Calculate cohesion score using a language model
+  const languageModel = new LanguageModel('en');
+  const cohesionScore = await languageModel.calculateCohesion(text);
+  return cohesionScore;
+}
 
-const getReadabilityLevel = (score: number) => {
-  if (score >= 90) {
-    return 'Very Easy';
-  } else if (score >= 80) {
-    return 'Easy';
-  } else if (score >= 70) {
-    return 'Fairly Easy';
-  } else if (score >= 60) {
-    return 'Medium';
-  } else if (score >= 50) {
-    return 'Fairly Difficult';
-  } else if (score >= 40) {
-    return 'Difficult';
-  } else {
-    return 'Very Difficult';
-  }
-};
+const calculateClarityScore = async (text: string) => {
+  // Calculate clarity score using a language model
+  const languageModel = new LanguageModel('en');
+  const clarityScore = await languageModel.calculateClarity(text);
+  return clarityScore;
+}
 
-const Page = () => {
-  const router = useRouter();
+const calculateSentenceLengthScore = async (text: string) => {
+  // Calculate sentence length score using a language model
+  const languageModel = new LanguageModel('en');
+  const sentenceLengthScore = await languageModel.calculateSentenceLength(text);
+  return sentenceLengthScore;
+}
+
+const calculateWordLengthScore = async (text: string) => {
+  // Calculate word length score using a language model
+  const languageModel = new LanguageModel('en');
+  const wordLengthScore = await languageModel.calculateWordLength(text);
+  return wordLengthScore;
+}
+
+const calculateSyllableCountScore = async (text: string) => {
+  // Calculate syllable count score using a language model
+  const languageModel = new LanguageModel('en');
+  const syllableCountScore = await languageModel.calculateSyllableCount(text);
+  return syllableCountScore;
+}
+
+const ContentAnalyzerPage = () => {
   const [text, setText] = useState('');
   const [readabilityScore, setReadabilityScore] = useState(0);
-  const [readabilityLevel, setReadabilityLevel] = useState('');
+  const router = useRouter();
 
-  useEffect(() => {
-    const storedText = LocalStorage.get('text');
-    if (storedText) {
-      setText(storedText);
-    }
-  }, []);
-
-  const handleTextChange = (newText: string) => {
-    setText(newText);
-    LocalStorage.set('text', newText);
-  };
+  const handleTextChange = (event: any) => {
+    setText(event.target.value);
+  }
 
   const handleAnalyze = async () => {
-    const result = await calculateReadabilityScore(text);
-    setReadabilityScore(result.intuitiveReadabilityScore);
-    setReadabilityLevel(result.readabilityLevel);
-  };
+    const score = await calculateReadabilityScore(text);
+    setReadabilityScore(score);
+  }
 
   return (
     <div>
-      <SEO title="AI-Powered Content Optimizer" />
-      <PageHeader title="AI-Powered Content Optimizer" />
-      <ContentAnalyzerForm
-        text={text}
-        onTextChange={handleTextChange}
-        onAnalyze={handleAnalyze}
-      />
-      {readabilityScore && readabilityLevel && (
-        <div>
-          <h2>Readability Score: {readabilityScore}%</h2>
-          <h2>Readability Level: {readabilityLevel}</h2>
-        </div>
-      )}
-      <OptimizationSuggestions text={text} />
-      <EngagementTracker text={text} />
-      <AlternativeFormats text={text} />
+      <SEO title="Content Analyzer" />
+      <PageHeader title="Content Analyzer" />
+      <ContentAnalyzerForm text={text} handleTextChange={handleTextChange} handleAnalyze={handleAnalyze} />
+      <OptimizationSuggestions readabilityScore={readabilityScore} />
+      <EngagementTracker />
+      <AlternativeFormats />
     </div>
   );
-};
+}
 
-export default Page;
+export default ContentAnalyzerPage;
