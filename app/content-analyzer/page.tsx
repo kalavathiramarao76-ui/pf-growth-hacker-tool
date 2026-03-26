@@ -59,39 +59,51 @@ const calculateReadabilityScore = async (text: string) => {
   return weightedScore;
 }
 
-const ReadabilityScoreCalculator = () => {
+const ReadabilityScoreDisplay = ({ score }: { score: number }) => {
+  const readabilityLevels = [
+    { level: 'Very Easy', range: [0, 30] },
+    { level: 'Easy', range: [31, 50] },
+    { level: 'Medium', range: [51, 70] },
+    { level: 'Hard', range: [71, 85] },
+    { level: 'Very Hard', range: [86, 100] },
+  ];
+
+  const level = readabilityLevels.find((level) => score >= level.range[0] && score <= level.range[1]);
+
+  return (
+    <div>
+      <h2>Readability Score: {score.toFixed(2)}</h2>
+      <p>Readability Level: {level?.level}</p>
+      <div style={{ width: '100%', height: '20px', backgroundColor: 'gray', borderRadius: '5px' }}>
+        <div style={{ width: `${score}%`, height: '20px', backgroundColor: 'blue', borderRadius: '5px' }} />
+      </div>
+    </div>
+  );
+};
+
+const Page = () => {
   const [text, setText] = useState('');
   const [readabilityScore, setReadabilityScore] = useState(0);
+  const router = useRouter();
 
   const handleTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setText(event.target.value);
   };
 
-  const handleCalculateReadabilityScore = async () => {
+  const handleAnalyze = async () => {
     const score = await calculateReadabilityScore(text);
     setReadabilityScore(score);
   };
 
   return (
     <div>
-      <h2>Readability Score Calculator</h2>
-      <textarea value={text} onChange={handleTextChange} />
-      <button onClick={handleCalculateReadabilityScore}>Calculate Readability Score</button>
-      <p>Readability Score: {readabilityScore}</p>
-    </div>
-  );
-};
-
-const Page = () => {
-  return (
-    <div>
-      <SEO title="AI-Powered Content Optimizer" />
-      <PageHeader title="AI-Powered Content Optimizer" />
-      <ContentAnalyzerForm />
-      <OptimizationSuggestions />
-      <EngagementTracker />
-      <AlternativeFormats />
-      <ReadabilityScoreCalculator />
+      <SEO title="Content Analyzer" />
+      <PageHeader title="Content Analyzer" />
+      <ContentAnalyzerForm text={text} onTextChange={handleTextChange} onAnalyze={handleAnalyze} />
+      {readabilityScore > 0 && <ReadabilityScoreDisplay score={readabilityScore} />}
+      <OptimizationSuggestions text={text} />
+      <EngagementTracker text={text} />
+      <AlternativeFormats text={text} />
     </div>
   );
 };

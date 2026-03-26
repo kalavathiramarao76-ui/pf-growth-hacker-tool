@@ -84,7 +84,7 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
       localStorage.removeItem('outlookCalendarToken');
     },
     name: 'Outlook Calendar',
-    icon: 'https://cdn-icons-png.flaticon.com/512/281/281765.png',
+    icon: 'https://cdn-icons-png.flaticon.com/512/281/281766.png',
     description: 'Connect your Outlook Calendar to view and manage your events',
     authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
   },
@@ -97,13 +97,13 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
       // Implement Apple Calendar event retrieval logic
       const token = localStorage.getItem('appleCalendarToken');
       if (token) {
-        const response = await fetch('https://api.apple.com/calendars/events', {
+        const response = await fetch('https://www.icloud.com/ical/api/2/calendars', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
         const data = await response.json();
-        return data.data.map((event: any) => ({
+        return data.calendars.map((event: any) => ({
           id: event.id,
           title: event.title,
           start: new Date(event.startDate),
@@ -117,72 +117,62 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
       localStorage.removeItem('appleCalendarToken');
     },
     name: 'Apple Calendar',
-    icon: 'https://cdn-icons-png.flaticon.com/512/281/281766.png',
+    icon: 'https://cdn-icons-png.flaticon.com/512/281/281765.png',
     description: 'Connect your Apple Calendar to view and manage your events',
     authUrl: 'https://id.apple.com/auth/authorize',
   },
-  YahooCalendar: {
+  MicrosoftExchange: {
     connect: (token: string) => {
-      // Implement Yahoo Calendar connection logic
-      localStorage.setItem('yahooCalendarToken', token);
+      // Implement Microsoft Exchange connection logic
+      localStorage.setItem('microsoftExchangeToken', token);
     },
     getEvents: async () => {
-      // Implement Yahoo Calendar event retrieval logic
-      const token = localStorage.getItem('yahooCalendarToken');
+      // Implement Microsoft Exchange event retrieval logic
+      const token = localStorage.getItem('microsoftExchangeToken');
       if (token) {
-        const response = await fetch('https://api.login.yahoo.com/calendars/events', {
+        const response = await fetch('https://outlook.office.com/api/v2.0/me/events', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
         const data = await response.json();
-        return data.events.map((event: any) => ({
+        return data.value.map((event: any) => ({
           id: event.id,
-          title: event.title,
-          start: new Date(event.start),
-          end: new Date(event.end),
+          title: event.subject,
+          start: new Date(event.start.dateTime),
+          end: new Date(event.end.dateTime),
         }));
       }
       return [];
     },
     disconnect: () => {
-      // Implement Yahoo Calendar disconnection logic
-      localStorage.removeItem('yahooCalendarToken');
+      // Implement Microsoft Exchange disconnection logic
+      localStorage.removeItem('microsoftExchangeToken');
     },
-    name: 'Yahoo Calendar',
+    name: 'Microsoft Exchange',
     icon: 'https://cdn-icons-png.flaticon.com/512/281/281767.png',
-    description: 'Connect your Yahoo Calendar to view and manage your events',
-    authUrl: 'https://api.login.yahoo.com/oauth2/request_auth',
+    description: 'Connect your Microsoft Exchange to view and manage your events',
+    authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
   },
 };
 
-const App = () => {
-  const [selectedCalendar, setSelectedCalendar] = useState<string | null>(null);
+const Page = () => {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [connected, setConnected] = useState<boolean>(false);
+  const [selectedCalendar, setSelectedCalendar] = useState<string>('GoogleCalendar');
 
-  const handleConnect = (calendar: string) => {
-    const token = prompt('Enter your calendar token:');
-    if (token) {
-      calendarIntegrations[calendar].connect(token);
-      setConnected(true);
-      setSelectedCalendar(calendar);
-    }
-  };
+  useEffect(() => {
+    const fetchEvents = async () => {
+      const calendar = calendarIntegrations[selectedCalendar];
+      if (calendar) {
+        const events = await calendar.getEvents();
+        setEvents(events);
+      }
+    };
+    fetchEvents();
+  }, [selectedCalendar]);
 
-  const handleDisconnect = () => {
-    if (selectedCalendar) {
-      calendarIntegrations[selectedCalendar].disconnect();
-      setConnected(false);
-      setSelectedCalendar(null);
-    }
-  };
-
-  const handleGetEvents = async () => {
-    if (selectedCalendar) {
-      const events = await calendarIntegrations[selectedCalendar].getEvents();
-      setEvents(events);
-    }
+  const handleCalendarChange = (calendar: string) => {
+    setSelectedCalendar(calendar);
   };
 
   return (
@@ -195,20 +185,14 @@ const App = () => {
             <div key={calendar}>
               <Image src={calendarIntegrations[calendar].icon} width={20} height={20} />
               <span>{calendarIntegrations[calendar].name}</span>
-              {connected && selectedCalendar === calendar ? (
-                <button onClick={handleDisconnect}>Disconnect</button>
-              ) : (
-                <button onClick={() => handleConnect(calendar)}>Connect</button>
-              )}
+              <button onClick={() => handleCalendarChange(calendar)}>Connect</button>
             </div>
           ))}
-          {connected && (
-            <button onClick={handleGetEvents}>Get Events</button>
-          )}
         </div>
       </DndProvider>
+      <Socket />
     </Layout>
   );
 };
 
-export default App;
+export default Page;
