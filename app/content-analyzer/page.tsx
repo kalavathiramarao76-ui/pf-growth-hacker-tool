@@ -117,37 +117,18 @@ const calculateSyllableCountScore = async (text: string) => {
   return syllableCountScore
 }
 
-const Page = () => {
-  const router = useRouter();
+const ContentAnalyzerPage = () => {
   const [text, setText] = useState('');
   const [readabilityScore, setReadabilityScore] = useState(0);
-  const [complexityScore, setComplexityScore] = useState(0);
-  const [cohesionScore, setCohesionScore] = useState(0);
-  const [clarityScore, setClarityScore] = useState(0);
-  const [sentenceLengthScore, setSentenceLengthScore] = useState(0);
-  const [wordLengthScore, setWordLengthScore] = useState(0);
-  const [syllableCountScore, setSyllableCountScore] = useState(0);
+  const router = useRouter();
 
   const handleTextChange = (event: any) => {
     setText(event.target.value);
   };
 
   const handleAnalyze = async () => {
-    const readabilityScore = await calculateReadabilityScore(text);
-    const complexityScore = await calculateComplexityScore(text);
-    const cohesionScore = await calculateCohesionScore(text);
-    const clarityScore = await calculateClarityScore(text);
-    const sentenceLengthScore = await calculateSentenceLengthScore(text);
-    const wordLengthScore = await calculateWordLengthScore(text);
-    const syllableCountScore = await calculateSyllableCountScore(text);
-
-    setReadabilityScore(readabilityScore);
-    setComplexityScore(complexityScore);
-    setCohesionScore(cohesionScore);
-    setClarityScore(clarityScore);
-    setSentenceLengthScore(sentenceLengthScore);
-    setWordLengthScore(wordLengthScore);
-    setSyllableCountScore(syllableCountScore);
+    const score = await calculateReadabilityScore(text);
+    setReadabilityScore(score);
   };
 
   return (
@@ -155,11 +136,11 @@ const Page = () => {
       <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
       <ContentAnalyzerForm text={text} onTextChange={handleTextChange} onAnalyze={handleAnalyze} />
-      <OptimizationSuggestions readabilityScore={readabilityScore} complexityScore={complexityScore} cohesionScore={cohesionScore} clarityScore={clarityScore} sentenceLengthScore={sentenceLengthScore} wordLengthScore={wordLengthScore} syllableCountScore={syllableCountScore} />
+      <OptimizationSuggestions readabilityScore={readabilityScore} />
       <EngagementTracker />
       <AlternativeFormats />
     </div>
   );
 };
 
-export default Page;
+export default ContentAnalyzerPage;

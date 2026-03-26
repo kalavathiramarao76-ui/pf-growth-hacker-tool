@@ -97,7 +97,7 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
       // Implement Apple Calendar event retrieval logic
       const token = localStorage.getItem('appleCalendarToken');
       if (token) {
-        const response = await fetch('https://api.apple.com/calendars/events', {
+        const response = await fetch('https://www.icloud.com/api/calendars', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -121,155 +121,88 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
     description: 'Connect your Apple Calendar to view and manage your events',
     authUrl: 'https://id.apple.com/auth/authorize',
   },
-  ICalCalendar: {
+  YahooCalendar: {
     connect: (token: string) => {
-      // Implement ICal Calendar connection logic
-      localStorage.setItem('iCalCalendarToken', token);
+      // Implement Yahoo Calendar connection logic
+      localStorage.setItem('yahooCalendarToken', token);
     },
     getEvents: async () => {
-      // Implement ICal Calendar event retrieval logic
-      const token = localStorage.getItem('iCalCalendarToken');
+      // Implement Yahoo Calendar event retrieval logic
+      const token = localStorage.getItem('yahooCalendarToken');
       if (token) {
-        const response = await fetch('https://api.icloud.com/calendars/events', {
+        const response = await fetch('https://api.login.yahoo.com/oauth2/request_auth', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
         const data = await response.json();
-        return data.data.map((event: any) => ({
+        return data.events.map((event: any) => ({
           id: event.id,
           title: event.title,
-          start: new Date(event.startDate),
-          end: new Date(event.endDate),
+          start: new Date(event.start),
+          end: new Date(event.end),
         }));
       }
       return [];
     },
     disconnect: () => {
-      // Implement ICal Calendar disconnection logic
-      localStorage.removeItem('iCalCalendarToken');
+      // Implement Yahoo Calendar disconnection logic
+      localStorage.removeItem('yahooCalendarToken');
     },
-    name: 'iCal Calendar',
+    name: 'Yahoo Calendar',
     icon: 'https://cdn-icons-png.flaticon.com/512/281/281767.png',
-    description: 'Connect your iCal Calendar to view and manage your events',
-    authUrl: 'https://id.apple.com/auth/authorize',
-  },
-  ExchangeCalendar: {
-    connect: (token: string) => {
-      // Implement Exchange Calendar connection logic
-      localStorage.setItem('exchangeCalendarToken', token);
-    },
-    getEvents: async () => {
-      // Implement Exchange Calendar event retrieval logic
-      const token = localStorage.getItem('exchangeCalendarToken');
-      if (token) {
-        const response = await fetch('https://outlook.office.com/api/v2.0/me/events', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const data = await response.json();
-        return data.value.map((event: any) => ({
-          id: event.id,
-          title: event.subject,
-          start: new Date(event.start.dateTime),
-          end: new Date(event.end.dateTime),
-        }));
-      }
-      return [];
-    },
-    disconnect: () => {
-      // Implement Exchange Calendar disconnection logic
-      localStorage.removeItem('exchangeCalendarToken');
-    },
-    name: 'Exchange Calendar',
-    icon: 'https://cdn-icons-png.flaticon.com/512/281/281768.png',
-    description: 'Connect your Exchange Calendar to view and manage your events',
-    authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
+    description: 'Connect your Yahoo Calendar to view and manage your events',
+    authUrl: 'https://api.login.yahoo.com/oauth2/request_auth',
   },
 };
 
 const ContentCalendarPage = () => {
-  const [selectedCalendar, setSelectedCalendar] = useState<string | null>(null);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [connectedCalendars, setConnectedCalendars] = useState<string[]>([]);
+  const [selectedCalendar, setSelectedCalendar] = useState<string>('GoogleCalendar');
+  const [token, setToken] = useState<string>('');
 
-  const handleConnectCalendar = (calendar: string) => {
+  useEffect(() => {
+    const fetchEvents = async () => {
+      const calendar = calendarIntegrations[selectedCalendar];
+      if (calendar) {
+        const events = await calendar.getEvents();
+        setEvents(events);
+      }
+    };
+    fetchEvents();
+  }, [selectedCalendar]);
+
+  const handleConnect = async (calendar: string) => {
     const authUrl = calendarIntegrations[calendar].authUrl;
-    window.open(authUrl, '_blank');
+    const response = await fetch(authUrl);
+    const data = await response.json();
+    const token = data.access_token;
+    setToken(token);
+    calendarIntegrations[calendar].connect(token);
   };
 
-  const handleDisconnectCalendar = (calendar: string) => {
-    calendarIntegrations[calendar].disconnect();
-    setConnectedCalendars(connectedCalendars.filter((c) => c !== calendar));
+  const handleDisconnect = () => {
+    calendarIntegrations[selectedCalendar].disconnect();
   };
-
-  const handleGetEvents = async () => {
-    if (selectedCalendar) {
-      const events = await calendarIntegrations[selectedCalendar].getEvents();
-      setEvents(events);
-    }
-  };
-
-  useEffect(() => {
-    const storedConnectedCalendars = localStorage.getItem('connectedCalendars');
-    if (storedConnectedCalendars) {
-      setConnectedCalendars(JSON.parse(storedConnectedCalendars));
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem('connectedCalendars', JSON.stringify(connectedCalendars));
-  }, [connectedCalendars]);
 
   return (
     <Layout>
       <SEO title="Content Calendar" />
       <DndProvider backend={HTML5Backend}>
-        <div className="flex flex-col h-screen">
-          <div className="flex justify-between items-center p-4 border-b border-gray-200">
-            <h1 className="text-2xl font-bold">Content Calendar</h1>
-            <div className="flex items-center">
-              {Object.keys(calendarIntegrations).map((calendar) => (
-                <div key={calendar} className="mr-4">
-                  <Image src={calendarIntegrations[calendar].icon} width={24} height={24} />
-                  <span className="ml-2">{calendarIntegrations[calendar].name}</span>
-                  {connectedCalendars.includes(calendar) ? (
-                    <button
-                      className="ml-2 text-red-500 hover:text-red-700"
-                      onClick={() => handleDisconnectCalendar(calendar)}
-                    >
-                      Disconnect
-                    </button>
-                  ) : (
-                    <button
-                      className="ml-2 text-blue-500 hover:text-blue-700"
-                      onClick={() => handleConnectCalendar(calendar)}
-                    >
-                      Connect
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="flex-1 p-4">
-            <Calendar
-              events={events}
-              onEventClick={(event) => console.log(event)}
-              onSelectCalendar={(calendar) => setSelectedCalendar(calendar)}
-            />
-          </div>
-          <div className="p-4 border-t border-gray-200">
-            <button
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-              onClick={handleGetEvents}
-            >
-              Get Events
-            </button>
-          </div>
-        </div>
+        <Calendar events={events} />
       </DndProvider>
+      <div>
+        {Object.keys(calendarIntegrations).map((calendar) => (
+          <div key={calendar}>
+            <Image src={calendarIntegrations[calendar].icon} width={20} height={20} />
+            <span>{calendarIntegrations[calendar].name}</span>
+            <button onClick={() => handleConnect(calendar)}>Connect</button>
+            <button onClick={handleDisconnect}>Disconnect</button>
+          </div>
+        ))}
+      </div>
+      <Socket />
+      <Tooltip />
     </Layout>
   );
 };
