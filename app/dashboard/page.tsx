@@ -97,7 +97,7 @@ const initialWidgets: Widget[] = [
           </table>
         </div>
         <div className="call-to-action-button">
-          <button>Upgrade to Premium</button>
+          <button>Upgrade Now</button>
         </div>
       </div>
     )
@@ -108,6 +108,7 @@ const Page = () => {
   const [widgets, setWidgets] = useState(initialWidgets);
   const [layout, setLayout] = useState<WidgetLayout>({ columns: 2, rows: 3, widgets: initialWidgets });
   const [dragging, setDragging] = useState(false);
+  const router = useRouter();
 
   const handleDragStart = () => {
     setDragging(true);
@@ -115,18 +116,6 @@ const Page = () => {
 
   const handleDragEnd = () => {
     setDragging(false);
-  };
-
-  const onDragEnd = (result: any) => {
-    if (!result.destination) return;
-
-    const { source, destination } = result;
-    const newWidgets = [...widgets];
-
-    const [removed] = newWidgets.splice(source.index, 1);
-    newWidgets.splice(destination.index, 0, removed);
-
-    setWidgets(newWidgets);
   };
 
   const handleWidgetClick = (widget: Widget) => {
@@ -137,39 +126,56 @@ const Page = () => {
     // Open widget settings modal
   };
 
+  const handleAddWidgetClick = () => {
+    // Add new widget to the layout
+  };
+
+  const handleLayoutChange = (newLayout: WidgetLayout) => {
+    setLayout(newLayout);
+  };
+
   return (
     <div className="dashboard-page">
       <DashboardHeader />
       <NavigationMenu />
-      <DndProvider>
-        <DragDropContext onDragEnd={onDragEnd} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-          <div className="dashboard-widgets">
-            {layout.widgets.map((widget, index) => (
-              <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
-                {(provided) => (
-                  <div
-                    ref={provided.innerRef}
-                    {...provided.draggableProps}
-                    {...provided.dragHandleProps}
-                    className="widget"
-                  >
-                    <DashboardCard
-                      title={widget.title}
-                      icon={widget.icon}
-                      onClick={() => handleWidgetClick(widget)}
-                      description={widget.description}
-                      callToAction={widget.callToAction}
-                    />
-                    <div className="widget-settings">
-                      <button onClick={() => handleWidgetSettingsClick(widget)}>Settings</button>
-                    </div>
-                  </div>
-                )}
-              </Draggable>
-            ))}
-          </div>
-        </DragDropContext>
-      </DndProvider>
+      <div className="dashboard-content">
+        <DndProvider>
+          <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+            <Droppable droppableId="widgets">
+              {(provided) => (
+                <div ref={provided.innerRef} {...provided.droppableProps}>
+                  {layout.widgets.map((widget, index) => (
+                    <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+                      {(provided) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                          className="widget"
+                        >
+                          <DashboardCard
+                            title={widget.title}
+                            icon={widget.icon}
+                            onClick={() => handleWidgetClick(widget)}
+                            onSettingsClick={() => handleWidgetSettingsClick(widget)}
+                          />
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
+        </DndProvider>
+        <div className="add-widget-button">
+          <button onClick={handleAddWidgetClick}>
+            <AiOutlinePlus size={24} />
+            Add Widget
+          </button>
+        </div>
+      </div>
       <WidgetSettings />
     </div>
   );

@@ -56,66 +56,101 @@ const calculateReadabilityScore = async (text: string) => {
   // Apply a weighted average to the combined scores
   const weightedScore = (0.4 * combinedScore) + (0.6 * combinedScoreAdvanced);
 
-  // Map the weighted score to a more user-friendly readability score (e.g., 1-10)
-  const userFriendlyScore = Math.round((weightedScore * 10));
+  // Provide actionable suggestions for improvement
+  const suggestions = [];
+  if (weightedScore < 0.5) {
+    suggestions.push('Improve sentence structure and clarity');
+  }
+  if (complexityScore < 0.5) {
+    suggestions.push('Use simpler vocabulary');
+  }
+  if (cohesionScore < 0.5) {
+    suggestions.push('Improve paragraph cohesion');
+  }
+  if (clarityScore < 0.5) {
+    suggestions.push('Improve overall clarity');
+  }
+  if (sentenceLengthScore < 0.5) {
+    suggestions.push('Vary sentence length');
+  }
+  if (wordLengthScore < 0.5) {
+    suggestions.push('Use shorter words');
+  }
+  if (syllableCountScore < 0.5) {
+    suggestions.push('Use words with fewer syllables');
+  }
 
-  // Display the results in a clear and concise manner
-  const readabilityResult = {
-    score: userFriendlyScore,
-    gradeLevel: getGradeLevel(userFriendlyScore),
-    readingEase: getReadingEase(userFriendlyScore)
-  };
+  return { weightedScore, suggestions };
+};
 
-  return readabilityResult;
-}
+const calculateComplexityScore = async (text: string) => {
+  // Calculate complexity score using a language model
+  const nlp = new NlpManager({ languages: ['en'] });
+  const doc = await nlp.process('en', text);
+  return doc.complexity;
+};
 
-const getGradeLevel = (score: number) => {
-  if (score <= 3) return 'Elementary School';
-  if (score <= 5) return 'Middle School';
-  if (score <= 7) return 'High School';
-  return 'College';
-}
+const calculateCohesionScore = async (text: string) => {
+  // Calculate cohesion score using a language model
+  const nlp = new NlpManager({ languages: ['en'] });
+  const doc = await nlp.process('en', text);
+  return doc.cohesion;
+};
 
-const getReadingEase = (score: number) => {
-  if (score <= 3) return 'Very Easy';
-  if (score <= 5) return 'Easy';
-  if (score <= 7) return 'Medium';
-  return 'Difficult';
-}
+const calculateClarityScore = async (text: string) => {
+  // Calculate clarity score using a language model
+  const nlp = new NlpManager({ languages: ['en'] });
+  const doc = await nlp.process('en', text);
+  return doc.clarity;
+};
+
+const calculateSentenceLengthScore = async (text: string) => {
+  // Calculate sentence length score using a language model
+  const nlp = new NlpManager({ languages: ['en'] });
+  const doc = await nlp.process('en', text);
+  return doc.sentenceLength;
+};
+
+const calculateWordLengthScore = async (text: string) => {
+  // Calculate word length score using a language model
+  const nlp = new NlpManager({ languages: ['en'] });
+  const doc = await nlp.process('en', text);
+  return doc.wordLength;
+};
+
+const calculateSyllableCountScore = async (text: string) => {
+  // Calculate syllable count score using a language model
+  const nlp = new NlpManager({ languages: ['en'] });
+  const doc = await nlp.process('en', text);
+  return doc.syllableCount;
+};
 
 const Page = () => {
   const router = useRouter();
   const [text, setText] = useState('');
-  const [readabilityScore, setReadabilityScore] = useState(null);
-  const [analysisResult, setAnalysisResult] = useState(null);
+  const [score, setScore] = useState(0);
+  const [suggestions, setSuggestions] = useState([]);
 
   const handleTextChange = (event: any) => {
     setText(event.target.value);
-  }
+  };
 
   const handleAnalyze = async () => {
     const result = await calculateReadabilityScore(text);
-    setReadabilityScore(result.score);
-    setAnalysisResult(result);
-  }
+    setScore(result.weightedScore);
+    setSuggestions(result.suggestions);
+  };
 
   return (
     <div>
       <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
       <ContentAnalyzerForm text={text} onChange={handleTextChange} onAnalyze={handleAnalyze} />
-      {analysisResult && (
-        <div>
-          <h2>Readability Score: {analysisResult.score}/10</h2>
-          <p>Grade Level: {analysisResult.gradeLevel}</p>
-          <p>Reading Ease: {analysisResult.readingEase}</p>
-        </div>
-      )}
-      <OptimizationSuggestions text={text} />
-      <EngagementTracker text={text} />
-      <AlternativeFormats text={text} />
+      <OptimizationSuggestions score={score} suggestions={suggestions} />
+      <EngagementTracker />
+      <AlternativeFormats />
     </div>
   );
-}
+};
 
 export default Page;

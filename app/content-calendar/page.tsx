@@ -84,7 +84,7 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
       localStorage.removeItem('outlookCalendarToken');
     },
     name: 'Outlook Calendar',
-    icon: 'https://cdn-icons-png.flaticon.com/512/281/281765.png',
+    icon: 'https://cdn-icons-png.flaticon.com/512/281/281766.png',
     description: 'Connect your Outlook Calendar to view and manage your events',
     authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
   },
@@ -117,49 +117,49 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
       localStorage.removeItem('appleCalendarToken');
     },
     name: 'Apple Calendar',
-    icon: 'https://cdn-icons-png.flaticon.com/512/281/281767.png',
+    icon: 'https://cdn-icons-png.flaticon.com/512/281/281765.png',
     description: 'Connect your Apple Calendar to view and manage your events',
     authUrl: 'https://id.apple.com/auth/authorize',
   },
-  YahooCalendar: {
+  MicrosoftExchange: {
     connect: (token: string) => {
-      // Implement Yahoo Calendar connection logic
-      localStorage.setItem('yahooCalendarToken', token);
+      // Implement Microsoft Exchange connection logic
+      localStorage.setItem('microsoftExchangeToken', token);
     },
     getEvents: async () => {
-      // Implement Yahoo Calendar event retrieval logic
-      const token = localStorage.getItem('yahooCalendarToken');
+      // Implement Microsoft Exchange event retrieval logic
+      const token = localStorage.getItem('microsoftExchangeToken');
       if (token) {
-        const response = await fetch('https://api.login.yahoo.com/oauth2/request_auth', {
+        const response = await fetch('https://outlook.office.com/api/v2.0/me/events', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
         const data = await response.json();
-        return data.events.map((event: any) => ({
+        return data.value.map((event: any) => ({
           id: event.id,
-          title: event.title,
-          start: new Date(event.start),
-          end: new Date(event.end),
+          title: event.subject,
+          start: new Date(event.start.dateTime),
+          end: new Date(event.end.dateTime),
         }));
       }
       return [];
     },
     disconnect: () => {
-      // Implement Yahoo Calendar disconnection logic
-      localStorage.removeItem('yahooCalendarToken');
+      // Implement Microsoft Exchange disconnection logic
+      localStorage.removeItem('microsoftExchangeToken');
     },
-    name: 'Yahoo Calendar',
-    icon: 'https://cdn-icons-png.flaticon.com/512/281/281768.png',
-    description: 'Connect your Yahoo Calendar to view and manage your events',
-    authUrl: 'https://api.login.yahoo.com/oauth2/request_auth',
+    name: 'Microsoft Exchange',
+    icon: 'https://cdn-icons-png.flaticon.com/512/281/281767.png',
+    description: 'Connect your Microsoft Exchange to view and manage your events',
+    authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
   },
 };
 
-const ContentCalendarPage = () => {
+export default function ContentCalendarPage() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [selectedCalendar, setSelectedCalendar] = useState<string>('GoogleCalendar');
-  const pathname = usePathname();
+  const [token, setToken] = useState<string>('');
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -175,7 +175,8 @@ const ContentCalendarPage = () => {
   const handleConnect = (calendar: string) => {
     const integration = calendarIntegrations[calendar];
     if (integration) {
-      window.location.href = integration.authUrl;
+      const authUrl = integration.authUrl;
+      window.location.href = authUrl;
     }
   };
 
@@ -194,7 +195,7 @@ const ContentCalendarPage = () => {
         <div>
           {Object.keys(calendarIntegrations).map((calendar) => (
             <div key={calendar}>
-              <Image src={calendarIntegrations[calendar].icon} alt={calendarIntegrations[calendar].name} />
+              <Image src={calendarIntegrations[calendar].icon} width={20} height={20} />
               <span>{calendarIntegrations[calendar].name}</span>
               <button onClick={() => handleConnect(calendar)}>Connect</button>
               <button onClick={() => handleDisconnect(calendar)}>Disconnect</button>
@@ -202,8 +203,7 @@ const ContentCalendarPage = () => {
           ))}
         </div>
       </DndProvider>
+      <Socket />
     </Layout>
   );
-};
-
-export default ContentCalendarPage;
+}
