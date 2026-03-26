@@ -56,51 +56,75 @@ const calculateReadabilityScore = async (text: string) => {
   // Apply a weighted average to the combined scores
   const weightedScore = (0.4 * combinedScore) + (0.6 * combinedScoreAdvanced);
 
-  return weightedScore;
-}
+  // Calculate a more intuitive readability score
+  const intuitiveReadabilityScore = Math.round(weightedScore * 100);
 
-const ReadabilityScoreDisplay = ({ score }: { score: number }) => {
-  const readabilityLevels = [
-    { level: 'Very Easy', range: [0, 30] },
-    { level: 'Easy', range: [31, 50] },
-    { level: 'Medium', range: [51, 70] },
-    { level: 'Hard', range: [71, 85] },
-    { level: 'Very Hard', range: [86, 100] },
-  ];
+  // Display the readability score in a user-friendly format
+  const readabilityLevel = getReadabilityLevel(intuitiveReadabilityScore);
 
-  const level = readabilityLevels.find((level) => score >= level.range[0] && score <= level.range[1]);
+  return {
+    intuitiveReadabilityScore,
+    readabilityLevel,
+  };
+};
 
-  return (
-    <div>
-      <h2>Readability Score: {score.toFixed(2)}</h2>
-      <p>Readability Level: {level?.level}</p>
-      <div style={{ width: '100%', height: '20px', backgroundColor: 'gray', borderRadius: '5px' }}>
-        <div style={{ width: `${score}%`, height: '20px', backgroundColor: 'blue', borderRadius: '5px' }} />
-      </div>
-    </div>
-  );
+const getReadabilityLevel = (score: number) => {
+  if (score >= 90) {
+    return 'Very Easy';
+  } else if (score >= 80) {
+    return 'Easy';
+  } else if (score >= 70) {
+    return 'Fairly Easy';
+  } else if (score >= 60) {
+    return 'Medium';
+  } else if (score >= 50) {
+    return 'Fairly Difficult';
+  } else if (score >= 40) {
+    return 'Difficult';
+  } else {
+    return 'Very Difficult';
+  }
 };
 
 const Page = () => {
+  const router = useRouter();
   const [text, setText] = useState('');
   const [readabilityScore, setReadabilityScore] = useState(0);
-  const router = useRouter();
+  const [readabilityLevel, setReadabilityLevel] = useState('');
 
-  const handleTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setText(event.target.value);
+  useEffect(() => {
+    const storedText = LocalStorage.get('text');
+    if (storedText) {
+      setText(storedText);
+    }
+  }, []);
+
+  const handleTextChange = (newText: string) => {
+    setText(newText);
+    LocalStorage.set('text', newText);
   };
 
   const handleAnalyze = async () => {
-    const score = await calculateReadabilityScore(text);
-    setReadabilityScore(score);
+    const result = await calculateReadabilityScore(text);
+    setReadabilityScore(result.intuitiveReadabilityScore);
+    setReadabilityLevel(result.readabilityLevel);
   };
 
   return (
     <div>
-      <SEO title="Content Analyzer" />
-      <PageHeader title="Content Analyzer" />
-      <ContentAnalyzerForm text={text} onTextChange={handleTextChange} onAnalyze={handleAnalyze} />
-      {readabilityScore > 0 && <ReadabilityScoreDisplay score={readabilityScore} />}
+      <SEO title="AI-Powered Content Optimizer" />
+      <PageHeader title="AI-Powered Content Optimizer" />
+      <ContentAnalyzerForm
+        text={text}
+        onTextChange={handleTextChange}
+        onAnalyze={handleAnalyze}
+      />
+      {readabilityScore && readabilityLevel && (
+        <div>
+          <h2>Readability Score: {readabilityScore}%</h2>
+          <h2>Readability Level: {readabilityLevel}</h2>
+        </div>
+      )}
       <OptimizationSuggestions text={text} />
       <EngagementTracker text={text} />
       <AlternativeFormats text={text} />

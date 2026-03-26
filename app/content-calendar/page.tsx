@@ -158,21 +158,19 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
 
 const Page = () => {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [selectedCalendar, setSelectedCalendar] = useState<string>('GoogleCalendar');
+  const [selectedCalendar, setSelectedCalendar] = useState<string>('');
 
-  useEffect(() => {
-    const fetchEvents = async () => {
-      const calendar = calendarIntegrations[selectedCalendar];
-      if (calendar) {
-        const events = await calendar.getEvents();
-        setEvents(events);
-      }
-    };
-    fetchEvents();
-  }, [selectedCalendar]);
+  const handleConnect = (calendar: string, token: string) => {
+    calendarIntegrations[calendar].connect(token);
+  };
 
-  const handleCalendarChange = (calendar: string) => {
-    setSelectedCalendar(calendar);
+  const handleGetEvents = async (calendar: string) => {
+    const events = await calendarIntegrations[calendar].getEvents();
+    setEvents(events);
+  };
+
+  const handleDisconnect = (calendar: string) => {
+    calendarIntegrations[calendar].disconnect();
   };
 
   return (
@@ -183,14 +181,15 @@ const Page = () => {
         <div>
           {Object.keys(calendarIntegrations).map((calendar) => (
             <div key={calendar}>
-              <Image src={calendarIntegrations[calendar].icon} width={20} height={20} />
+              <Image src={calendarIntegrations[calendar].icon} alt={calendarIntegrations[calendar].name} />
               <span>{calendarIntegrations[calendar].name}</span>
-              <button onClick={() => handleCalendarChange(calendar)}>Connect</button>
+              <button onClick={() => handleConnect(calendar, '')}>Connect</button>
+              <button onClick={() => handleGetEvents(calendar)}>Get Events</button>
+              <button onClick={() => handleDisconnect(calendar)}>Disconnect</button>
             </div>
           ))}
         </div>
       </DndProvider>
-      <Socket />
     </Layout>
   );
 };
