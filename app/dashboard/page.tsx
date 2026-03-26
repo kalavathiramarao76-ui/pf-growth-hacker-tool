@@ -91,93 +91,56 @@ const initialWidgets: Widget[] = [
               <tr>
                 <td>Yearly</td>
                 <td>$99.99 (save 20% compared to monthly)</td>
-                <td>Advanced features, priority support</td>
+                <td>Advanced features, priority support, expert guidance</td>
               </tr>
             </tbody>
           </table>
         </div>
+        <button className="upgrade-button">Upgrade Now</button>
       </div>
     )
   },
 ];
 
-const initialLayout: WidgetLayout = {
-  columns: 2,
-  rows: 3,
-  widgets: initialWidgets,
-};
+const DashboardPage = () => {
+  const router = useRouter();
+  const [widgets, setWidgets] = useState(initialWidgets);
+  const [layout, setLayout] = useState<WidgetLayout>({ columns: 3, rows: 2, widgets: initialWidgets });
 
-const Page = () => {
-  const [layout, setLayout] = useState(initialLayout);
-  const [dragging, setDragging] = useState(false);
-
-  const onDragStart = () => {
-    setDragging(true);
+  const handleWidgetClick = (widget: Widget) => {
+    widget.onClick();
   };
 
-  const onDragEnd = (result: any) => {
-    if (!result.destination) return;
-    const { source, destination } = result;
-    const newLayout = { ...layout };
-    const widgets = [...newLayout.widgets];
-    const [removed] = widgets.splice(source.index, 1);
-    widgets.splice(destination.index, 0, removed);
-    newLayout.widgets = widgets;
+  const handleLayoutChange = (newLayout: WidgetLayout) => {
     setLayout(newLayout);
-    setDragging(false);
   };
 
   return (
-    <div className="dashboard-page">
+    <div className="dashboard-container">
       <DashboardHeader />
       <NavigationMenu />
-      <DndProvider>
-        <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
-          <div className="dashboard-content">
-            {Array.from({ length: layout.rows }, (_, row) => (
-              <div key={row} className="row">
-                {Array.from({ length: layout.columns }, (_, col) => (
-                  <div key={col} className="column">
-                    <Droppable droppableId={`${row}-${col}`}>
-                      {(provided) => (
-                        <div ref={provided.innerRef} {...provided.droppableProps}>
-                          {layout.widgets
-                            .filter((widget, index) => index >= row * layout.columns + col && index < row * layout.columns + col + 1)
-                            .map((widget, index) => (
-                              <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
-                                {(provided) => (
-                                  <div
-                                    ref={provided.innerRef}
-                                    {...provided.draggableProps}
-                                    {...provided.dragHandleProps}
-                                    className="widget"
-                                  >
-                                    <DashboardCard
-                                      title={widget.title}
-                                      icon={widget.icon}
-                                      onClick={widget.onClick}
-                                      frequency={widget.frequency}
-                                      description={widget.description}
-                                      callToAction={widget.callToAction}
-                                    />
-                                  </div>
-                                )}
-                              </Draggable>
-                            ))}
-                          {provided.placeholder}
-                        </div>
-                      )}
-                    </Droppable>
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
-        </DragDropContext>
-      </DndProvider>
-      <WidgetSettings />
+      <div className="dashboard-content">
+        <div className="key-metrics">
+          <h2>Key Metrics</h2>
+          <ul>
+            <li>Engagement: 20%</li>
+            <li>Conversions: 30%</li>
+            <li>Content Performance: 85%</li>
+          </ul>
+        </div>
+        <div className="widget-grid">
+          {layout.widgets.map((widget, index) => (
+            <DashboardCard key={widget.id} widget={widget} onClick={() => handleWidgetClick(widget)} />
+          ))}
+        </div>
+        <div className="call-to-action">
+          <h2>Take Your Content to the Next Level</h2>
+          <p>Upgrade to our premium plan to unlock advanced features, priority support, and expert guidance.</p>
+          <button className="upgrade-button">Upgrade Now</button>
+        </div>
+      </div>
     </div>
   );
 };
 
-export default Page;
+export default DashboardPage;
