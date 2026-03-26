@@ -8,6 +8,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Tooltip } from '../components/Tooltip';
 import Image from 'next/image';
 import { Socket } from '../utils/socket';
+import StripeCheckout from 'react-stripe-checkout';
 
 // Unified Calendar API
 interface CalendarIntegration {
@@ -84,138 +85,110 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
       localStorage.removeItem('outlookCalendarToken');
     },
     name: 'Outlook Calendar',
-    icon: 'https://cdn-icons-png.flaticon.com/512/281/281766.png',
+    icon: 'https://cdn-icons-png.flaticon.com/512/281/281764.png',
     description: 'Connect your Outlook Calendar to view and manage your events',
     authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
   },
-  AppleCalendar: {
-    connect: (token: string) => {
-      // Implement Apple Calendar connection logic
-      localStorage.setItem('appleCalendarToken', token);
-    },
-    getEvents: async () => {
-      // Implement Apple Calendar event retrieval logic
-      const token = localStorage.getItem('appleCalendarToken');
-      if (token) {
-        const response = await fetch('https://api.apple.com/calendars/events', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const data = await response.json();
-        return data.data.map((event: any) => ({
-          id: event.id,
-          title: event.title,
-          start: new Date(event.startDate),
-          end: new Date(event.endDate),
-        }));
-      }
-      return [];
-    },
-    disconnect: () => {
-      // Implement Apple Calendar disconnection logic
-      localStorage.removeItem('appleCalendarToken');
-    },
-    name: 'Apple Calendar',
-    icon: 'https://cdn-icons-png.flaticon.com/512/281/281765.png',
-    description: 'Connect your Apple Calendar to view and manage your events',
-    authUrl: 'https://id.apple.com/auth/authorize',
-  },
-  YahooCalendar: {
-    connect: (token: string) => {
-      // Implement Yahoo Calendar connection logic
-      localStorage.setItem('yahooCalendarToken', token);
-    },
-    getEvents: async () => {
-      // Implement Yahoo Calendar event retrieval logic
-      const token = localStorage.getItem('yahooCalendarToken');
-      if (token) {
-        const response = await fetch('https://api.login.yahoo.com/oauth2/request_auth', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const data = await response.json();
-        return data.events.map((event: any) => ({
-          id: event.id,
-          title: event.title,
-          start: new Date(event.start),
-          end: new Date(event.end),
-        }));
-      }
-      return [];
-    },
-    disconnect: () => {
-      // Implement Yahoo Calendar disconnection logic
-      localStorage.removeItem('yahooCalendarToken');
-    },
-    name: 'Yahoo Calendar',
-    icon: 'https://cdn-icons-png.flaticon.com/512/281/281767.png',
-    description: 'Connect your Yahoo Calendar to view and manage your events',
-    authUrl: 'https://api.login.yahoo.com/oauth2/request_auth',
-  },
 };
 
-const App = () => {
-  const [selectedCalendar, setSelectedCalendar] = useState<CalendarIntegration | null>(null);
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [connected, setConnected] = useState(false);
+const Plan = {
+  FREE: 'free',
+  PREMIUM: 'premium',
+};
 
-  const handleConnect = async (calendar: CalendarIntegration) => {
-    const token = prompt('Enter your calendar token');
-    if (token) {
-      calendar.connect(token);
-      setConnected(true);
-      setSelectedCalendar(calendar);
-    }
-  };
+const Pricing = {
+  [Plan.FREE]: 0,
+  [Plan.PREMIUM]: 9.99,
+};
 
-  const handleDisconnect = () => {
-    if (selectedCalendar) {
-      selectedCalendar.disconnect();
-      setConnected(false);
-      setSelectedCalendar(null);
-    }
-  };
+const onToken = (token: any) => {
+  // Send token to server to charge customer
+  fetch('/api/charge', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ token }),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success) {
+        // Update user plan to premium
+        localStorage.setItem('plan', Plan.PREMIUM);
+        window.location.reload();
+      } else {
+        alert('Payment failed');
+      }
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+};
 
-  const handleGetEvents = async () => {
-    if (selectedCalendar) {
-      const events = await selectedCalendar.getEvents();
-      setEvents(events);
-    }
-  };
+const UpgradeButton = () => {
+  const [plan, setPlan] = useState(Plan.FREE);
 
   useEffect(() => {
-    if (connected && selectedCalendar) {
-      handleGetEvents();
+    const storedPlan = localStorage.getItem('plan');
+    if (storedPlan) {
+      setPlan(storedPlan);
     }
-  }, [connected, selectedCalendar]);
+  }, []);
+
+  if (plan === Plan.PREMIUM) {
+    return <p>You are on the premium plan</p>;
+  }
+
+  return (
+    <StripeCheckout
+      token={onToken}
+      stripeKey="YOUR_STRIPE_PUBLIC_KEY"
+      name="AI-Powered Content Optimizer"
+      description="Upgrade to premium plan"
+      amount={Pricing[Plan.PREMIUM] * 100}
+      currency="USD"
+    >
+      <button>Upgrade to Premium ($9.99/month)</button>
+    </StripeCheckout>
+  );
+};
+
+const Page = () => {
+  const pathname = usePathname();
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [selectedCalendar, setSelectedCalendar] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      if (selectedCalendar) {
+        const calendar = calendarIntegrations[selectedCalendar];
+        const events = await calendar.getEvents();
+        setEvents(events);
+      }
+    };
+    fetchEvents();
+  }, [selectedCalendar]);
+
+  const handleCalendarSelect = (calendar: string) => {
+    setSelectedCalendar(calendar);
+  };
 
   return (
     <Layout>
-      <SEO title="AI-Powered Content Optimizer" />
+      <SEO title="Content Calendar" />
       <DndProvider backend={HTML5Backend}>
         <Calendar events={events} />
         <div>
-          {Object.values(calendarIntegrations).map((calendar) => (
-            <div key={calendar.name}>
-              <Image src={calendar.icon} alt={calendar.name} width={20} height={20} />
-              <span>{calendar.name}</span>
-              <button onClick={() => handleConnect(calendar)}>Connect</button>
-            </div>
+          {Object.keys(calendarIntegrations).map((calendar) => (
+            <button key={calendar} onClick={() => handleCalendarSelect(calendar)}>
+              {calendarIntegrations[calendar].name}
+            </button>
           ))}
-          {connected && (
-            <div>
-              <button onClick={handleDisconnect}>Disconnect</button>
-              <button onClick={handleGetEvents}>Get Events</button>
-            </div>
-          )}
         </div>
-        <Tooltip />
+        <UpgradeButton />
       </DndProvider>
-      <Socket />
     </Layout>
   );
 };
 
-export default App;
+export default Page;

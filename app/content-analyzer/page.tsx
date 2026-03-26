@@ -56,66 +56,18 @@ const calculateReadabilityScore = async (text: string) => {
   // Apply a weighted average to the combined scores
   const weightedScore = (0.4 * combinedScore) + (0.6 * combinedScoreAdvanced);
 
-  // Visualize the readability score
-  const readabilityScoreVisualization = {
-    score: weightedScore,
-    gradeLevel: getGradeLevel(weightedScore),
-    readingEase: getReadingEase(weightedScore),
-    color: getColor(weightedScore)
-  };
-
-  return readabilityScoreVisualization;
+  return weightedScore;
 }
 
-const getGradeLevel = (score: number) => {
-  if (score < 5) return 'Elementary School';
-  if (score < 7) return 'Middle School';
-  if (score < 9) return 'High School';
-  return 'College';
-}
-
-const getReadingEase = (score: number) => {
-  if (score < 5) return 'Very Difficult';
-  if (score < 7) return 'Difficult';
-  if (score < 9) return 'Average';
-  return 'Easy';
-}
-
-const getColor = (score: number) => {
-  if (score < 5) return 'red';
-  if (score < 7) return 'orange';
-  if (score < 9) return 'yellow';
-  return 'green';
-}
-
-const calculateComplexityScore = async (text: string) => {
-  // Implement complexity score calculation
-}
-
-const calculateCohesionScore = async (text: string) => {
-  // Implement cohesion score calculation
-}
-
-const calculateClarityScore = async (text: string) => {
-  // Implement clarity score calculation
-}
-
-const calculateSentenceLengthScore = async (text: string) => {
-  // Implement sentence length score calculation
-}
-
-const calculateWordLengthScore = async (text: string) => {
-  // Implement word length score calculation
-}
-
-const calculateSyllableCountScore = async (text: string) => {
-  // Implement syllable count score calculation
-}
-
-const Page = () => {
+const ContentAnalyzerPage = () => {
   const [text, setText] = useState('');
-  const [readabilityScore, setReadabilityScore] = useState(null);
-  const router = useRouter();
+  const [readabilityScore, setReadabilityScore] = useState(0);
+  const [complexityScore, setComplexityScore] = useState(0);
+  const [cohesionScore, setCohesionScore] = useState(0);
+  const [clarityScore, setClarityScore] = useState(0);
+  const [sentenceLengthScore, setSentenceLengthScore] = useState(0);
+  const [wordLengthScore, setWordLengthScore] = useState(0);
+  const [syllableCountScore, setSyllableCountScore] = useState(0);
 
   const handleTextChange = (event: any) => {
     setText(event.target.value);
@@ -124,26 +76,70 @@ const Page = () => {
   const handleAnalyze = async () => {
     const score = await calculateReadabilityScore(text);
     setReadabilityScore(score);
+    const complexity = await calculateComplexityScore(text);
+    setComplexityScore(complexity);
+    const cohesion = await calculateCohesionScore(text);
+    setCohesionScore(cohesion);
+    const clarity = await calculateClarityScore(text);
+    setClarityScore(clarity);
+    const sentenceLength = await calculateSentenceLengthScore(text);
+    setSentenceLengthScore(sentenceLength);
+    const wordLength = await calculateWordLengthScore(text);
+    setWordLengthScore(wordLength);
+    const syllableCount = await calculateSyllableCountScore(text);
+    setSyllableCountScore(syllableCount);
   }
 
   return (
     <div>
       <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
-      <ContentAnalyzerForm text={text} onChange={handleTextChange} onAnalyze={handleAnalyze} />
-      {readabilityScore && (
+      <ContentAnalyzerForm
+        text={text}
+        onChange={handleTextChange}
+        onAnalyze={handleAnalyze}
+      />
+      {readabilityScore !== 0 && (
         <div>
-          <h2>Readability Score: {readabilityScore.score.toFixed(2)}</h2>
-          <p>Grade Level: {readabilityScore.gradeLevel}</p>
-          <p>Reading Ease: {readabilityScore.readingEase}</p>
-          <div style={{ backgroundColor: readabilityScore.color, width: '100px', height: '100px' }} />
+          <h2>Readability Scores</h2>
+          <p>Readability Score: {readabilityScore.toFixed(2)}</p>
+          <p>Complexity Score: {complexityScore.toFixed(2)}</p>
+          <p>Cohesion Score: {cohesionScore.toFixed(2)}</p>
+          <p>Clarity Score: {clarityScore.toFixed(2)}</p>
+          <p>Sentence Length Score: {sentenceLengthScore.toFixed(2)}</p>
+          <p>Word Length Score: {wordLengthScore.toFixed(2)}</p>
+          <p>Syllable Count Score: {syllableCountScore.toFixed(2)}</p>
+          <OptimizationSuggestions
+            readabilityScore={readabilityScore}
+            complexityScore={complexityScore}
+            cohesionScore={cohesionScore}
+            clarityScore={clarityScore}
+            sentenceLengthScore={sentenceLengthScore}
+            wordLengthScore={wordLengthScore}
+            syllableCountScore={syllableCountScore}
+          />
+          <EngagementTracker
+            readabilityScore={readabilityScore}
+            complexityScore={complexityScore}
+            cohesionScore={cohesionScore}
+            clarityScore={clarityScore}
+            sentenceLengthScore={sentenceLengthScore}
+            wordLengthScore={wordLengthScore}
+            syllableCountScore={syllableCountScore}
+          />
+          <AlternativeFormats
+            readabilityScore={readabilityScore}
+            complexityScore={complexityScore}
+            cohesionScore={cohesionScore}
+            clarityScore={clarityScore}
+            sentenceLengthScore={sentenceLengthScore}
+            wordLengthScore={wordLengthScore}
+            syllableCountScore={syllableCountScore}
+          />
         </div>
       )}
-      <OptimizationSuggestions text={text} />
-      <EngagementTracker text={text} />
-      <AlternativeFormats text={text} />
     </div>
   );
-}
+};
 
-export default Page;
+export default ContentAnalyzerPage;

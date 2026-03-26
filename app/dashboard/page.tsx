@@ -73,86 +73,77 @@ const initialWidgets: Widget[] = [
           </ul>
         </div>
         <div className="pricing-table">
-          <h2>Choose Your Plan:</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Plan</th>
-                <th>Price</th>
-                <th>Features</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Monthly</td>
-                <td>$9.99</td>
-                <td>Basic features, limited support</td>
-              </tr>
-              <tr>
-                <td>Yearly</td>
-                <td>$99.99 (save 20% compared to monthly)</td>
-                <td>Advanced features, priority support, AI-powered content insights, and more</td>
-              </tr>
-              <tr>
-                <td>Yearly (Limited Time Offer)</td>
-                <td>$84.99 (save 15% compared to yearly)</td>
-                <td>Advanced features, priority support, AI-powered content insights, and more</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div className="call-to-action-button">
-          <button>Upgrade to Premium Now</button>
         </div>
       </div>
     )
   },
 ];
 
-const DashboardPage = () => {
-  const router = useRouter();
-  const [widgets, setWidgets] = useState(initialWidgets);
+const initialLayout: WidgetLayout = {
+  columns: 2,
+  rows: 3,
+  widgets: initialWidgets,
+};
 
-  const handleWidgetClick = (widget: Widget) => {
-    widget.onClick();
+const DashboardPage = () => {
+  const [layout, setLayout] = useState(initialLayout);
+  const [dragging, setDragging] = useState(false);
+
+  const onDragStart = () => {
+    setDragging(true);
+  };
+
+  const onDragEnd = (result: any) => {
+    if (!result.destination) return;
+    const { source, destination } = result;
+    const newLayout = { ...layout };
+    const widgets = [...newLayout.widgets];
+    const [removed] = widgets.splice(source.index, 1);
+    widgets.splice(destination.index, 0, removed);
+    newLayout.widgets = widgets;
+    setLayout(newLayout);
+    setDragging(false);
   };
 
   return (
     <div className="dashboard-page">
       <DashboardHeader />
       <NavigationMenu />
-      <div className="dashboard-content">
-        <DndProvider>
-          <DragDropContext>
-            <Droppable droppableId="widgets">
-              {(provided) => (
-                <div {...provided.droppableProps} ref={provided.innerRef}>
-                  {widgets.map((widget, index) => (
-                    <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+      <DndProvider>
+        <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
+          <div className="dashboard-widgets">
+            {Array.from({ length: layout.columns }, (_, columnIndex) => (
+              <div key={columnIndex} className="widget-column">
+                {Array.from({ length: layout.rows }, (_, rowIndex) => {
+                  const widgetIndex = columnIndex * layout.rows + rowIndex;
+                  const widget = layout.widgets[widgetIndex];
+                  return (
+                    <Draggable key={widget.id} draggableId={widget.id.toString()} index={widgetIndex}>
                       {(provided) => (
                         <div
+                          ref={provided.innerRef}
                           {...provided.draggableProps}
                           {...provided.dragHandleProps}
-                          ref={provided.innerRef}
+                          className="widget"
                         >
                           <DashboardCard
                             title={widget.title}
                             icon={widget.icon}
-                            onClick={() => handleWidgetClick(widget)}
+                            onClick={widget.onClick}
                             description={widget.description}
                             callToAction={widget.callToAction}
                           />
                         </div>
                       )}
                     </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </DragDropContext>
-        </DndProvider>
-      </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </DragDropContext>
+      </DndProvider>
+      <WidgetSettings />
     </div>
   );
 };
