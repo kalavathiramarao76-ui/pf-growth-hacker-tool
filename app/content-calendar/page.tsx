@@ -84,7 +84,7 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
       localStorage.removeItem('outlookCalendarToken');
     },
     name: 'Outlook Calendar',
-    icon: 'https://cdn-icons-png.flaticon.com/512/281/281765.png',
+    icon: 'https://cdn-icons-png.flaticon.com/512/281/281766.png',
     description: 'Connect your Outlook Calendar to view and manage your events',
     authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
   },
@@ -117,7 +117,7 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
       localStorage.removeItem('appleCalendarToken');
     },
     name: 'Apple Calendar',
-    icon: 'https://cdn-icons-png.flaticon.com/512/281/281766.png',
+    icon: 'https://cdn-icons-png.flaticon.com/512/281/281765.png',
     description: 'Connect your Apple Calendar to view and manage your events',
     authUrl: 'https://id.apple.com/auth/authorize',
   },
@@ -130,7 +130,7 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
       // Implement Microsoft Exchange event retrieval logic
       const token = localStorage.getItem('microsoftExchangeToken');
       if (token) {
-        const response = await fetch('https://outlook.office.com/api/v2.0/me/events', {
+        const response = await fetch('https://outlook.office365.com/api/v2.0/me/events', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -159,12 +159,13 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
 const Page = () => {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [selectedCalendar, setSelectedCalendar] = useState<string>('GoogleCalendar');
+  const pathname = usePathname();
 
   useEffect(() => {
     const fetchEvents = async () => {
-      const calendarIntegration = calendarIntegrations[selectedCalendar];
-      if (calendarIntegration) {
-        const events = await calendarIntegration.getEvents();
+      const calendar = calendarIntegrations[selectedCalendar];
+      if (calendar) {
+        const events = await calendar.getEvents();
         setEvents(events);
       }
     };
@@ -182,14 +183,12 @@ const Page = () => {
         <Calendar events={events} />
         <div>
           {Object.keys(calendarIntegrations).map((calendar) => (
-            <div key={calendar}>
+            <button key={calendar} onClick={() => handleCalendarChange(calendar)}>
               <Image src={calendarIntegrations[calendar].icon} width={20} height={20} />
-              <span>{calendarIntegrations[calendar].name}</span>
-              <button onClick={() => handleCalendarChange(calendar)}>Connect</button>
-            </div>
+              {calendarIntegrations[calendar].name}
+            </button>
           ))}
         </div>
-        <Tooltip />
       </DndProvider>
       <Socket />
     </Layout>

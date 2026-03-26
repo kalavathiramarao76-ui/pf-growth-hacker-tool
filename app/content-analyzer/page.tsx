@@ -59,52 +59,11 @@ const calculateReadabilityScore = async (text: string) => {
   return weightedScore;
 }
 
-const calculateComplexityScore = async (text: string) => {
-  // Calculate complexity score using a language model
-  const languageModel = new LanguageModel('en');
-  const complexityScore = await languageModel.calculateComplexity(text);
-  return complexityScore;
-}
-
-const calculateCohesionScore = async (text: string) => {
-  // Calculate cohesion score using a language model
-  const languageModel = new LanguageModel('en');
-  const cohesionScore = await languageModel.calculateCohesion(text);
-  return cohesionScore;
-}
-
-const calculateClarityScore = async (text: string) => {
-  // Calculate clarity score using a language model
-  const languageModel = new LanguageModel('en');
-  const clarityScore = await languageModel.calculateClarity(text);
-  return clarityScore;
-}
-
-const calculateSentenceLengthScore = async (text: string) => {
-  // Calculate sentence length score using a language model
-  const languageModel = new LanguageModel('en');
-  const sentenceLengthScore = await languageModel.calculateSentenceLength(text);
-  return sentenceLengthScore;
-}
-
-const calculateWordLengthScore = async (text: string) => {
-  // Calculate word length score using a language model
-  const languageModel = new LanguageModel('en');
-  const wordLengthScore = await languageModel.calculateWordLength(text);
-  return wordLengthScore;
-}
-
-const calculateSyllableCountScore = async (text: string) => {
-  // Calculate syllable count score using a language model
-  const languageModel = new LanguageModel('en');
-  const syllableCountScore = await languageModel.calculateSyllableCount(text);
-  return syllableCountScore;
-}
-
 const ContentAnalyzerPage = () => {
+  const router = useRouter();
   const [text, setText] = useState('');
   const [readabilityScore, setReadabilityScore] = useState(0);
-  const router = useRouter();
+  const [analysisResults, setAnalysisResults] = useState({});
 
   const handleTextChange = (event: any) => {
     setText(event.target.value);
@@ -113,18 +72,64 @@ const ContentAnalyzerPage = () => {
   const handleAnalyze = async () => {
     const score = await calculateReadabilityScore(text);
     setReadabilityScore(score);
+    const results = await analyzeText(text);
+    setAnalysisResults(results);
+  }
+
+  const analyzeText = async (text: string) => {
+    const results = {
+      sentiment: await analyzeSentiment(text),
+      entities: await extractEntities(text),
+      keywords: await extractKeywords(text),
+      summary: await summarizeText(text),
+    };
+    return results;
+  }
+
+  const analyzeSentiment = async (text: string) => {
+    const sentimentPipeline = pipeline('sentiment-analysis', model='distilbert-base-uncased-finetuned-sst-2-english')
+    const result = await sentimentPipeline(text)
+    return result.label;
+  }
+
+  const extractEntities = async (text: string) => {
+    const entityPipeline = pipeline('ner', model='distilbert-base-uncased-finetuned-ner')
+    const result = await entityPipeline(text)
+    return result;
+  }
+
+  const extractKeywords = async (text: string) => {
+    const keywordPipeline = pipeline('keyword-extraction', model='distilbert-base-uncased-finetuned-keyword-extraction')
+    const result = await keywordPipeline(text)
+    return result;
+  }
+
+  const summarizeText = async (text: string) => {
+    const summaryPipeline = pipeline('summarization', model='t5-base')
+    const result = await summaryPipeline(text)
+    return result.summary_text;
   }
 
   return (
     <div>
       <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
-      <ContentAnalyzerForm text={text} handleTextChange={handleTextChange} handleAnalyze={handleAnalyze} />
-      <OptimizationSuggestions readabilityScore={readabilityScore} />
+      <ContentAnalyzerForm text={text} onChange={handleTextChange} onAnalyze={handleAnalyze} />
+      <OptimizationSuggestions readabilityScore={readabilityScore} analysisResults={analysisResults} />
       <EngagementTracker />
       <AlternativeFormats />
+      <div>
+        <h2>Readability Score: {readabilityScore}</h2>
+        <h2>Analysis Results:</h2>
+        <ul>
+          <li>Sentiment: {analysisResults.sentiment}</li>
+          <li>Entities: {JSON.stringify(analysisResults.entities)}</li>
+          <li>Keywords: {JSON.stringify(analysisResults.keywords)}</li>
+          <li>Summary: {analysisResults.summary}</li>
+        </ul>
+      </div>
     </div>
   );
-}
+};
 
 export default ContentAnalyzerPage;

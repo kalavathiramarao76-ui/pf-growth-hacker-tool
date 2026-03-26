@@ -101,99 +101,97 @@ const initialWidgets: Widget[] = [
   },
 ];
 
-const initialLayout: WidgetLayout = {
-  columns: 2,
-  rows: 3,
-  widgets: initialWidgets,
-};
-
-const App = () => {
-  const [layout, setLayout] = useState(initialLayout);
+const Page = () => {
+  const [widgets, setWidgets] = useState(initialWidgets);
+  const [layout, setLayout] = useState<WidgetLayout>({ columns: 2, rows: 3, widgets: initialWidgets });
   const [dragging, setDragging] = useState(false);
+  const [selectedWidget, setSelectedWidget] = useState<Widget | null>(null);
 
-  const onDragEnd = (result: any) => {
-    if (!result.destination) return;
-    const { source, destination } = result;
-    const newWidgets = [...layout.widgets];
-    const [removed] = newWidgets.splice(source.index, 1);
-    newWidgets.splice(destination.index, 0, removed);
-    setLayout({ ...layout, widgets: newWidgets });
+  const handleDragStart = (widget: Widget) => {
+    setDragging(true);
+    setSelectedWidget(widget);
   };
 
-  const handleAddWidget = () => {
-    const newWidget: Widget = {
-      id: layout.widgets.length + 1,
-      title: 'New Widget',
-      icon: <AiOutlinePlus size={24} />,
-      onClick: () => {},
-    };
-    setLayout({ ...layout, widgets: [...layout.widgets, newWidget] });
+  const handleDragEnd = () => {
+    setDragging(false);
+    setSelectedWidget(null);
   };
 
-  const handleRemoveWidget = (id: number) => {
-    const newWidgets = layout.widgets.filter((widget) => widget.id !== id);
-    setLayout({ ...layout, widgets: newWidgets });
+  const handleDrop = (widget: Widget, index: number) => {
+    const newWidgets = [...widgets];
+    const widgetIndex = newWidgets.findIndex((w) => w.id === widget.id);
+    if (widgetIndex !== -1) {
+      newWidgets.splice(widgetIndex, 1);
+      newWidgets.splice(index, 0, widget);
+      setWidgets(newWidgets);
+    }
   };
 
-  const handleEditWidget = (id: number, title: string) => {
-    const newWidgets = layout.widgets.map((widget) => {
-      if (widget.id === id) {
-        return { ...widget, title };
-      }
-      return widget;
-    });
-    setLayout({ ...layout, widgets: newWidgets });
+  const handleWidgetSettings = (widget: Widget) => {
+    // Open widget settings modal
+  };
+
+  const handleWidgetRemove = (widget: Widget) => {
+    const newWidgets = [...widgets];
+    const widgetIndex = newWidgets.findIndex((w) => w.id === widget.id);
+    if (widgetIndex !== -1) {
+      newWidgets.splice(widgetIndex, 1);
+      setWidgets(newWidgets);
+    }
+  };
+
+  const handleLayoutChange = (newLayout: WidgetLayout) => {
+    setLayout(newLayout);
   };
 
   return (
-    <DndProvider>
+    <div className="dashboard-page">
       <DashboardHeader />
       <NavigationMenu />
-      <div className="dashboard-container">
-        <div className="widget-settings">
-          <WidgetSettings
-            layout={layout}
-            onAddWidget={handleAddWidget}
-            onRemoveWidget={handleRemoveWidget}
-            onEditWidget={handleEditWidget}
-          />
-        </div>
-        <DragDropContext onDragEnd={onDragEnd}>
-          <Droppable droppableId="widgets">
-            {(provided) => (
-              <div
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                className="widget-grid"
-              >
-                {layout.widgets.map((widget, index) => (
-                  <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
-                    {(provided) => (
-                      <div
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        ref={provided.innerRef}
-                        className="widget"
-                      >
-                        <DashboardCard
-                          title={widget.title}
-                          icon={widget.icon}
-                          onClick={widget.onClick}
-                          description={widget.description}
-                          callToAction={widget.callToAction}
-                        />
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-        </DragDropContext>
+      <div className="dashboard-content">
+        <DndProvider>
+          <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+            <Droppable droppableId="widgets">
+              {(provided) => (
+                <div ref={provided.innerRef} {...provided.droppableProps}>
+                  {widgets.map((widget, index) => (
+                    <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+                      {(provided) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                          className="widget"
+                        >
+                          <DashboardCard
+                            title={widget.title}
+                            icon={widget.icon}
+                            onClick={widget.onClick}
+                            frequency={widget.frequency}
+                            description={widget.description}
+                            callToAction={widget.callToAction}
+                            onSettingsClick={() => handleWidgetSettings(widget)}
+                            onRemoveClick={() => handleWidgetRemove(widget)}
+                          />
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
+        </DndProvider>
+        <WidgetSettings
+          widget={selectedWidget}
+          isOpen={dragging}
+          onClose={handleDragEnd}
+          onLayoutChange={handleLayoutChange}
+        />
       </div>
-    </DndProvider>
+    </div>
   );
 };
 
-export default App;
+export default Page;
