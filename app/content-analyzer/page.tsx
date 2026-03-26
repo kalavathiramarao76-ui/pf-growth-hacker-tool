@@ -56,58 +56,47 @@ const calculateReadabilityScore = async (text: string) => {
   // Apply a weighted average to the combined scores
   const weightedScore = (0.4 * combinedScore) + (0.6 * combinedScoreAdvanced);
 
-  return weightedScore;
+  // Map the weighted score to a more user-friendly readability score (e.g., 1-10)
+  const userFriendlyScore = Math.round((weightedScore * 10));
+
+  // Display the results in a clear and concise manner
+  const readabilityResult = {
+    score: userFriendlyScore,
+    gradeLevel: getGradeLevel(userFriendlyScore),
+    readingEase: getReadingEase(userFriendlyScore)
+  };
+
+  return readabilityResult;
 }
 
-const ContentAnalyzerPage = () => {
+const getGradeLevel = (score: number) => {
+  if (score <= 3) return 'Elementary School';
+  if (score <= 5) return 'Middle School';
+  if (score <= 7) return 'High School';
+  return 'College';
+}
+
+const getReadingEase = (score: number) => {
+  if (score <= 3) return 'Very Easy';
+  if (score <= 5) return 'Easy';
+  if (score <= 7) return 'Medium';
+  return 'Difficult';
+}
+
+const Page = () => {
   const router = useRouter();
   const [text, setText] = useState('');
-  const [readabilityScore, setReadabilityScore] = useState(0);
-  const [analysisResults, setAnalysisResults] = useState({});
+  const [readabilityScore, setReadabilityScore] = useState(null);
+  const [analysisResult, setAnalysisResult] = useState(null);
 
   const handleTextChange = (event: any) => {
     setText(event.target.value);
   }
 
   const handleAnalyze = async () => {
-    const score = await calculateReadabilityScore(text);
-    setReadabilityScore(score);
-    const results = await analyzeText(text);
-    setAnalysisResults(results);
-  }
-
-  const analyzeText = async (text: string) => {
-    const results = {
-      sentiment: await analyzeSentiment(text),
-      entities: await extractEntities(text),
-      keywords: await extractKeywords(text),
-      summary: await summarizeText(text),
-    };
-    return results;
-  }
-
-  const analyzeSentiment = async (text: string) => {
-    const sentimentPipeline = pipeline('sentiment-analysis', model='distilbert-base-uncased-finetuned-sst-2-english')
-    const result = await sentimentPipeline(text)
-    return result.label;
-  }
-
-  const extractEntities = async (text: string) => {
-    const entityPipeline = pipeline('ner', model='distilbert-base-uncased-finetuned-ner')
-    const result = await entityPipeline(text)
-    return result;
-  }
-
-  const extractKeywords = async (text: string) => {
-    const keywordPipeline = pipeline('keyword-extraction', model='distilbert-base-uncased-finetuned-keyword-extraction')
-    const result = await keywordPipeline(text)
-    return result;
-  }
-
-  const summarizeText = async (text: string) => {
-    const summaryPipeline = pipeline('summarization', model='t5-base')
-    const result = await summaryPipeline(text)
-    return result.summary_text;
+    const result = await calculateReadabilityScore(text);
+    setReadabilityScore(result.score);
+    setAnalysisResult(result);
   }
 
   return (
@@ -115,21 +104,18 @@ const ContentAnalyzerPage = () => {
       <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
       <ContentAnalyzerForm text={text} onChange={handleTextChange} onAnalyze={handleAnalyze} />
-      <OptimizationSuggestions readabilityScore={readabilityScore} analysisResults={analysisResults} />
-      <EngagementTracker />
-      <AlternativeFormats />
-      <div>
-        <h2>Readability Score: {readabilityScore}</h2>
-        <h2>Analysis Results:</h2>
-        <ul>
-          <li>Sentiment: {analysisResults.sentiment}</li>
-          <li>Entities: {JSON.stringify(analysisResults.entities)}</li>
-          <li>Keywords: {JSON.stringify(analysisResults.keywords)}</li>
-          <li>Summary: {analysisResults.summary}</li>
-        </ul>
-      </div>
+      {analysisResult && (
+        <div>
+          <h2>Readability Score: {analysisResult.score}/10</h2>
+          <p>Grade Level: {analysisResult.gradeLevel}</p>
+          <p>Reading Ease: {analysisResult.readingEase}</p>
+        </div>
+      )}
+      <OptimizationSuggestions text={text} />
+      <EngagementTracker text={text} />
+      <AlternativeFormats text={text} />
     </div>
   );
-};
+}
 
-export default ContentAnalyzerPage;
+export default Page;
