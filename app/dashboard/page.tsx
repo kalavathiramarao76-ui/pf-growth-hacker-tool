@@ -96,51 +96,67 @@ const initialWidgets: Widget[] = [
             </tbody>
           </table>
         </div>
-        <button className="upgrade-button">Upgrade Now</button>
+        <div className="call-to-action-button">
+          <button>Upgrade to Premium Now</button>
+          <p>Start your 14-day free trial today and experience the power of our premium plan.</p>
+        </div>
       </div>
     )
   },
 ];
 
-const DashboardPage = () => {
+const App = () => {
   const router = useRouter();
   const [widgets, setWidgets] = useState(initialWidgets);
-  const [layout, setLayout] = useState<WidgetLayout>({ columns: 3, rows: 2, widgets: initialWidgets });
 
-  const handleWidgetClick = (widget: Widget) => {
-    widget.onClick();
+  const handleWidgetClick = (id: number) => {
+    const widget = widgets.find((widget) => widget.id === id);
+    if (widget && widget.onClick) {
+      widget.onClick();
+    }
   };
 
-  const handleLayoutChange = (newLayout: WidgetLayout) => {
-    setLayout(newLayout);
+  const handleDragEnd = (result: any) => {
+    if (!result.destination) return;
+    const newWidgets = [...widgets];
+    const [reorderedWidget] = newWidgets.splice(result.source.index, 1);
+    newWidgets.splice(result.destination.index, 0, reorderedWidget);
+    setWidgets(newWidgets);
   };
 
   return (
-    <div className="dashboard-container">
-      <DashboardHeader />
-      <NavigationMenu />
-      <div className="dashboard-content">
-        <div className="key-metrics">
-          <h2>Key Metrics</h2>
-          <ul>
-            <li>Engagement: 20%</li>
-            <li>Conversions: 30%</li>
-            <li>Content Performance: 85%</li>
-          </ul>
-        </div>
-        <div className="widget-grid">
-          {layout.widgets.map((widget, index) => (
-            <DashboardCard key={widget.id} widget={widget} onClick={() => handleWidgetClick(widget)} />
-          ))}
-        </div>
-        <div className="call-to-action">
-          <h2>Take Your Content to the Next Level</h2>
-          <p>Upgrade to our premium plan to unlock advanced features, priority support, and expert guidance.</p>
-          <button className="upgrade-button">Upgrade Now</button>
-        </div>
-      </div>
-    </div>
+    <DndProvider>
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <Droppable droppableId="widgets">
+          {(provided) => (
+            <div ref={provided.innerRef} {...provided.droppableProps}>
+              {widgets.map((widget, index) => (
+                <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+                  {(provided) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      {...provided.dragHandleProps}
+                      className="widget"
+                    >
+                      <DashboardCard
+                        title={widget.title}
+                        icon={widget.icon}
+                        onClick={() => handleWidgetClick(widget.id)}
+                        description={widget.description}
+                        callToAction={widget.callToAction}
+                      />
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
+    </DndProvider>
   );
 };
 
-export default DashboardPage;
+export default App;

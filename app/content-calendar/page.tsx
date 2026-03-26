@@ -84,7 +84,7 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
       localStorage.removeItem('outlookCalendarToken');
     },
     name: 'Outlook Calendar',
-    icon: 'https://cdn-icons-png.flaticon.com/512/281/281766.png',
+    icon: 'https://cdn-icons-png.flaticon.com/512/281/281765.png',
     description: 'Connect your Outlook Calendar to view and manage your events',
     authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
   },
@@ -97,17 +97,17 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
       // Implement Apple Calendar event retrieval logic
       const token = localStorage.getItem('appleCalendarToken');
       if (token) {
-        const response = await fetch('https://www.icloud.com/calendar/api/1.0/calendars', {
+        const response = await fetch('https://api.apple.com/calendars/events', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
         const data = await response.json();
-        return data.calendars.map((calendar: any) => ({
-          id: calendar.id,
-          title: calendar.name,
-          start: new Date(calendar.startDate),
-          end: new Date(calendar.endDate),
+        return data.data.map((event: any) => ({
+          id: event.id,
+          title: event.title,
+          start: new Date(event.startDate),
+          end: new Date(event.endDate),
         }));
       }
       return [];
@@ -117,7 +117,7 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
       localStorage.removeItem('appleCalendarToken');
     },
     name: 'Apple Calendar',
-    icon: 'https://cdn-icons-png.flaticon.com/512/281/281765.png',
+    icon: 'https://cdn-icons-png.flaticon.com/512/281/281766.png',
     description: 'Connect your Apple Calendar to view and manage your events',
     authUrl: 'https://id.apple.com/auth/authorize',
   },
@@ -130,13 +130,13 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
       // Implement Yahoo Calendar event retrieval logic
       const token = localStorage.getItem('yahooCalendarToken');
       if (token) {
-        const response = await fetch('https://query.yahooapis.com/v1/yql?q=SELECT%20*%20FROM%20calendar.events', {
+        const response = await fetch('https://api.login.yahoo.com/calendars/events', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
         const data = await response.json();
-        return data.query.results.event.map((event: any) => ({
+        return data.events.map((event: any) => ({
           id: event.id,
           title: event.title,
           start: new Date(event.start),
@@ -156,23 +156,33 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
   },
 };
 
-const Page = () => {
+const App = () => {
+  const [selectedCalendar, setSelectedCalendar] = useState<string | null>(null);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [selectedCalendar, setSelectedCalendar] = useState<string>('GoogleCalendar');
+  const [connected, setConnected] = useState<boolean>(false);
 
-  useEffect(() => {
-    const fetchEvents = async () => {
-      const calendar = calendarIntegrations[selectedCalendar];
-      if (calendar) {
-        const events = await calendar.getEvents();
-        setEvents(events);
-      }
-    };
-    fetchEvents();
-  }, [selectedCalendar]);
+  const handleConnect = (calendar: string) => {
+    const token = prompt('Enter your calendar token:');
+    if (token) {
+      calendarIntegrations[calendar].connect(token);
+      setConnected(true);
+      setSelectedCalendar(calendar);
+    }
+  };
 
-  const handleCalendarChange = (calendar: string) => {
-    setSelectedCalendar(calendar);
+  const handleDisconnect = () => {
+    if (selectedCalendar) {
+      calendarIntegrations[selectedCalendar].disconnect();
+      setConnected(false);
+      setSelectedCalendar(null);
+    }
+  };
+
+  const handleGetEvents = async () => {
+    if (selectedCalendar) {
+      const events = await calendarIntegrations[selectedCalendar].getEvents();
+      setEvents(events);
+    }
   };
 
   return (
@@ -182,19 +192,23 @@ const Page = () => {
         <Calendar events={events} />
         <div>
           {Object.keys(calendarIntegrations).map((calendar) => (
-            <button key={calendar} onClick={() => handleCalendarChange(calendar)}>
-              <Image src={calendarIntegrations[calendar].icon} alt={calendarIntegrations[calendar].name} />
-              {calendarIntegrations[calendar].name}
-            </button>
+            <div key={calendar}>
+              <Image src={calendarIntegrations[calendar].icon} width={20} height={20} />
+              <span>{calendarIntegrations[calendar].name}</span>
+              {connected && selectedCalendar === calendar ? (
+                <button onClick={handleDisconnect}>Disconnect</button>
+              ) : (
+                <button onClick={() => handleConnect(calendar)}>Connect</button>
+              )}
+            </div>
           ))}
+          {connected && (
+            <button onClick={handleGetEvents}>Get Events</button>
+          )}
         </div>
-        <Tooltip>
-          Connect your calendar to view and manage your events
-        </Tooltip>
       </DndProvider>
-      <Socket />
     </Layout>
   );
 };
 
-export default Page;
+export default App;

@@ -56,116 +56,44 @@ const calculateReadabilityScore = async (text: string) => {
   // Apply a weighted average to the combined scores
   const weightedScore = (0.4 * combinedScore) + (0.6 * combinedScoreAdvanced);
 
-  return weightedScore
+  return weightedScore;
 }
 
-const countSyllables = (word: string) => {
-  word = word.toLowerCase();
-  const vowels = 'aeiouy';
-  const diphthongs = ['ai', 'au', 'ay', 'ea', 'ee', 'ei', 'eu', 'ew', 'ey', 'ie', 'oi', 'oo', 'ou', 'oy', 'ua', 'ue', 'ui', 'uo', 'uy'];
-  let count = 0;
-  let i = 0;
-  while (i < word.length) {
-    if (vowels.includes(word[i])) {
-      count++;
-      i++;
-      if (diphthongs.includes(word.substring(i - 1, i + 1))) {
-        i++;
-      }
-    } else {
-      i++;
-    }
-  }
-  if (word.endsWith('e')) {
-    count--;
-  }
-  if (count === 0) {
-    count = 1;
-  }
-  return count;
-}
-
-const calculateComplexityScore = async (text: string) => {
-  const sentences = text.split('.').filter(sentence => sentence.trim() !== '');
-  const sentenceLengths = sentences.map(sentence => sentence.split(' ').length);
-  const averageSentenceLength = sentenceLengths.reduce((a, b) => a + b, 0) / sentenceLengths.length;
-  return averageSentenceLength;
-}
-
-const calculateCohesionScore = async (text: string) => {
-  const sentences = text.split('.').filter(sentence => sentence.trim() !== '');
-  const sentenceSimilarities = [];
-  for (let i = 0; i < sentences.length - 1; i++) {
-    const similarity = calculateSentenceSimilarity(sentences[i], sentences[i + 1]);
-    sentenceSimilarities.push(similarity);
-  }
-  const averageSentenceSimilarity = sentenceSimilarities.reduce((a, b) => a + b, 0) / sentenceSimilarities.length;
-  return averageSentenceSimilarity;
-}
-
-const calculateSentenceSimilarity = (sentence1: string, sentence2: string) => {
-  const words1 = sentence1.split(' ');
-  const words2 = sentence2.split(' ');
-  const commonWords = words1.filter(word => words2.includes(word));
-  return commonWords.length / Math.max(words1.length, words2.length);
-}
-
-const calculateClarityScore = async (text: string) => {
-  const sentences = text.split('.').filter(sentence => sentence.trim() !== '');
-  const sentenceClarity = sentences.map(sentence => calculateSentenceClarity(sentence));
-  const averageSentenceClarity = sentenceClarity.reduce((a, b) => a + b, 0) / sentenceClarity.length;
-  return averageSentenceClarity;
-}
-
-const calculateSentenceClarity = (sentence: string) => {
-  const words = sentence.split(' ');
-  const complexWords = words.filter(word => countSyllables(word) > 2);
-  return complexWords.length / words.length;
-}
-
-const calculateSentenceLengthScore = async (text: string) => {
-  const sentences = text.split('.').filter(sentence => sentence.trim() !== '');
-  const sentenceLengths = sentences.map(sentence => sentence.split(' ').length);
-  const averageSentenceLength = sentenceLengths.reduce((a, b) => a + b, 0) / sentenceLengths.length;
-  return averageSentenceLength;
-}
-
-const calculateWordLengthScore = async (text: string) => {
-  const words = text.split(' ');
-  const wordLengths = words.map(word => word.length);
-  const averageWordLength = wordLengths.reduce((a, b) => a + b, 0) / wordLengths.length;
-  return averageWordLength;
-}
-
-const calculateSyllableCountScore = async (text: string) => {
-  const words = text.split(' ');
-  const syllableCounts = words.map(word => countSyllables(word));
-  const averageSyllableCount = syllableCounts.reduce((a, b) => a + b, 0) / syllableCounts.length;
-  return averageSyllableCount;
-}
-
-export default function ContentAnalyzerPage() {
+const ReadabilityScoreCalculator = () => {
   const [text, setText] = useState('');
   const [readabilityScore, setReadabilityScore] = useState(0);
-  const router = useRouter();
 
-  const handleTextChange = (event: any) => {
+  const handleTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setText(event.target.value);
   };
 
-  const handleAnalyzeClick = async () => {
+  const handleCalculateReadabilityScore = async () => {
     const score = await calculateReadabilityScore(text);
     setReadabilityScore(score);
   };
 
   return (
     <div>
-      <SEO title="Content Analyzer" />
-      <PageHeader title="Content Analyzer" />
-      <ContentAnalyzerForm text={text} onTextChange={handleTextChange} onAnalyzeClick={handleAnalyzeClick} />
-      <OptimizationSuggestions readabilityScore={readabilityScore} />
-      <EngagementTracker />
-      <AlternativeFormats />
+      <h2>Readability Score Calculator</h2>
+      <textarea value={text} onChange={handleTextChange} />
+      <button onClick={handleCalculateReadabilityScore}>Calculate Readability Score</button>
+      <p>Readability Score: {readabilityScore}</p>
     </div>
   );
-}
+};
+
+const Page = () => {
+  return (
+    <div>
+      <SEO title="AI-Powered Content Optimizer" />
+      <PageHeader title="AI-Powered Content Optimizer" />
+      <ContentAnalyzerForm />
+      <OptimizationSuggestions />
+      <EngagementTracker />
+      <AlternativeFormats />
+      <ReadabilityScoreCalculator />
+    </div>
+  );
+};
+
+export default Page;
