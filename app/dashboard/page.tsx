@@ -101,93 +101,82 @@ const initialWidgets: Widget[] = [
   },
 ];
 
-const initialWidgetLayout: WidgetLayout = {
+const initialLayout: WidgetLayout = {
   columns: 2,
   rows: 3,
   widgets: initialWidgets,
 };
 
 const Page = () => {
-  const [widgetLayout, setWidgetLayout] = useState(initialWidgetLayout);
+  const [layout, setLayout] = useState(initialLayout);
   const [dragging, setDragging] = useState(false);
+
+  const onDragStart = () => {
+    setDragging(true);
+  };
 
   const onDragEnd = (result: any) => {
     if (!result.destination) return;
-
     const { source, destination } = result;
-    const newWidgets = [...widgetLayout.widgets];
-    const [removed] = newWidgets.splice(source.index, 1);
-
-    newWidgets.splice(destination.index, 0, removed);
-
-    setWidgetLayout({
-      ...widgetLayout,
-      widgets: newWidgets,
-    });
-  };
-
-  const handleAddWidget = () => {
-    const newWidget: Widget = {
-      id: widgetLayout.widgets.length + 1,
-      title: 'New Widget',
-      icon: <AiOutlinePlus size={24} />,
-      onClick: () => {},
-    };
-
-    setWidgetLayout({
-      ...widgetLayout,
-      widgets: [...widgetLayout.widgets, newWidget],
-    });
+    const newLayout = { ...layout };
+    const widgets = [...newLayout.widgets];
+    const [removed] = widgets.splice(source.index, 1);
+    widgets.splice(destination.index, 0, removed);
+    newLayout.widgets = widgets;
+    setLayout(newLayout);
+    setDragging(false);
   };
 
   return (
-    <DndProvider backend={require('react-beautiful-dnd').backend}>
+    <div className="dashboard-page">
       <DashboardHeader />
       <NavigationMenu />
-      <div className="dashboard-container">
-        <div className="widget-grid">
-          <DragDropContext onDragEnd={onDragEnd}>
-            <Droppable droppableId="widgets">
-              {(provided) => (
-                <div
-                  {...provided.droppableProps}
-                  ref={provided.innerRef}
-                  className="widget-grid-container"
-                >
-                  {widgetLayout.widgets.map((widget, index) => (
-                    <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+      <DndProvider>
+        <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
+          <div className="dashboard-content">
+            {Array.from({ length: layout.rows }, (_, row) => (
+              <div key={row} className="row">
+                {Array.from({ length: layout.columns }, (_, col) => (
+                  <div key={col} className="column">
+                    <Droppable droppableId={`${row}-${col}`}>
                       {(provided) => (
-                        <div
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          ref={provided.innerRef}
-                          className="widget-card"
-                        >
-                          <DashboardCard
-                            title={widget.title}
-                            icon={widget.icon}
-                            onClick={widget.onClick}
-                            description={widget.description}
-                            callToAction={widget.callToAction}
-                          />
+                        <div ref={provided.innerRef} {...provided.droppableProps}>
+                          {layout.widgets
+                            .filter((widget, index) => index >= row * layout.columns + col && index < row * layout.columns + col + 1)
+                            .map((widget, index) => (
+                              <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+                                {(provided) => (
+                                  <div
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                    {...provided.dragHandleProps}
+                                    className="widget"
+                                  >
+                                    <DashboardCard
+                                      title={widget.title}
+                                      icon={widget.icon}
+                                      onClick={widget.onClick}
+                                      frequency={widget.frequency}
+                                      description={widget.description}
+                                      callToAction={widget.callToAction}
+                                    />
+                                  </div>
+                                )}
+                              </Draggable>
+                            ))}
+                          {provided.placeholder}
                         </div>
                       )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </DragDropContext>
-        </div>
-        <div className="add-widget-button">
-          <button onClick={handleAddWidget}>
-            <AiOutlinePlus size={24} />
-            Add Widget
-          </button>
-        </div>
-      </div>
-    </DndProvider>
+                    </Droppable>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </DragDropContext>
+      </DndProvider>
+      <WidgetSettings />
+    </div>
   );
 };
 
