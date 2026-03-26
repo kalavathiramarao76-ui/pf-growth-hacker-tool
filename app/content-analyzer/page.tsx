@@ -56,101 +56,94 @@ const calculateReadabilityScore = async (text: string) => {
   // Apply a weighted average to the combined scores
   const weightedScore = (0.4 * combinedScore) + (0.6 * combinedScoreAdvanced);
 
-  // Provide actionable suggestions for improvement
-  const suggestions = [];
-  if (weightedScore < 0.5) {
-    suggestions.push('Improve sentence structure and clarity');
-  }
-  if (complexityScore < 0.5) {
-    suggestions.push('Use simpler vocabulary');
-  }
-  if (cohesionScore < 0.5) {
-    suggestions.push('Improve paragraph cohesion');
-  }
-  if (clarityScore < 0.5) {
-    suggestions.push('Improve overall clarity');
-  }
-  if (sentenceLengthScore < 0.5) {
-    suggestions.push('Vary sentence length');
-  }
-  if (wordLengthScore < 0.5) {
-    suggestions.push('Use shorter words');
-  }
-  if (syllableCountScore < 0.5) {
-    suggestions.push('Use words with fewer syllables');
-  }
+  // Visualize the readability score
+  const readabilityScoreVisualization = {
+    score: weightedScore,
+    gradeLevel: getGradeLevel(weightedScore),
+    readingEase: getReadingEase(weightedScore),
+    color: getColor(weightedScore)
+  };
 
-  return { weightedScore, suggestions };
-};
+  return readabilityScoreVisualization;
+}
+
+const getGradeLevel = (score: number) => {
+  if (score < 5) return 'Elementary School';
+  if (score < 7) return 'Middle School';
+  if (score < 9) return 'High School';
+  return 'College';
+}
+
+const getReadingEase = (score: number) => {
+  if (score < 5) return 'Very Difficult';
+  if (score < 7) return 'Difficult';
+  if (score < 9) return 'Average';
+  return 'Easy';
+}
+
+const getColor = (score: number) => {
+  if (score < 5) return 'red';
+  if (score < 7) return 'orange';
+  if (score < 9) return 'yellow';
+  return 'green';
+}
 
 const calculateComplexityScore = async (text: string) => {
-  // Calculate complexity score using a language model
-  const nlp = new NlpManager({ languages: ['en'] });
-  const doc = await nlp.process('en', text);
-  return doc.complexity;
-};
+  // Implement complexity score calculation
+}
 
 const calculateCohesionScore = async (text: string) => {
-  // Calculate cohesion score using a language model
-  const nlp = new NlpManager({ languages: ['en'] });
-  const doc = await nlp.process('en', text);
-  return doc.cohesion;
-};
+  // Implement cohesion score calculation
+}
 
 const calculateClarityScore = async (text: string) => {
-  // Calculate clarity score using a language model
-  const nlp = new NlpManager({ languages: ['en'] });
-  const doc = await nlp.process('en', text);
-  return doc.clarity;
-};
+  // Implement clarity score calculation
+}
 
 const calculateSentenceLengthScore = async (text: string) => {
-  // Calculate sentence length score using a language model
-  const nlp = new NlpManager({ languages: ['en'] });
-  const doc = await nlp.process('en', text);
-  return doc.sentenceLength;
-};
+  // Implement sentence length score calculation
+}
 
 const calculateWordLengthScore = async (text: string) => {
-  // Calculate word length score using a language model
-  const nlp = new NlpManager({ languages: ['en'] });
-  const doc = await nlp.process('en', text);
-  return doc.wordLength;
-};
+  // Implement word length score calculation
+}
 
 const calculateSyllableCountScore = async (text: string) => {
-  // Calculate syllable count score using a language model
-  const nlp = new NlpManager({ languages: ['en'] });
-  const doc = await nlp.process('en', text);
-  return doc.syllableCount;
-};
+  // Implement syllable count score calculation
+}
 
 const Page = () => {
-  const router = useRouter();
   const [text, setText] = useState('');
-  const [score, setScore] = useState(0);
-  const [suggestions, setSuggestions] = useState([]);
+  const [readabilityScore, setReadabilityScore] = useState(null);
+  const router = useRouter();
 
   const handleTextChange = (event: any) => {
     setText(event.target.value);
-  };
+  }
 
   const handleAnalyze = async () => {
-    const result = await calculateReadabilityScore(text);
-    setScore(result.weightedScore);
-    setSuggestions(result.suggestions);
-  };
+    const score = await calculateReadabilityScore(text);
+    setReadabilityScore(score);
+  }
 
   return (
     <div>
       <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
       <ContentAnalyzerForm text={text} onChange={handleTextChange} onAnalyze={handleAnalyze} />
-      <OptimizationSuggestions score={score} suggestions={suggestions} />
-      <EngagementTracker />
-      <AlternativeFormats />
+      {readabilityScore && (
+        <div>
+          <h2>Readability Score: {readabilityScore.score.toFixed(2)}</h2>
+          <p>Grade Level: {readabilityScore.gradeLevel}</p>
+          <p>Reading Ease: {readabilityScore.readingEase}</p>
+          <div style={{ backgroundColor: readabilityScore.color, width: '100px', height: '100px' }} />
+        </div>
+      )}
+      <OptimizationSuggestions text={text} />
+      <EngagementTracker text={text} />
+      <AlternativeFormats text={text} />
     </div>
   );
-};
+}
 
 export default Page;

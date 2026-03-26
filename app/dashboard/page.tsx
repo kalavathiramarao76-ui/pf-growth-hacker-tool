@@ -61,19 +61,19 @@ const initialWidgets: Widget[] = [
     callToAction: (
       <div className="premium-upgrade-call-to-action">
         <h1>Unlock Your Content's Full Potential with Our Premium Plan</h1>
-        <p>Take your content to the next level with our premium plan, featuring advanced features, priority support, and expert guidance. Limited time offer: get 15% off your first year!</p>
+        <p>Take your content to the next level with our premium plan, featuring advanced features, priority support, and expert guidance. Limited time offer: get 15% off your first year and experience the power of AI-driven content optimization!</p>
         <div className="benefits-list">
-          <h2>Benefits:</h2>
+          <h2>Unlock Exclusive Benefits:</h2>
           <ul>
-            <li>20% more engagement</li>
-            <li>30% more conversions</li>
-            <li>Expert guidance and support</li>
-            <li>Priority access to new features</li>
-            <li>Enhanced security and backups</li>
+            <li><strong>AI-Powered Content Insights</strong>: Get data-driven recommendations to boost engagement and conversions</li>
+            <li><strong>Prioritized Support</strong>: Get expert help whenever you need it, with priority access to our support team</li>
+            <li><strong>Advanced Analytics</strong>: Dive deeper into your content's performance with our advanced analytics tools</li>
+            <li><strong>Content Calendar Pro</strong>: Plan and schedule your content in advance with our intuitive calendar feature</li>
+            <li><strong>Enhanced Security and Backups</strong>: Protect your content with our robust security measures and automated backups</li>
           </ul>
         </div>
         <div className="pricing-table">
-          <h2>Pricing Plans:</h2>
+          <h2>Choose Your Plan:</h2>
           <table>
             <thead>
               <tr>
@@ -91,47 +91,30 @@ const initialWidgets: Widget[] = [
               <tr>
                 <td>Yearly</td>
                 <td>$99.99 (save 20% compared to monthly)</td>
-                <td>Advanced features, priority support</td>
+                <td>Advanced features, priority support, AI-powered content insights, and more</td>
+              </tr>
+              <tr>
+                <td>Yearly (Limited Time Offer)</td>
+                <td>$84.99 (save 15% compared to yearly)</td>
+                <td>Advanced features, priority support, AI-powered content insights, and more</td>
               </tr>
             </tbody>
           </table>
         </div>
         <div className="call-to-action-button">
-          <button>Upgrade Now</button>
+          <button>Upgrade to Premium Now</button>
         </div>
       </div>
     )
   },
 ];
 
-const Page = () => {
-  const [widgets, setWidgets] = useState(initialWidgets);
-  const [layout, setLayout] = useState<WidgetLayout>({ columns: 2, rows: 3, widgets: initialWidgets });
-  const [dragging, setDragging] = useState(false);
+const DashboardPage = () => {
   const router = useRouter();
-
-  const handleDragStart = () => {
-    setDragging(true);
-  };
-
-  const handleDragEnd = () => {
-    setDragging(false);
-  };
+  const [widgets, setWidgets] = useState(initialWidgets);
 
   const handleWidgetClick = (widget: Widget) => {
     widget.onClick();
-  };
-
-  const handleWidgetSettingsClick = (widget: Widget) => {
-    // Open widget settings modal
-  };
-
-  const handleAddWidgetClick = () => {
-    // Add new widget to the layout
-  };
-
-  const handleLayoutChange = (newLayout: WidgetLayout) => {
-    setLayout(newLayout);
   };
 
   return (
@@ -140,24 +123,24 @@ const Page = () => {
       <NavigationMenu />
       <div className="dashboard-content">
         <DndProvider>
-          <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+          <DragDropContext>
             <Droppable droppableId="widgets">
               {(provided) => (
-                <div ref={provided.innerRef} {...provided.droppableProps}>
-                  {layout.widgets.map((widget, index) => (
+                <div {...provided.droppableProps} ref={provided.innerRef}>
+                  {widgets.map((widget, index) => (
                     <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
                       {(provided) => (
                         <div
-                          ref={provided.innerRef}
                           {...provided.draggableProps}
                           {...provided.dragHandleProps}
-                          className="widget"
+                          ref={provided.innerRef}
                         >
                           <DashboardCard
                             title={widget.title}
                             icon={widget.icon}
                             onClick={() => handleWidgetClick(widget)}
-                            onSettingsClick={() => handleWidgetSettingsClick(widget)}
+                            description={widget.description}
+                            callToAction={widget.callToAction}
                           />
                         </div>
                       )}
@@ -169,16 +152,9 @@ const Page = () => {
             </Droppable>
           </DragDropContext>
         </DndProvider>
-        <div className="add-widget-button">
-          <button onClick={handleAddWidgetClick}>
-            <AiOutlinePlus size={24} />
-            Add Widget
-          </button>
-        </div>
       </div>
-      <WidgetSettings />
     </div>
   );
 };
 
-export default Page;
+export default DashboardPage;
