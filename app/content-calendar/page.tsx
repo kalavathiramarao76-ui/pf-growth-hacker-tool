@@ -84,86 +84,114 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
       localStorage.removeItem('outlookCalendarToken');
     },
     name: 'Outlook Calendar',
-    icon: 'https://cdn-icons-png.flaticon.com/512/281/281765.png',
+    icon: 'https://cdn-icons-png.flaticon.com/512/281/281766.png',
     description: 'Connect your Outlook Calendar to view and manage your events',
     authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
+  },
+  AppleCalendar: {
+    connect: (token: string) => {
+      // Implement Apple Calendar connection logic
+      localStorage.setItem('appleCalendarToken', token);
+    },
+    getEvents: async () => {
+      // Implement Apple Calendar event retrieval logic
+      const token = localStorage.getItem('appleCalendarToken');
+      if (token) {
+        const response = await fetch('https://api.apple.com/calendars/v1/events', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const data = await response.json();
+        return data.data.map((event: any) => ({
+          id: event.id,
+          title: event.title,
+          start: new Date(event.startDate),
+          end: new Date(event.endDate),
+        }));
+      }
+      return [];
+    },
+    disconnect: () => {
+      // Implement Apple Calendar disconnection logic
+      localStorage.removeItem('appleCalendarToken');
+    },
+    name: 'Apple Calendar',
+    icon: 'https://cdn-icons-png.flaticon.com/512/281/281765.png',
+    description: 'Connect your Apple Calendar to view and manage your events',
+    authUrl: 'https://id.apple.com/auth/authorize',
+  },
+  YahooCalendar: {
+    connect: (token: string) => {
+      // Implement Yahoo Calendar connection logic
+      localStorage.setItem('yahooCalendarToken', token);
+    },
+    getEvents: async () => {
+      // Implement Yahoo Calendar event retrieval logic
+      const token = localStorage.getItem('yahooCalendarToken');
+      if (token) {
+        const response = await fetch('https://api.login.yahoo.com/oauth2/request_auth', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const data = await response.json();
+        return data.events.map((event: any) => ({
+          id: event.id,
+          title: event.title,
+          start: new Date(event.start),
+          end: new Date(event.end),
+        }));
+      }
+      return [];
+    },
+    disconnect: () => {
+      // Implement Yahoo Calendar disconnection logic
+      localStorage.removeItem('yahooCalendarToken');
+    },
+    name: 'Yahoo Calendar',
+    icon: 'https://cdn-icons-png.flaticon.com/512/281/281767.png',
+    description: 'Connect your Yahoo Calendar to view and manage your events',
+    authUrl: 'https://api.login.yahoo.com/oauth2/request_auth',
   },
 };
 
 const Page = () => {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [draggedEvent, setDraggedEvent] = useState<CalendarEvent | null>(null);
-  const [calendarView, setCalendarView] = useState<'day' | 'week' | 'month'>('day');
-  const [socketConnected, setSocketConnected] = useState(false);
+  const [selectedCalendar, setSelectedCalendar] = useState<string>('GoogleCalendar');
+  const pathname = usePathname();
 
   useEffect(() => {
     const fetchEvents = async () => {
-      const googleCalendarEvents = await calendarIntegrations.GoogleCalendar.getEvents();
-      const outlookCalendarEvents = await calendarIntegrations.OutlookCalendar.getEvents();
-      setEvents([...googleCalendarEvents, ...outlookCalendarEvents]);
+      const calendar = calendarIntegrations[selectedCalendar];
+      if (calendar) {
+        const events = await calendar.getEvents();
+        setEvents(events);
+      }
     };
     fetchEvents();
-  }, []);
+  }, [selectedCalendar]);
 
-  useEffect(() => {
-    const socket = new Socket();
-    socket.on('connect', () => {
-      setSocketConnected(true);
-    });
-    socket.on('disconnect', () => {
-      setSocketConnected(false);
-    });
-    socket.on('eventUpdated', (event: CalendarEvent) => {
-      setEvents((prevEvents) => prevEvents.map((prevEvent) => (prevEvent.id === event.id ? event : prevEvent)));
-    });
-    return () => {
-      socket.disconnect();
-    };
-  }, []);
-
-  const handleDragStart = (event: CalendarEvent) => {
-    setDraggedEvent(event);
-  };
-
-  const handleDragEnd = (event: CalendarEvent) => {
-    setDraggedEvent(null);
-  };
-
-  const handleDrop = (event: CalendarEvent) => {
-    if (draggedEvent) {
-      const updatedEvents = events.map((prevEvent) => {
-        if (prevEvent.id === draggedEvent.id) {
-          return { ...prevEvent, start: event.start, end: event.end };
-        }
-        return prevEvent;
-      });
-      setEvents(updatedEvents);
-      socketConnected && socket.emit('eventUpdated', { ...draggedEvent, start: event.start, end: event.end });
-    }
-  };
-
-  const handleCalendarViewChange = (view: 'day' | 'week' | 'month') => {
-    setCalendarView(view);
+  const handleCalendarChange = (calendar: string) => {
+    setSelectedCalendar(calendar);
   };
 
   return (
     <Layout>
       <SEO title="Content Calendar" />
       <DndProvider backend={HTML5Backend}>
-        <Calendar
-          events={events}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-          onDrop={handleDrop}
-          view={calendarView}
-          onViewChange={handleCalendarViewChange}
-        />
+        <Calendar events={events} />
+        <div>
+          {Object.keys(calendarIntegrations).map((calendar) => (
+            <div key={calendar}>
+              <Image src={calendarIntegrations[calendar].icon} width={20} height={20} />
+              <span>{calendarIntegrations[calendar].name}</span>
+              <button onClick={() => handleCalendarChange(calendar)}>Connect</button>
+            </div>
+          ))}
+        </div>
       </DndProvider>
-      {events.map((event) => (
-        <Tooltip key={event.id} title={event.title}>
-          <Image src={calendarIntegrations.GoogleCalendar.icon} alt={calendarIntegrations.GoogleCalendar.name} />
-        </Tooltip>
-      ))}
+      <Socket />
     </Layout>
   );
 };

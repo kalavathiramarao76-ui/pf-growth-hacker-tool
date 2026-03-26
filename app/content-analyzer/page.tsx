@@ -93,84 +93,71 @@ const calculateClarityScore = async (text: string) => {
 }
 
 const calculateSentenceLengthScore = async (text: string) => {
-  const sentences = text.split('. ')
-  const averageSentenceLength = sentences.reduce((acc, sentence) => acc + sentence.split(' ').length, 0) / sentences.length
-  const sentenceLengthScore = 1 - (averageSentenceLength / 20)
+  const sentences = text.split('.').filter(sentence => sentence.trim() !== '');
+  const averageSentenceLength = sentences.reduce((sum, sentence) => sum + sentence.split(' ').length, 0) / sentences.length;
+  const sentenceLengthScore = 1 - (averageSentenceLength / 20);
 
   return sentenceLengthScore
 }
 
 const calculateWordLengthScore = async (text: string) => {
-  const words = text.split(' ')
-  const averageWordLength = words.reduce((acc, word) => acc + word.length, 0) / words.length
-  const wordLengthScore = 1 - (averageWordLength / 10)
+  const words = text.split(' ');
+  const averageWordLength = words.reduce((sum, word) => sum + word.length, 0) / words.length;
+  const wordLengthScore = 1 - (averageWordLength / 10);
 
   return wordLengthScore
 }
 
 const calculateSyllableCountScore = async (text: string) => {
-  const words = text.split(' ')
-  const totalSyllableCount = words.reduce((acc, word) => acc + countSyllables(word), 0)
-  const averageSyllableCount = totalSyllableCount / words.length
-  const syllableCountScore = 1 - (averageSyllableCount / 2)
+  const words = text.split(' ');
+  const syllableCount = words.reduce((sum, word) => sum + countSyllables(word), 0);
+  const averageSyllableCount = syllableCount / words.length;
+  const syllableCountScore = 1 - (averageSyllableCount / 2);
 
   return syllableCountScore
 }
 
 const Page = () => {
   const router = useRouter();
-  const [content, setContent] = useState('');
+  const [text, setText] = useState('');
   const [readabilityScore, setReadabilityScore] = useState(0);
-  const [optimizationSuggestions, setOptimizationSuggestions] = useState([]);
-  const [engagementScore, setEngagementScore] = useState(0);
-  const [alternativeFormats, setAlternativeFormats] = useState([]);
+  const [complexityScore, setComplexityScore] = useState(0);
+  const [cohesionScore, setCohesionScore] = useState(0);
+  const [clarityScore, setClarityScore] = useState(0);
+  const [sentenceLengthScore, setSentenceLengthScore] = useState(0);
+  const [wordLengthScore, setWordLengthScore] = useState(0);
+  const [syllableCountScore, setSyllableCountScore] = useState(0);
 
-  const handleContentChange = (newContent: string) => {
-    setContent(newContent);
+  const handleTextChange = (event: any) => {
+    setText(event.target.value);
   };
 
-  const calculateScores = async () => {
-    const readabilityScore = await calculateReadabilityScore(content);
+  const handleAnalyze = async () => {
+    const readabilityScore = await calculateReadabilityScore(text);
+    const complexityScore = await calculateComplexityScore(text);
+    const cohesionScore = await calculateCohesionScore(text);
+    const clarityScore = await calculateClarityScore(text);
+    const sentenceLengthScore = await calculateSentenceLengthScore(text);
+    const wordLengthScore = await calculateWordLengthScore(text);
+    const syllableCountScore = await calculateSyllableCountScore(text);
+
     setReadabilityScore(readabilityScore);
-
-    const optimizationSuggestions = await getOptimizationSuggestions(content);
-    setOptimizationSuggestions(optimizationSuggestions);
-
-    const engagementScore = await calculateEngagementScore(content);
-    setEngagementScore(engagementScore);
-
-    const alternativeFormats = await getAlternativeFormats(content);
-    setAlternativeFormats(alternativeFormats);
-  };
-
-  const getOptimizationSuggestions = async (text: string) => {
-    const suggestions = [];
-    // Implement optimization suggestions logic here
-    return suggestions;
-  };
-
-  const calculateEngagementScore = async (text: string) => {
-    const engagementScore = 0;
-    // Implement engagement score calculation logic here
-    return engagementScore;
-  };
-
-  const getAlternativeFormats = async (text: string) => {
-    const formats = [];
-    // Implement alternative formats logic here
-    return formats;
+    setComplexityScore(complexityScore);
+    setCohesionScore(cohesionScore);
+    setClarityScore(clarityScore);
+    setSentenceLengthScore(sentenceLengthScore);
+    setWordLengthScore(wordLengthScore);
+    setSyllableCountScore(syllableCountScore);
   };
 
   return (
     <div>
       <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
-      <ContentAnalyzerForm content={content} onChange={handleContentChange} />
-      <OptimizationSuggestions suggestions={optimizationSuggestions} />
-      <EngagementTracker engagementScore={engagementScore} />
-      <AlternativeFormats formats={alternativeFormats} />
-      <button onClick={calculateScores}>Calculate Scores</button>
-      <p>Readability Score: {readabilityScore}</p>
+      <ContentAnalyzerForm text={text} handleTextChange={handleTextChange} handleAnalyze={handleAnalyze} />
+      <OptimizationSuggestions readabilityScore={readabilityScore} complexityScore={complexityScore} cohesionScore={cohesionScore} clarityScore={clarityScore} sentenceLengthScore={sentenceLengthScore} wordLengthScore={wordLengthScore} syllableCountScore={syllableCountScore} />
+      <EngagementTracker />
+      <AlternativeFormats />
     </div>
   );
 };
