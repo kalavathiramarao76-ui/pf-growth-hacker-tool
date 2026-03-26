@@ -98,7 +98,7 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
       // Implement Apple Calendar event retrieval logic
       const token = localStorage.getItem('appleCalendarToken');
       if (token) {
-        const response = await fetch('https://api.apple.com/calendars/v1/events', {
+        const response = await fetch('https://api.apple.com/calendars/events', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -131,7 +131,7 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
       // Implement Yahoo Calendar event retrieval logic
       const token = localStorage.getItem('yahooCalendarToken');
       if (token) {
-        const response = await fetch('https://api.login.yahoo.com/oauth2/request_auth', {
+        const response = await fetch('https://api.yahoo.com/calendars/events', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -216,10 +216,12 @@ const App = () => {
               </option>
             ))}
           </select>
-          <button onClick={handleGetEvents}>Get Events</button>
-          <button onClick={handleDisconnect}>Disconnect</button>
           {connected && (
-            <Calendar events={events} />
+            <div>
+              <button onClick={handleGetEvents}>Get Events</button>
+              <button onClick={handleDisconnect}>Disconnect</button>
+              <Calendar events={events} />
+            </div>
           )}
         </div>
       </DndProvider>

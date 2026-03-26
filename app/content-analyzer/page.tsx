@@ -20,6 +20,7 @@ import { HuggingFaceHub } from 'huggingface-hub';
 import { Transformers } from 'transformers';
 
 import { pipeline } from 'transformers';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 
 const calculateReadabilityScore = async (text: string) => {
   const readabilityPipeline = pipeline('text-classification', model='distilbert-base-uncased-finetuned-sst-2-english')
@@ -59,112 +60,75 @@ const calculateReadabilityScore = async (text: string) => {
   return weightedScore;
 }
 
-const calculateComplexityScore = async (text: string) => {
-  // Calculate complexity score using a language model
-  const languageModel = new LanguageModel('en');
-  const complexityScore = await languageModel.calculateComplexity(text);
-  return complexityScore;
-}
-
-const calculateCohesionScore = async (text: string) => {
-  // Calculate cohesion score using a language model
-  const languageModel = new LanguageModel('en');
-  const cohesionScore = await languageModel.calculateCohesion(text);
-  return cohesionScore;
-}
-
-const calculateClarityScore = async (text: string) => {
-  // Calculate clarity score using a language model
-  const languageModel = new LanguageModel('en');
-  const clarityScore = await languageModel.calculateClarity(text);
-  return clarityScore;
-}
-
-const calculateSentenceLengthScore = async (text: string) => {
-  // Calculate sentence length score using a language model
-  const languageModel = new LanguageModel('en');
-  const sentenceLengthScore = await languageModel.calculateSentenceLength(text);
-  return sentenceLengthScore;
-}
-
-const calculateWordLengthScore = async (text: string) => {
-  // Calculate word length score using a language model
-  const languageModel = new LanguageModel('en');
-  const wordLengthScore = await languageModel.calculateWordLength(text);
-  return wordLengthScore;
-}
-
-const calculateSyllableCountScore = async (text: string) => {
-  // Calculate syllable count score using a language model
-  const languageModel = new LanguageModel('en');
-  const syllableCountScore = await languageModel.calculateSyllableCount(text);
-  return syllableCountScore;
-}
-
 const ContentAnalyzerPage = () => {
   const router = useRouter();
-  const [content, setContent] = useState('');
+  const [text, setText] = useState('');
   const [readabilityScore, setReadabilityScore] = useState(0);
-  const [optimizationSuggestions, setOptimizationSuggestions] = useState([]);
-  const [engagementTracker, setEngagementTracker] = useState({});
-  const [alternativeFormats, setAlternativeFormats] = useState({});
+  const [complexityScore, setComplexityScore] = useState(0);
+  const [cohesionScore, setCohesionScore] = useState(0);
+  const [clarityScore, setClarityScore] = useState(0);
+  const [sentenceLengthScore, setSentenceLengthScore] = useState(0);
+  const [wordLengthScore, setWordLengthScore] = useState(0);
+  const [syllableCountScore, setSyllableCountScore] = useState(0);
+  const [data, setData] = useState([
+    { name: 'Readability', score: 0 },
+    { name: 'Complexity', score: 0 },
+    { name: 'Cohesion', score: 0 },
+    { name: 'Clarity', score: 0 },
+    { name: 'Sentence Length', score: 0 },
+    { name: 'Word Length', score: 0 },
+    { name: 'Syllable Count', score: 0 },
+  ]);
 
-  useEffect(() => {
-    const storedContent = LocalStorage.get('content');
-    if (storedContent) {
-      setContent(storedContent);
-    }
-  }, []);
-
-  const handleContentChange = (newContent: string) => {
-    setContent(newContent);
-    LocalStorage.set('content', newContent);
+  const handleTextChange = (event: any) => {
+    setText(event.target.value);
   };
 
-  const handleAnalyzeContent = async () => {
-    const score = await calculateReadabilityScore(content);
-    setReadabilityScore(score);
-    const suggestions = await getOptimizationSuggestions(content);
-    setOptimizationSuggestions(suggestions);
-    const engagementData = await getEngagementData(content);
-    setEngagementTracker(engagementData);
-    const formats = await getAlternativeFormats(content);
-    setAlternativeFormats(formats);
-  };
+  const handleAnalyze = async () => {
+    const readabilityScore = await calculateReadabilityScore(text);
+    const complexityScore = await calculateComplexityScore(text);
+    const cohesionScore = await calculateCohesionScore(text);
+    const clarityScore = await calculateClarityScore(text);
+    const sentenceLengthScore = await calculateSentenceLengthScore(text);
+    const wordLengthScore = await calculateWordLengthScore(text);
+    const syllableCountScore = await calculateSyllableCountScore(text);
 
-  const getOptimizationSuggestions = async (content: string) => {
-    // Use a language model to generate optimization suggestions
-    const languageModel = new LanguageModel('en');
-    const suggestions = await languageModel.generateOptimizationSuggestions(content);
-    return suggestions;
-  };
+    setReadabilityScore(readabilityScore);
+    setComplexityScore(complexityScore);
+    setCohesionScore(cohesionScore);
+    setClarityScore(clarityScore);
+    setSentenceLengthScore(sentenceLengthScore);
+    setWordLengthScore(wordLengthScore);
+    setSyllableCountScore(syllableCountScore);
 
-  const getEngagementData = async (content: string) => {
-    // Use a language model to generate engagement data
-    const languageModel = new LanguageModel('en');
-    const engagementData = await languageModel.generateEngagementData(content);
-    return engagementData;
-  };
-
-  const getAlternativeFormats = async (content: string) => {
-    // Use a language model to generate alternative formats
-    const languageModel = new LanguageModel('en');
-    const formats = await languageModel.generateAlternativeFormats(content);
-    return formats;
+    setData([
+      { name: 'Readability', score: readabilityScore },
+      { name: 'Complexity', score: complexityScore },
+      { name: 'Cohesion', score: cohesionScore },
+      { name: 'Clarity', score: clarityScore },
+      { name: 'Sentence Length', score: sentenceLengthScore },
+      { name: 'Word Length', score: wordLengthScore },
+      { name: 'Syllable Count', score: syllableCountScore },
+    ]);
   };
 
   return (
     <div>
       <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
-      <ContentAnalyzerForm
-        content={content}
-        onChange={handleContentChange}
-        onAnalyze={handleAnalyzeContent}
-      />
-      <OptimizationSuggestions suggestions={optimizationSuggestions} />
-      <EngagementTracker engagementData={engagementTracker} />
-      <AlternativeFormats formats={alternativeFormats} />
+      <ContentAnalyzerForm text={text} handleTextChange={handleTextChange} handleAnalyze={handleAnalyze} />
+      <div style={{ width: '100%', height: '300px' }}>
+        <BarChart width={500} height={300} data={data}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="name" />
+          <YAxis />
+          <Tooltip />
+          <Bar dataKey="score" fill="#8884d8" />
+        </BarChart>
+      </div>
+      <OptimizationSuggestions readabilityScore={readabilityScore} complexityScore={complexityScore} cohesionScore={cohesionScore} clarityScore={clarityScore} sentenceLengthScore={sentenceLengthScore} wordLengthScore={wordLengthScore} syllableCountScore={syllableCountScore} />
+      <EngagementTracker />
+      <AlternativeFormats />
     </div>
   );
 };
