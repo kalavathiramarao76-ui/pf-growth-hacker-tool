@@ -55,82 +55,84 @@ const calculateReadabilityScore = async (text: string) => {
   const combinedScoreAdvanced = (readabilityScore + readabilityScoreNlp + readabilityScoreSpacy + tfReadabilityScore) / 4;
 
   // Apply a weighted average to the combined scores
-  const weightedScore = (0.4 * combinedScore) + (0.6 * combinedScoreAdvanced);
+  const weightedAverage = (0.3 * combinedScore) + (0.7 * combinedScoreAdvanced);
 
-  return weightedScore;
+  return weightedAverage;
+}
+
+const calculateComplexityScore = async (text: string) => {
+  // Calculate complexity score using a language model
+  const languageModel = new LanguageModel('en');
+  const complexityScore = await languageModel.calculateComplexity(text);
+  return complexityScore;
+}
+
+const calculateCohesionScore = async (text: string) => {
+  // Calculate cohesion score using a language model
+  const languageModel = new LanguageModel('en');
+  const cohesionScore = await languageModel.calculateCohesion(text);
+  return cohesionScore;
+}
+
+const calculateClarityScore = async (text: string) => {
+  // Calculate clarity score using a language model
+  const languageModel = new LanguageModel('en');
+  const clarityScore = await languageModel.calculateClarity(text);
+  return clarityScore;
+}
+
+const calculateSentenceLengthScore = async (text: string) => {
+  // Calculate sentence length score using a language model
+  const languageModel = new LanguageModel('en');
+  const sentenceLengthScore = await languageModel.calculateSentenceLength(text);
+  return sentenceLengthScore;
+}
+
+const calculateWordLengthScore = async (text: string) => {
+  // Calculate word length score using a language model
+  const languageModel = new LanguageModel('en');
+  const wordLengthScore = await languageModel.calculateWordLength(text);
+  return wordLengthScore;
+}
+
+const calculateSyllableCountScore = async (text: string) => {
+  // Calculate syllable count score using a language model
+  const languageModel = new LanguageModel('en');
+  const syllableCountScore = await languageModel.calculateSyllableCount(text);
+  return syllableCountScore;
 }
 
 const ContentAnalyzerPage = () => {
-  const router = useRouter();
   const [text, setText] = useState('');
   const [readabilityScore, setReadabilityScore] = useState(0);
-  const [complexityScore, setComplexityScore] = useState(0);
-  const [cohesionScore, setCohesionScore] = useState(0);
-  const [clarityScore, setClarityScore] = useState(0);
-  const [sentenceLengthScore, setSentenceLengthScore] = useState(0);
-  const [wordLengthScore, setWordLengthScore] = useState(0);
-  const [syllableCountScore, setSyllableCountScore] = useState(0);
-  const [data, setData] = useState([
-    { name: 'Readability', score: 0 },
-    { name: 'Complexity', score: 0 },
-    { name: 'Cohesion', score: 0 },
-    { name: 'Clarity', score: 0 },
-    { name: 'Sentence Length', score: 0 },
-    { name: 'Word Length', score: 0 },
-    { name: 'Syllable Count', score: 0 },
-  ]);
+  const router = useRouter();
 
   const handleTextChange = (event: any) => {
     setText(event.target.value);
-  };
+  }
 
   const handleAnalyze = async () => {
-    const readabilityScore = await calculateReadabilityScore(text);
-    const complexityScore = await calculateComplexityScore(text);
-    const cohesionScore = await calculateCohesionScore(text);
-    const clarityScore = await calculateClarityScore(text);
-    const sentenceLengthScore = await calculateSentenceLengthScore(text);
-    const wordLengthScore = await calculateWordLengthScore(text);
-    const syllableCountScore = await calculateSyllableCountScore(text);
-
-    setReadabilityScore(readabilityScore);
-    setComplexityScore(complexityScore);
-    setCohesionScore(cohesionScore);
-    setClarityScore(clarityScore);
-    setSentenceLengthScore(sentenceLengthScore);
-    setWordLengthScore(wordLengthScore);
-    setSyllableCountScore(syllableCountScore);
-
-    setData([
-      { name: 'Readability', score: readabilityScore },
-      { name: 'Complexity', score: complexityScore },
-      { name: 'Cohesion', score: cohesionScore },
-      { name: 'Clarity', score: clarityScore },
-      { name: 'Sentence Length', score: sentenceLengthScore },
-      { name: 'Word Length', score: wordLengthScore },
-      { name: 'Syllable Count', score: syllableCountScore },
-    ]);
-  };
+    const score = await calculateReadabilityScore(text);
+    setReadabilityScore(score);
+  }
 
   return (
     <div>
       <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
       <ContentAnalyzerForm text={text} handleTextChange={handleTextChange} handleAnalyze={handleAnalyze} />
-      <div style={{ width: '100%', height: '300px' }}>
-        <BarChart width={500} height={300} data={data}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="name" />
-          <YAxis />
-          <Tooltip />
-          <Bar dataKey="score" fill="#8884d8" />
-        </BarChart>
-      </div>
-      <OptimizationSuggestions readabilityScore={readabilityScore} complexityScore={complexityScore} cohesionScore={cohesionScore} clarityScore={clarityScore} sentenceLengthScore={sentenceLengthScore} wordLengthScore={wordLengthScore} syllableCountScore={syllableCountScore} />
+      <OptimizationSuggestions readabilityScore={readabilityScore} />
       <EngagementTracker />
       <AlternativeFormats />
+      <BarChart width={500} height={300} data={[{ name: 'Readability Score', score: readabilityScore }]}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="name" />
+        <YAxis />
+        <Tooltip />
+        <Bar dataKey="score" fill="#8884d8" />
+      </BarChart>
     </div>
   );
-};
+}
 
 export default ContentAnalyzerPage;

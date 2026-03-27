@@ -67,49 +67,64 @@ const initialWidgets: Widget[] = [
           <ul style={{ listStyle: 'none', padding: '0', margin: '0' }}>
             <li style={{ marginBottom: '10px' }}><strong>AI-Powered Content Insights</strong>: Get data-driven recommendations to boost engagement and conversions</li>
             <li style={{ marginBottom: '10px' }}><strong>Prioritized Support</strong>: Get expert help whenever you need it, with priority access to our support team</li>
-            <li style={{ marginBottom: '10px' }}><strong>Advanced Analytics</strong>: Track your content's performance with in-depth metrics and insights</li>
-            <li style={{ marginBottom: '10px' }}><strong>Content Calendar Pro</strong>: Plan and schedule your content in advance with our intuitive calendar tool</li>
-            <li style={{ marginBottom: '10px' }}><strong>Expert Guidance</strong>: Get access to our team of content experts who will help you create a winning content strategy</li>
           </ul>
         </div>
-        <div style={{ textAlign: 'center' }}>
-          <button style={{ backgroundColor: '#3498db', color: '#ffffff', padding: '10px 20px', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>Upgrade to Premium Now</button>
-        </div>
-        <p style={{ fontSize: '14px', color: '#666666' }}>Hurry! This limited-time offer won't last long. Use code PREMIUM15 at checkout to receive your 15% discount.</p>
       </div>
     )
   },
-]
+];
 
-const App = () => {
+const Page = () => {
   const router = useRouter();
+  const [widgets, setWidgets] = useState(initialWidgets);
+
+  const handleDragEnd = (result: any) => {
+    if (!result.destination) return;
+
+    const newWidgets = [...widgets];
+    const [reorderedWidget] = newWidgets.splice(result.source.index, 1);
+    newWidgets.splice(result.destination.index, 0, reorderedWidget);
+
+    setWidgets(newWidgets);
+  };
 
   return (
-    <div>
+    <div className="dashboard-container" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <DashboardHeader />
-      <NavigationMenu />
-      <DndProvider>
-        <DragDropContext>
-          <Droppable droppableId="widgets">
-            {(provided) => (
-              <div ref={provided.innerRef} {...provided.droppableProps}>
-                {initialWidgets.map((widget, index) => (
-                  <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
-                    {(provided) => (
-                      <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
-                        <DashboardCard widget={widget} />
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-        </DragDropContext>
-      </DndProvider>
+      <div className="dashboard-body" style={{ flex: 1, display: 'flex', flexDirection: 'row' }}>
+        <NavigationMenu />
+        <div className="dashboard-content" style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
+          <DndProvider>
+            <DragDropContext onDragEnd={handleDragEnd}>
+              <Droppable droppableId="widgets">
+                {(provided) => (
+                  <div ref={provided.innerRef} {...provided.droppableProps} style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
+                    {widgets.map((widget, index) => (
+                      <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+                        {(provided) => (
+                          <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} style={{ margin: '10px' }}>
+                            <DashboardCard
+                              title={widget.title}
+                              icon={widget.icon}
+                              onClick={widget.onClick}
+                              frequency={widget.frequency}
+                              description={widget.description}
+                              callToAction={widget.callToAction}
+                            />
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
+          </DndProvider>
+        </div>
+      </div>
     </div>
   );
 };
 
-export default App;
+export default Page;
