@@ -54,119 +54,108 @@ const calculateReadabilityScore = async (text: string) => {
 
   const combinedScoreAdvanced = (readabilityScore * 0.3 + readabilityScoreNlp * 0.2 + readabilityScoreSpacy * 0.2 + tfReadabilityScore.dataSync()[0] * 0.3);
 
-  // Provide actionable insights and recommendations to improve the content's readability
-  const insights = [
-    `Readability Score: ${combinedScoreAdvanced.toFixed(2)}`,
-    `Complexity Score: ${complexityScore.toFixed(2)}`,
-    `Cohesion Score: ${cohesionScore.toFixed(2)}`,
-    `Clarity Score: ${clarityScore.toFixed(2)}`,
-    `Sentence Length Score: ${sentenceLengthScore.toFixed(2)}`,
-    `Word Length Score: ${wordLengthScore.toFixed(2)}`,
-    `Syllable Count Score: ${syllableCountScore.toFixed(2)}`,
-  ];
+  // Provide actionable suggestions for improvement
+  let suggestions = [];
+  if (combinedScoreAdvanced < 0.5) {
+    suggestions.push("Use simpler vocabulary and sentence structures to improve readability.");
+  }
+  if (complexityScore < 0.5) {
+    suggestions.push("Use more complex sentence structures and vocabulary to improve complexity.");
+  }
+  if (cohesionScore < 0.5) {
+    suggestions.push("Use transitional phrases and words to improve cohesion.");
+  }
+  if (clarityScore < 0.5) {
+    suggestions.push("Use clear and concise language to improve clarity.");
+  }
+  if (sentenceLengthScore < 0.5) {
+    suggestions.push("Vary sentence length to improve readability.");
+  }
+  if (wordLengthScore < 0.5) {
+    suggestions.push("Use a mix of short and long words to improve readability.");
+  }
+  if (syllableCountScore < 0.5) {
+    suggestions.push("Use words with fewer syllables to improve readability.");
+  }
 
-  const recommendations = [
-    'Use shorter sentences to improve clarity',
-    'Use simpler vocabulary to reduce complexity',
-    'Use transitional phrases to improve cohesion',
-    'Use active voice to improve readability',
-    'Use concise language to reduce word count',
-  ];
-
-  return { combinedScoreAdvanced, insights, recommendations };
-};
+  return { combinedScoreAdvanced, suggestions };
+}
 
 const calculateComplexityScore = async (text: string) => {
-  // Calculate the complexity score using a language model
+  // Calculate complexity score using a language model
   const nlp = new NlpManager({ languages: ['en'] });
   const doc = await nlp.process('en', text);
-  const complexityScore = doc.complexity;
-  return complexityScore;
-};
+  return doc.score;
+}
 
 const calculateCohesionScore = async (text: string) => {
-  // Calculate the cohesion score using a language model
+  // Calculate cohesion score using a language model
   const nlp = new NlpManager({ languages: ['en'] });
   const doc = await nlp.process('en', text);
-  const cohesionScore = doc.cohesion;
-  return cohesionScore;
-};
+  return doc.score;
+}
 
 const calculateClarityScore = async (text: string) => {
-  // Calculate the clarity score using a language model
+  // Calculate clarity score using a language model
   const nlp = new NlpManager({ languages: ['en'] });
   const doc = await nlp.process('en', text);
-  const clarityScore = doc.clarity;
-  return clarityScore;
-};
+  return doc.score;
+}
 
 const calculateSentenceLengthScore = async (text: string) => {
-  // Calculate the sentence length score using a language model
+  // Calculate sentence length score using a language model
   const nlp = new NlpManager({ languages: ['en'] });
   const doc = await nlp.process('en', text);
-  const sentenceLengthScore = doc.sentenceLength;
-  return sentenceLengthScore;
-};
+  return doc.score;
+}
 
 const calculateWordLengthScore = async (text: string) => {
-  // Calculate the word length score using a language model
+  // Calculate word length score using a language model
   const nlp = new NlpManager({ languages: ['en'] });
   const doc = await nlp.process('en', text);
-  const wordLengthScore = doc.wordLength;
-  return wordLengthScore;
-};
+  return doc.score;
+}
 
 const calculateSyllableCountScore = async (text: string) => {
-  // Calculate the syllable count score using a language model
+  // Calculate syllable count score using a language model
   const nlp = new NlpManager({ languages: ['en'] });
   const doc = await nlp.process('en', text);
-  const syllableCountScore = doc.syllableCount;
-  return syllableCountScore;
-};
+  return doc.score;
+}
 
 const Page = () => {
   const [text, setText] = useState('');
   const [readabilityScore, setReadabilityScore] = useState(0);
-  const [insights, setInsights] = useState([]);
-  const [recommendations, setRecommendations] = useState([]);
+  const [suggestions, setSuggestions] = useState([]);
   const router = useRouter();
 
   const handleTextChange = (event: any) => {
     setText(event.target.value);
-  };
+  }
 
-  const handleAnalyzeClick = async () => {
+  const handleAnalyze = async () => {
     const result = await calculateReadabilityScore(text);
     setReadabilityScore(result.combinedScoreAdvanced);
-    setInsights(result.insights);
-    setRecommendations(result.recommendations);
-  };
+    setSuggestions(result.suggestions);
+  }
 
   return (
     <div>
       <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
-      <ContentAnalyzerForm
-        text={text}
-        onChange={handleTextChange}
-        onAnalyzeClick={handleAnalyzeClick}
-      />
-      <OptimizationSuggestions
-        readabilityScore={readabilityScore}
-        insights={insights}
-        recommendations={recommendations}
-      />
+      <ContentAnalyzerForm text={text} handleTextChange={handleTextChange} handleAnalyze={handleAnalyze} />
+      <OptimizationSuggestions suggestions={suggestions} />
       <EngagementTracker />
       <AlternativeFormats />
-      <BarChart width={500} height={300} data={insights}>
+      <BarChart width={500} height={300} data={[{ name: 'Readability Score', score: readabilityScore }]}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="name" />
         <YAxis />
         <Tooltip />
-        <Bar dataKey="value" fill="#8884d8" />
+        <Bar dataKey="score" fill="#8884d8" />
       </BarChart>
     </div>
   );
-};
+}
 
 export default Page;

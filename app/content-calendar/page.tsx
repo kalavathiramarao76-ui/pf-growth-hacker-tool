@@ -89,72 +89,134 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
     description: 'Connect your Outlook Calendar to view and manage your events',
     authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
   },
+  AppleCalendar: {
+    connect: (token: string) => {
+      // Implement Apple Calendar connection logic
+      localStorage.setItem('appleCalendarToken', token);
+    },
+    getEvents: async () => {
+      // Implement Apple Calendar event retrieval logic
+      const token = localStorage.getItem('appleCalendarToken');
+      if (token) {
+        const response = await fetch('https://api.apple.com/calendars/v1/events', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const data = await response.json();
+        return data.data.map((event: any) => ({
+          id: event.id,
+          title: event.title,
+          start: new Date(event.startDate),
+          end: new Date(event.endDate),
+        }));
+      }
+      return [];
+    },
+    disconnect: () => {
+      // Implement Apple Calendar disconnection logic
+      localStorage.removeItem('appleCalendarToken');
+    },
+    name: 'Apple Calendar',
+    icon: 'https://cdn-icons-png.flaticon.com/512/281/281766.png',
+    description: 'Connect your Apple Calendar to view and manage your events',
+    authUrl: 'https://id.apple.com/auth/authorize',
+  },
+  YahooCalendar: {
+    connect: (token: string) => {
+      // Implement Yahoo Calendar connection logic
+      localStorage.setItem('yahooCalendarToken', token);
+    },
+    getEvents: async () => {
+      // Implement Yahoo Calendar event retrieval logic
+      const token = localStorage.getItem('yahooCalendarToken');
+      if (token) {
+        const response = await fetch('https://api.login.yahoo.com/oauth2/get_token', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const data = await response.json();
+        return data.events.map((event: any) => ({
+          id: event.id,
+          title: event.title,
+          start: new Date(event.start),
+          end: new Date(event.end),
+        }));
+      }
+      return [];
+    },
+    disconnect: () => {
+      // Implement Yahoo Calendar disconnection logic
+      localStorage.removeItem('yahooCalendarToken');
+    },
+    name: 'Yahoo Calendar',
+    icon: 'https://cdn-icons-png.flaticon.com/512/281/281767.png',
+    description: 'Connect your Yahoo Calendar to view and manage your events',
+    authUrl: 'https://api.login.yahoo.com/oauth2/request_auth',
+  },
 };
 
-const ContentCalendarPage = () => {
-  const pathname = usePathname();
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
+const App = () => {
   const [selectedCalendar, setSelectedCalendar] = useState<string>('');
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [connected, setConnected] = useState<boolean>(false);
+
+  const handleConnect = async (calendar: string) => {
+    const authUrl = calendarIntegrations[calendar].authUrl;
+    const response = await fetch(authUrl, {
+      method: 'GET',
+      redirect: 'follow',
+    });
+    const url = response.url;
+    window.location.href = url;
+  };
+
+  const handleDisconnect = () => {
+    calendarIntegrations[selectedCalendar].disconnect();
+    setConnected(false);
+  };
+
+  const handleGetEvents = async () => {
+    if (connected) {
+      const events = await calendarIntegrations[selectedCalendar].getEvents();
+      setEvents(events);
+    }
+  };
 
   useEffect(() => {
-    const fetchEvents = async () => {
-      if (selectedCalendar) {
-        const integration = calendarIntegrations[selectedCalendar];
-        if (integration) {
-          const fetchedEvents = await integration.getEvents();
-          setEvents(fetchedEvents);
-        }
-      }
-    };
-    fetchEvents();
+    const token = localStorage.getItem(`${selectedCalendar}Token`);
+    if (token) {
+      setConnected(true);
+    }
   }, [selectedCalendar]);
 
   return (
     <Layout>
-      <SEO
-        title="AI-Powered Content Optimizer - Content Calendar"
-        description="Optimize your content with our AI-powered content calendar"
-        keywords="content calendar, ai-powered, content optimizer"
-        canonicalUrl={pathname}
-        openGraph={{
-          type: 'website',
-          url: pathname,
-          title: 'AI-Powered Content Optimizer - Content Calendar',
-          description: 'Optimize your content with our AI-powered content calendar',
-          images: [
-            {
-              url: 'https://example.com/content-calendar-image.jpg',
-              width: 1200,
-              height: 630,
-              alt: 'Content Calendar Image',
-            },
-          ],
-        }}
-        twitter={{
-          handle: '@contentoptimizer',
-          site: '@contentoptimizer',
-          cardType: 'summary_large_image',
-        }}
-      />
+      <SEO title="Content Calendar" />
       <DndProvider backend={HTML5Backend}>
         <Calendar events={events} />
+        <div>
+          {Object.keys(calendarIntegrations).map((calendar) => (
+            <div key={calendar}>
+              <Image src={calendarIntegrations[calendar].icon} width={20} height={20} />
+              <span>{calendarIntegrations[calendar].name}</span>
+              <button onClick={() => handleConnect(calendar)}>Connect</button>
+              {connected && selectedCalendar === calendar && (
+                <button onClick={handleDisconnect}>Disconnect</button>
+              )}
+              {connected && selectedCalendar === calendar && (
+                <button onClick={handleGetEvents}>Get Events</button>
+              )}
+            </div>
+          ))}
+        </div>
       </DndProvider>
-      <div>
-        {Object.keys(calendarIntegrations).map((integration) => (
-          <div key={integration}>
-            <Image src={calendarIntegrations[integration].icon} width={24} height={24} />
-            <span>{calendarIntegrations[integration].name}</span>
-            <button onClick={() => setSelectedCalendar(integration)}>Connect</button>
-          </div>
-        ))}
-      </div>
-      <Tooltip>
-        <span>Drag and drop events to schedule your content</span>
-      </Tooltip>
       <Socket />
       <StripeCheckout />
+      <Tooltip />
     </Layout>
   );
 };
 
-export default ContentCalendarPage;
+export default App;
