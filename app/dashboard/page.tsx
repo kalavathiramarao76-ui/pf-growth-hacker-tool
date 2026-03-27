@@ -128,66 +128,55 @@ const initialWidgets: Widget[] = [
   },
 ];
 
-const cache = {
-  analyticsData: {},
-  contentSuggestions: {},
-};
-
-const fetchAnalyticsData = async (widgetId: number) => {
-  if (cache.analyticsData[widgetId]) {
-    return cache.analyticsData[widgetId];
-  }
-
-  const response = await axios.get(`/api/analytics/${widgetId}`);
-  cache.analyticsData[widgetId] = response.data;
-  return response.data;
-};
-
-const fetchContentSuggestions = async (widgetId: number) => {
-  if (cache.contentSuggestions[widgetId]) {
-    return cache.contentSuggestions[widgetId];
-  }
-
-  const response = await axios.get(`/api/content-suggestions/${widgetId}`);
-  cache.contentSuggestions[widgetId] = response.data;
-  return response.data;
-};
-
 const DashboardPage = () => {
-  const router = useRouter();
   const [widgets, setWidgets] = useState(initialWidgets);
   const [widgetLayout, setWidgetLayout] = useState<WidgetLayout>({
     columns: 3,
     rows: 2,
     widgets: initialWidgets,
   });
+  const [apiData, setApiData] = useState<any>(null);
 
-  const handleWidgetClick = async (widget: Widget) => {
-    if (widget.onClick) {
-      widget.onClick();
+  const fetchApiData = useCallback(async () => {
+    try {
+      const response = await axios.get('/api/data');
+      setApiData(response.data);
+    } catch (error) {
+      console.error(error);
     }
+  }, []);
 
-    if (widget.analyticsData) {
-      const analyticsData = await fetchAnalyticsData(widget.id);
-      console.log(analyticsData);
-    }
+  useEffect(() => {
+    fetchApiData();
+  }, [fetchApiData]);
 
-    if (widget.contentSuggestions) {
-      const contentSuggestions = await fetchContentSuggestions(widget.id);
-      console.log(contentSuggestions);
+  const memoizedWidgets = useMemo(() => {
+    if (apiData) {
+      return widgets.map((widget) => {
+        if (widget.id === 2) {
+          return {
+            ...widget,
+            analyticsData: apiData,
+          };
+        }
+        return widget;
+      });
     }
-  };
+    return widgets;
+  }, [apiData, widgets]);
 
   const handleDragEnd = (result: any) => {
     if (!result.destination) return;
 
-    const { source, destination } = result;
-    const newWidgets = [...widgets];
-    const [removed] = newWidgets.splice(source.index, 1);
+    const newWidgets = [...memoizedWidgets];
+    const [reorderedWidget] = newWidgets.splice(result.source.index, 1);
+    newWidgets.splice(result.destination.index, 0, reorderedWidget);
 
-    newWidgets.splice(destination.index, 0, removed);
-
-    setWidgets(newWidgets);
+    setWidgetLayout({
+      columns: widgetLayout.columns,
+      rows: widgetLayout.rows,
+      widgets: newWidgets,
+    });
   };
 
   return (
@@ -203,7 +192,7 @@ const DashboardPage = () => {
                 ref={provided.innerRef}
                 className="widgets-container"
               >
-                {widgets.map((widget, index) => (
+                {memoizedWidgets.map((widget, index) => (
                   <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
                     {(provided) => (
                       <div
@@ -212,15 +201,7 @@ const DashboardPage = () => {
                         ref={provided.innerRef}
                         className="widget"
                       >
-                        <DashboardCard
-                          title={widget.title}
-                          icon={widget.icon}
-                          onClick={() => handleWidgetClick(widget)}
-                          analyticsData={widget.analyticsData}
-                          contentSuggestions={widget.contentSuggestions}
-                          description={widget.description}
-                          callToAction={widget.callToAction}
-                        />
+                        <DashboardCard widget={widget} />
                       </div>
                     )}
                   </Draggable>

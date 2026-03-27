@@ -92,57 +92,81 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
 };
 
 const App = () => {
+  const [connectedCalendar, setConnectedCalendar] = useState<string | null>(null);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [dragging, setDragging] = useState(false);
-  const [droppedEvent, setDroppedEvent] = useState<CalendarEvent | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
 
-  const handleDragStart = () => {
-    setDragging(true);
+  const handleConnect = async (calendarName: string) => {
+    setIsConnecting(true);
+    const calendar = calendarIntegrations[calendarName];
+    if (calendar) {
+      const token = await getToken(calendar.authUrl);
+      calendar.connect(token);
+      setConnectedCalendar(calendarName);
+    }
+    setIsConnecting(false);
   };
 
-  const handleDragEnd = () => {
-    setDragging(false);
+  const handleDisconnect = async () => {
+    setIsDisconnecting(true);
+    if (connectedCalendar) {
+      const calendar = calendarIntegrations[connectedCalendar];
+      if (calendar) {
+        calendar.disconnect();
+        setConnectedCalendar(null);
+      }
+    }
+    setIsDisconnecting(false);
   };
 
-  const handleDrop = (event: CalendarEvent) => {
-    setDroppedEvent(event);
-    // Update event in real-time
-    const updatedEvents = events.map((e) => (e.id === event.id ? event : e));
-    setEvents(updatedEvents);
+  const getToken = async (authUrl: string) => {
+    const response = await fetch(authUrl);
+    const data = await response.json();
+    return data.access_token;
   };
 
   useEffect(() => {
     const fetchEvents = async () => {
-      const googleCalendarEvents = await calendarIntegrations.GoogleCalendar.getEvents();
-      const outlookCalendarEvents = await calendarIntegrations.OutlookCalendar.getEvents();
-      setEvents([...googleCalendarEvents, ...outlookCalendarEvents]);
+      if (connectedCalendar) {
+        const calendar = calendarIntegrations[connectedCalendar];
+        if (calendar) {
+          const events = await calendar.getEvents();
+          setEvents(events);
+        }
+      }
     };
     fetchEvents();
-  }, []);
+  }, [connectedCalendar]);
 
   return (
-    <DndProvider backend={HTML5Backend}>
-      <Layout>
-        <SEO title="Content Calendar" />
-        <Calendar
-          events={events}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-          onDrop={handleDrop}
-          dragging={dragging}
-          droppedEvent={droppedEvent}
-        />
-        <Socket
-          onMessage={(message) => {
-            if (message.type === 'eventUpdated') {
-              const updatedEvent = message.data;
-              const updatedEvents = events.map((e) => (e.id === updatedEvent.id ? updatedEvent : e));
-              setEvents(updatedEvents);
-            }
-          }}
-        />
-      </Layout>
-    </DndProvider>
+    <Layout>
+      <SEO title="Content Calendar" />
+      <DndProvider backend={HTML5Backend}>
+        <Calendar events={events} />
+        {connectedCalendar ? (
+          <div>
+            <p>Connected to {connectedCalendar}</p>
+            <button onClick={handleDisconnect} disabled={isDisconnecting}>
+              {isDisconnecting ? 'Disconnecting...' : 'Disconnect'}
+            </button>
+          </div>
+        ) : (
+          <div>
+            <h2>Connect a calendar</h2>
+            {Object.keys(calendarIntegrations).map((calendarName) => (
+              <div key={calendarName}>
+                <Image src={calendarIntegrations[calendarName].icon} width={20} height={20} />
+                <span>{calendarIntegrations[calendarName].name}</span>
+                <button onClick={() => handleConnect(calendarName)} disabled={isConnecting}>
+                  {isConnecting ? 'Connecting...' : 'Connect'}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </DndProvider>
+    </Layout>
   );
 };
 
