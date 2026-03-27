@@ -104,7 +104,7 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
           },
         });
         const data = await response.json();
-        return data.data.map((event: any) => ({
+        return data.events.map((event: any) => ({
           id: event.id,
           title: event.title,
           start: new Date(event.startDate),
@@ -131,7 +131,7 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
       // Implement Yahoo Calendar event retrieval logic
       const token = localStorage.getItem('yahooCalendarToken');
       if (token) {
-        const response = await fetch('https://api.login.yahoo.com/oauth2/get_token', {
+        const response = await fetch('https://api.login.yahoo.com/calendars/events', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -140,8 +140,8 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
         return data.events.map((event: any) => ({
           id: event.id,
           title: event.title,
-          start: new Date(event.start),
-          end: new Date(event.end),
+          start: new Date(event.startDate),
+          end: new Date(event.endDate),
         }));
       }
       return [];
@@ -157,11 +157,10 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
   },
 };
 
-const App = () => {
-  const [selectedCalendar, setSelectedCalendar] = useState<string>('');
-  const [connectedCalendars, setConnectedCalendars] = useState<string[]>([]);
+const Page = () => {
+  const [selectedCalendar, setSelectedCalendar] = useState<string | null>(null);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const pathname = usePathname();
+  const [connectedCalendars, setConnectedCalendars] = useState<string[]>([]);
 
   useEffect(() => {
     const storedConnectedCalendars = localStorage.getItem('connectedCalendars');
@@ -172,7 +171,13 @@ const App = () => {
 
   const handleConnectCalendar = (calendar: string) => {
     const authUrl = calendarIntegrations[calendar].authUrl;
-    window.location.href = authUrl;
+    const clientId = 'YOUR_CLIENT_ID';
+    const redirectUri = 'YOUR_REDIRECT_URI';
+    const scope = 'YOUR_SCOPE';
+    const state = 'YOUR_STATE';
+
+    const url = `${authUrl}?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&state=${state}&response_type=code`;
+    window.location.href = url;
   };
 
   const handleDisconnectCalendar = (calendar: string) => {
@@ -181,12 +186,8 @@ const App = () => {
     localStorage.setItem('connectedCalendars', JSON.stringify(connectedCalendars.filter((c) => c !== calendar)));
   };
 
-  const handleGetEvents = async () => {
-    const events: CalendarEvent[] = [];
-    for (const calendar of connectedCalendars) {
-      const calendarEvents = await calendarIntegrations[calendar].getEvents();
-      events.push(...calendarEvents);
-    }
+  const handleGetEvents = async (calendar: string) => {
+    const events = await calendarIntegrations[calendar].getEvents();
     setEvents(events);
   };
 
@@ -194,24 +195,31 @@ const App = () => {
     <Layout>
       <SEO title="Content Calendar" />
       <DndProvider backend={HTML5Backend}>
-        <Calendar events={events} />
+        <Calendar
+          events={events}
+          onEventClick={(event) => console.log(event)}
+          onDateClick={(date) => console.log(date)}
+        />
         <div>
+          <h2>Connect a Calendar</h2>
           {Object.keys(calendarIntegrations).map((calendar) => (
             <div key={calendar}>
-              <Image src={calendarIntegrations[calendar].icon} width={20} height={20} />
+              <Image src={calendarIntegrations[calendar].icon} alt={calendarIntegrations[calendar].name} width={20} height={20} />
               <span>{calendarIntegrations[calendar].name}</span>
               {connectedCalendars.includes(calendar) ? (
                 <button onClick={() => handleDisconnectCalendar(calendar)}>Disconnect</button>
               ) : (
                 <button onClick={() => handleConnectCalendar(calendar)}>Connect</button>
               )}
+              {connectedCalendars.includes(calendar) && (
+                <button onClick={() => handleGetEvents(calendar)}>Get Events</button>
+              )}
             </div>
           ))}
         </div>
-        <button onClick={handleGetEvents}>Get Events</button>
       </DndProvider>
     </Layout>
   );
 };
 
-export default App;
+export default Page;
