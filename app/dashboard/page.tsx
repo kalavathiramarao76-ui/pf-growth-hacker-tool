@@ -128,6 +128,31 @@ const initialWidgets: Widget[] = [
   },
 ];
 
+const cache = {
+  analyticsData: {},
+  contentSuggestions: {},
+};
+
+const fetchAnalyticsData = async (widgetId: number) => {
+  if (cache.analyticsData[widgetId]) {
+    return cache.analyticsData[widgetId];
+  }
+
+  const response = await axios.get(`/api/analytics/${widgetId}`);
+  cache.analyticsData[widgetId] = response.data;
+  return response.data;
+};
+
+const fetchContentSuggestions = async (widgetId: number) => {
+  if (cache.contentSuggestions[widgetId]) {
+    return cache.contentSuggestions[widgetId];
+  }
+
+  const response = await axios.get(`/api/content-suggestions/${widgetId}`);
+  cache.contentSuggestions[widgetId] = response.data;
+  return response.data;
+};
+
 const DashboardPage = () => {
   const router = useRouter();
   const [widgets, setWidgets] = useState(initialWidgets);
@@ -136,85 +161,75 @@ const DashboardPage = () => {
     rows: 2,
     widgets: initialWidgets,
   });
-  const [analyticsData, setAnalyticsData] = useState<any>({});
-  const [contentSuggestions, setContentSuggestions] = useState<any>({});
 
-  const fetchAnalyticsData = useCallback(async () => {
-    try {
-      const response = await axios.get('/api/analytics');
-      setAnalyticsData(response.data);
-    } catch (error) {
-      console.error(error);
-    }
-  }, []);
-
-  const fetchContentSuggestions = useCallback(async () => {
-    try {
-      const response = await axios.get('/api/content-suggestions');
-      setContentSuggestions(response.data);
-    } catch (error) {
-      console.error(error);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchAnalyticsData();
-    fetchContentSuggestions();
-  }, [fetchAnalyticsData, fetchContentSuggestions]);
-
-  const handleWidgetClick = (widget: Widget) => {
+  const handleWidgetClick = async (widget: Widget) => {
     if (widget.onClick) {
       widget.onClick();
     }
+
+    if (widget.analyticsData) {
+      const analyticsData = await fetchAnalyticsData(widget.id);
+      console.log(analyticsData);
+    }
+
+    if (widget.contentSuggestions) {
+      const contentSuggestions = await fetchContentSuggestions(widget.id);
+      console.log(contentSuggestions);
+    }
   };
 
-  const handleWidgetDragEnd = (result: any) => {
+  const handleDragEnd = (result: any) => {
     if (!result.destination) return;
-    const { source, destination } = result;
-    const newWidgets = [...widgetLayout.widgets];
-    const [removed] = newWidgets.splice(source.index, 1);
-    newWidgets.splice(destination.index, 0, removed);
-    setWidgetLayout((prevLayout) => ({
-      ...prevLayout,
-      widgets: newWidgets,
-    }));
-  };
 
-  const memoizedWidgets = useMemo(() => widgetLayout.widgets, [widgetLayout.widgets]);
+    const { source, destination } = result;
+    const newWidgets = [...widgets];
+    const [removed] = newWidgets.splice(source.index, 1);
+
+    newWidgets.splice(destination.index, 0, removed);
+
+    setWidgets(newWidgets);
+  };
 
   return (
     <DndProvider>
-      <DragDropContext onDragEnd={handleWidgetDragEnd}>
-        <Droppable droppableId="widgets">
-          {(provided) => (
-            <div ref={provided.innerRef} {...provided.droppableProps}>
-              {memoizedWidgets.map((widget, index) => (
-                <Draggable key={widget.id} draggableId={String(widget.id)} index={index}>
-                  {(provided) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      {...provided.dragHandleProps}
-                    >
-                      <DashboardCard
-                        key={widget.id}
-                        title={widget.title}
-                        icon={widget.icon}
-                        onClick={() => handleWidgetClick(widget)}
-                        frequency={widget.frequency}
-                        description={widget.description}
-                        callToAction={widget.callToAction}
-                        analyticsData={analyticsData}
-                        contentSuggestions={contentSuggestions}
-                      />
-                    </div>
-                  )}
-                </Draggable>
-              ))}
-              {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <DashboardHeader />
+        <NavigationMenu />
+        <div className="dashboard-container">
+          <Droppable droppableId="widgets">
+            {(provided) => (
+              <div
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                className="widgets-container"
+              >
+                {widgets.map((widget, index) => (
+                  <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+                    {(provided) => (
+                      <div
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        ref={provided.innerRef}
+                        className="widget"
+                      >
+                        <DashboardCard
+                          title={widget.title}
+                          icon={widget.icon}
+                          onClick={() => handleWidgetClick(widget)}
+                          analyticsData={widget.analyticsData}
+                          contentSuggestions={widget.contentSuggestions}
+                          description={widget.description}
+                          callToAction={widget.callToAction}
+                        />
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </div>
       </DragDropContext>
     </DndProvider>
   );

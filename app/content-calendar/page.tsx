@@ -92,75 +92,57 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
 };
 
 const App = () => {
-  const [connectedCalendars, setConnectedCalendars] = useState<string[]>([]);
-  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [isDisconnecting, setIsDisconnecting] = useState(false);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [dragging, setDragging] = useState(false);
+  const [droppedEvent, setDroppedEvent] = useState<CalendarEvent | null>(null);
 
-  const handleConnect = async (calendarName: string) => {
-    setIsConnecting(true);
-    const token = await getAuthorizationToken(calendarName);
-    if (token) {
-      calendarIntegrations[calendarName].connect(token);
-      setConnectedCalendars([...connectedCalendars, calendarName]);
-    }
-    setIsConnecting(false);
+  const handleDragStart = () => {
+    setDragging(true);
   };
 
-  const handleDisconnect = async (calendarName: string) => {
-    setIsDisconnecting(true);
-    calendarIntegrations[calendarName].disconnect();
-    setConnectedCalendars(connectedCalendars.filter((calendar) => calendar !== calendarName));
-    setIsDisconnecting(false);
+  const handleDragEnd = () => {
+    setDragging(false);
   };
 
-  const getAuthorizationToken = async (calendarName: string) => {
-    const response = await fetch(calendarIntegrations[calendarName].authUrl, {
-      method: 'GET',
-      redirect: 'follow',
-    });
-    const url = new URL(response.url);
-    const token = url.searchParams.get('token');
-    return token;
-  };
-
-  const getCalendarEvents = async () => {
-    const events: CalendarEvent[] = [];
-    for (const calendarName of connectedCalendars) {
-      const calendarEvents = await calendarIntegrations[calendarName].getEvents();
-      events.push(...calendarEvents);
-    }
-    setCalendarEvents(events);
+  const handleDrop = (event: CalendarEvent) => {
+    setDroppedEvent(event);
+    // Update event in real-time
+    const updatedEvents = events.map((e) => (e.id === event.id ? event : e));
+    setEvents(updatedEvents);
   };
 
   useEffect(() => {
-    getCalendarEvents();
-  }, [connectedCalendars]);
+    const fetchEvents = async () => {
+      const googleCalendarEvents = await calendarIntegrations.GoogleCalendar.getEvents();
+      const outlookCalendarEvents = await calendarIntegrations.OutlookCalendar.getEvents();
+      setEvents([...googleCalendarEvents, ...outlookCalendarEvents]);
+    };
+    fetchEvents();
+  }, []);
 
   return (
-    <Layout>
-      <SEO title="Content Calendar" />
-      <DndProvider backend={HTML5Backend}>
-        <Calendar events={calendarEvents} />
-        <div>
-          {Object.keys(calendarIntegrations).map((calendarName) => (
-            <div key={calendarName}>
-              <Image src={calendarIntegrations[calendarName].icon} width={20} height={20} />
-              <span>{calendarIntegrations[calendarName].name}</span>
-              {connectedCalendars.includes(calendarName) ? (
-                <button onClick={() => handleDisconnect(calendarName)} disabled={isDisconnecting}>
-                  {isDisconnecting ? 'Disconnecting...' : 'Disconnect'}
-                </button>
-              ) : (
-                <button onClick={() => handleConnect(calendarName)} disabled={isConnecting}>
-                  {isConnecting ? 'Connecting...' : 'Connect'}
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-      </DndProvider>
-    </Layout>
+    <DndProvider backend={HTML5Backend}>
+      <Layout>
+        <SEO title="Content Calendar" />
+        <Calendar
+          events={events}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          onDrop={handleDrop}
+          dragging={dragging}
+          droppedEvent={droppedEvent}
+        />
+        <Socket
+          onMessage={(message) => {
+            if (message.type === 'eventUpdated') {
+              const updatedEvent = message.data;
+              const updatedEvents = events.map((e) => (e.id === updatedEvent.id ? updatedEvent : e));
+              setEvents(updatedEvents);
+            }
+          }}
+        />
+      </Layout>
+    </DndProvider>
   );
 };
 
