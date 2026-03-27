@@ -101,45 +101,70 @@ const calculateSyllableCountScore = async (text: string) => {
 
 const ContentAnalyzerPage = () => {
   const router = useRouter();
-  const [text, setText] = useState('');
+  const [content, setContent] = useState('');
   const [readabilityScore, setReadabilityScore] = useState(0);
-  const [complexityScore, setComplexityScore] = useState(0);
-  const [cohesionScore, setCohesionScore] = useState(0);
-  const [clarityScore, setClarityScore] = useState(0);
-  const [sentenceLengthScore, setSentenceLengthScore] = useState(0);
-  const [wordLengthScore, setWordLengthScore] = useState(0);
-  const [syllableCountScore, setSyllableCountScore] = useState(0);
+  const [optimizationSuggestions, setOptimizationSuggestions] = useState([]);
+  const [engagementTracker, setEngagementTracker] = useState({});
+  const [alternativeFormats, setAlternativeFormats] = useState({});
 
-  const handleTextChange = (event: any) => {
-    setText(event.target.value);
-  }
+  useEffect(() => {
+    const storedContent = LocalStorage.get('content');
+    if (storedContent) {
+      setContent(storedContent);
+    }
+  }, []);
 
-  const handleAnalyze = async () => {
-    const score = await calculateReadabilityScore(text);
-    setReadabilityScore(score);
-    const complexity = await calculateComplexityScore(text);
-    setComplexityScore(complexity);
-    const cohesion = await calculateCohesionScore(text);
-    setCohesionScore(cohesion);
-    const clarity = await calculateClarityScore(text);
-    setClarityScore(clarity);
-    const sentenceLength = await calculateSentenceLengthScore(text);
-    setSentenceLengthScore(sentenceLength);
-    const wordLength = await calculateWordLengthScore(text);
-    setWordLengthScore(wordLength);
-    const syllableCount = await calculateSyllableCountScore(text);
-    setSyllableCountScore(syllableCount);
-  }
+  const handleContentChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const content = event.target.value;
+    setContent(content);
+    LocalStorage.set('content', content);
+  };
+
+  const handleAnalyzeContent = async () => {
+    const readabilityScore = await calculateReadabilityScore(content);
+    setReadabilityScore(readabilityScore);
+    const optimizationSuggestions = await getOptimizationSuggestions(content);
+    setOptimizationSuggestions(optimizationSuggestions);
+    const engagementTracker = await getEngagementTracker(content);
+    setEngagementTracker(engagementTracker);
+    const alternativeFormats = await getAlternativeFormats(content);
+    setAlternativeFormats(alternativeFormats);
+  };
+
+  const getOptimizationSuggestions = async (content: string) => {
+    // Get optimization suggestions using a language model
+    const languageModel = new LanguageModel('en');
+    const optimizationSuggestions = await languageModel.getOptimizationSuggestions(content);
+    return optimizationSuggestions;
+  };
+
+  const getEngagementTracker = async (content: string) => {
+    // Get engagement tracker using a language model
+    const languageModel = new LanguageModel('en');
+    const engagementTracker = await languageModel.getEngagementTracker(content);
+    return engagementTracker;
+  };
+
+  const getAlternativeFormats = async (content: string) => {
+    // Get alternative formats using a language model
+    const languageModel = new LanguageModel('en');
+    const alternativeFormats = await languageModel.getAlternativeFormats(content);
+    return alternativeFormats;
+  };
 
   return (
     <div>
       <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
-      <ContentAnalyzerForm text={text} handleTextChange={handleTextChange} handleAnalyze={handleAnalyze} />
-      <OptimizationSuggestions readabilityScore={readabilityScore} complexityScore={complexityScore} cohesionScore={cohesionScore} clarityScore={clarityScore} sentenceLengthScore={sentenceLengthScore} wordLengthScore={wordLengthScore} syllableCountScore={syllableCountScore} />
-      <EngagementTracker />
-      <AlternativeFormats />
-      <BarChart width={500} height={300} data={[{ name: 'Readability Score', score: readabilityScore }, { name: 'Complexity Score', score: complexityScore }, { name: 'Cohesion Score', score: cohesionScore }, { name: 'Clarity Score', score: clarityScore }, { name: 'Sentence Length Score', score: sentenceLengthScore }, { name: 'Word Length Score', score: wordLengthScore }, { name: 'Syllable Count Score', score: syllableCountScore }]}>
+      <ContentAnalyzerForm
+        content={content}
+        onChange={handleContentChange}
+        onAnalyze={handleAnalyzeContent}
+      />
+      <OptimizationSuggestions suggestions={optimizationSuggestions} />
+      <EngagementTracker engagementTracker={engagementTracker} />
+      <AlternativeFormats alternativeFormats={alternativeFormats} />
+      <BarChart width={500} height={300} data={[{ name: 'Readability Score', score: readabilityScore }]}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="name" />
         <YAxis />

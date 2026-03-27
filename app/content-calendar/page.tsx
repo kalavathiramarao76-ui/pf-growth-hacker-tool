@@ -89,88 +89,118 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
     description: 'Connect your Outlook Calendar to view and manage your events',
     authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
   },
+  AppleCalendar: {
+    connect: (token: string) => {
+      // Implement Apple Calendar connection logic
+      localStorage.setItem('appleCalendarToken', token);
+    },
+    getEvents: async () => {
+      // Implement Apple Calendar event retrieval logic
+      const token = localStorage.getItem('appleCalendarToken');
+      if (token) {
+        const response = await fetch('https://api.apple.com/calendars/v1/events', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const data = await response.json();
+        return data.data.map((event: any) => ({
+          id: event.id,
+          title: event.title,
+          start: new Date(event.startDate),
+          end: new Date(event.endDate),
+        }));
+      }
+      return [];
+    },
+    disconnect: () => {
+      // Implement Apple Calendar disconnection logic
+      localStorage.removeItem('appleCalendarToken');
+    },
+    name: 'Apple Calendar',
+    icon: 'https://cdn-icons-png.flaticon.com/512/281/281766.png',
+    description: 'Connect your Apple Calendar to view and manage your events',
+    authUrl: 'https://id.apple.com/auth/authorize',
+  },
+  MicrosoftExchange: {
+    connect: (token: string) => {
+      // Implement Microsoft Exchange connection logic
+      localStorage.setItem('microsoftExchangeToken', token);
+    },
+    getEvents: async () => {
+      // Implement Microsoft Exchange event retrieval logic
+      const token = localStorage.getItem('microsoftExchangeToken');
+      if (token) {
+        const response = await fetch('https://outlook.office.com/api/v2.0/me/events', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const data = await response.json();
+        return data.value.map((event: any) => ({
+          id: event.id,
+          title: event.subject,
+          start: new Date(event.start.dateTime),
+          end: new Date(event.end.dateTime),
+        }));
+      }
+      return [];
+    },
+    disconnect: () => {
+      // Implement Microsoft Exchange disconnection logic
+      localStorage.removeItem('microsoftExchangeToken');
+    },
+    name: 'Microsoft Exchange',
+    icon: 'https://cdn-icons-png.flaticon.com/512/281/281767.png',
+    description: 'Connect your Microsoft Exchange to view and manage your events',
+    authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
+  },
 };
 
-const App = () => {
-  const [selectedIntegration, setSelectedIntegration] = useState<string>('');
+const Page = () => {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [isConnected, setIsConnected] = useState<boolean>(false);
-
-  const handleConnect = async (integration: string) => {
-    const token = await getAccessToken(integration);
-    if (token) {
-      calendarIntegrations[integration].connect(token);
-      setIsConnected(true);
-      setSelectedIntegration(integration);
-    }
-  };
-
-  const handleDisconnect = () => {
-    calendarIntegrations[selectedIntegration].disconnect();
-    setIsConnected(false);
-    setSelectedIntegration('');
-  };
-
-  const getAccessToken = async (integration: string) => {
-    const authUrl = calendarIntegrations[integration].authUrl;
-    const response = await fetch(authUrl, {
-      method: 'GET',
-      redirect: 'follow',
-    });
-    const url = new URL(response.url);
-    const token = url.searchParams.get('token');
-    return token;
-  };
-
-  const getEvents = async () => {
-    if (isConnected) {
-      const events = await calendarIntegrations[selectedIntegration].getEvents();
-      setEvents(events);
-    }
-  };
+  const [selectedCalendar, setSelectedCalendar] = useState<string>('');
 
   useEffect(() => {
-    getEvents();
-  }, [isConnected, selectedIntegration]);
+    const fetchEvents = async () => {
+      if (selectedCalendar) {
+        const calendarIntegration = calendarIntegrations[selectedCalendar];
+        if (calendarIntegration) {
+          const events = await calendarIntegration.getEvents();
+          setEvents(events);
+        }
+      }
+    };
+    fetchEvents();
+  }, [selectedCalendar]);
+
+  const handleCalendarSelect = (calendar: string) => {
+    setSelectedCalendar(calendar);
+  };
 
   return (
     <Layout>
       <SEO title="Content Calendar" />
       <DndProvider backend={HTML5Backend}>
-        <div className="flex flex-col h-screen">
-          <div className="flex justify-between items-center p-4 border-b border-gray-200">
-            <h1 className="text-2xl font-bold">Content Calendar</h1>
-            <div className="flex items-center space-x-4">
-              {Object.keys(calendarIntegrations).map((integration) => (
-                <button
-                  key={integration}
-                  className={`px-4 py-2 rounded-lg ${
-                    isConnected && selectedIntegration === integration
-                      ? 'bg-green-500 text-white'
-                      : 'bg-gray-200 text-gray-600'
-                  }`}
-                  onClick={() => handleConnect(integration)}
-                >
-                  {calendarIntegrations[integration].name}
-                </button>
-              ))}
-              {isConnected && (
-                <button
-                  className="px-4 py-2 rounded-lg bg-red-500 text-white"
-                  onClick={handleDisconnect}
-                >
-                  Disconnect
-                </button>
-              )}
-            </div>
+        <div className="container">
+          <h1>Content Calendar</h1>
+          <div className="calendar-integrations">
+            {Object.keys(calendarIntegrations).map((calendar) => (
+              <div key={calendar} className="calendar-integration">
+                <Image src={calendarIntegrations[calendar].icon} alt={calendarIntegrations[calendar].name} />
+                <h2>{calendarIntegrations[calendar].name}</h2>
+                <p>{calendarIntegrations[calendar].description}</p>
+                <button onClick={() => handleCalendarSelect(calendar)}>Connect</button>
+              </div>
+            ))}
           </div>
-          <div className="flex-1 p-4">
+          {selectedCalendar && (
             <Calendar events={events} />
-          </div>
+          )}
         </div>
       </DndProvider>
     </Layout>
   );
 };
 
-export default App;
+export default Page;
