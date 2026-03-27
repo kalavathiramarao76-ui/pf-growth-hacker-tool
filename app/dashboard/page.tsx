@@ -74,51 +74,62 @@ const initialWidgets: Widget[] = [
           <ul style={{ listStyle: 'none', padding: '0', margin: '0' }}>
             <li style={{ marginBottom: '10px' }}><strong>AI-Powered Content Insights</strong>: Get data-driven recommendations to boost engagement and conversions</li>
             <li style={{ marginBottom: '10px' }}><strong>Priority Support</strong>: Get dedicated support from our team of experts to help you achieve your content goals</li>
-            <li style={{ marginBottom: '10px' }}><strong>Advanced Analytics</strong>: Get in-depth analytics and insights to track your content's performance and make data-driven decisions</li>
-            <li style={{ marginBottom: '10px' }}><strong>Content Calendar Pro</strong>: Plan and schedule your content in advance with our intuitive content calendar</li>
-            <li style={{ marginBottom: '10px' }}><strong>Free Trial or Demo</strong>: Try our premium plan risk-free with a 14-day free trial or schedule a demo with our team to see how our premium plan can help you achieve your content goals</li>
+            <li style={{ marginBottom: '10px' }}><strong>Advanced Analytics</strong>: Get in-depth analytics and tracking to optimize your content strategy</li>
+            <li style={{ marginBottom: '10px' }}><strong>Content Optimization Tools</strong>: Get access to our suite of content optimization tools to streamline your workflow</li>
           </ul>
         </div>
-        <button style={{ backgroundColor: '#3498db', color: '#ffffff', padding: '10px 20px', borderRadius: '10px', border: 'none', cursor: 'pointer' }} onClick={() => alert('Upgrade to Premium Plan')}>Upgrade Now</button>
+        <button style={{ backgroundColor: '#3498db', color: '#ffffff', padding: '10px 20px', borderRadius: '5px', border: 'none', cursor: 'pointer' }} onClick={() => alert('Upgrade to Premium Plan')}>Upgrade Now</button>
       </div>
     )
   },
 ];
 
-const App = () => {
+const DashboardPage = () => {
   const router = useRouter();
   const [widgets, setWidgets] = useState(initialWidgets);
 
-  const handleDragEnd = (result: any) => {
-    if (!result.destination) return;
-    const newWidgets = [...widgets];
-    const [reorderedItem] = newWidgets.splice(result.source.index, 1);
-    newWidgets.splice(result.destination.index, 0, reorderedItem);
-    setWidgets(newWidgets);
+  const handleWidgetClick = (widget: Widget) => {
+    widget.onClick();
+  };
+
+  const handleUpgradeClick = () => {
+    // Add logic to handle upgrade to premium plan
   };
 
   return (
-    <DndProvider>
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <Droppable droppableId="widgets">
-          {(provided) => (
-            <div ref={provided.innerRef} {...provided.droppableProps}>
-              {widgets.map((widget, index) => (
-                <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
-                  {(provided) => (
-                    <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
-                      <DashboardCard widget={widget} />
-                    </div>
-                  )}
-                </Draggable>
-              ))}
-              {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
-      </DragDropContext>
-    </DndProvider>
+    <div>
+      <DashboardHeader />
+      <NavigationMenu />
+      <div className="dashboard-container">
+        <DndProvider>
+          <DragDropContext>
+            <Droppable droppableId="widgets">
+              {(provided) => (
+                <div ref={provided.innerRef} {...provided.droppableProps}>
+                  {widgets.map((widget, index) => (
+                    <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+                      {(provided) => (
+                        <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                          <DashboardCard
+                            title={widget.title}
+                            icon={widget.icon}
+                            onClick={() => handleWidgetClick(widget)}
+                            description={widget.description}
+                            callToAction={widget.callToAction}
+                          />
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
+        </DndProvider>
+      </div>
+    </div>
   );
 };
 
-export default App;
+export default DashboardPage;
