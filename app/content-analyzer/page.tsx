@@ -58,48 +58,42 @@ const calculateReadabilityScore = async (text: string) => {
 }
 
 const calculateComplexityScore = async (text: string) => {
-  // Calculate complexity score using a language model
-  const languageModel = new LanguageModel('en');
-  const complexityScore = await languageModel.calculateComplexity(text);
-  return complexityScore;
+  const complexityPipeline = pipeline('text-classification', model='distilbert-base-uncased-finetuned-sst-2-english')
+  const result = await complexityPipeline(text)
+  return result.score
 }
 
 const calculateCohesionScore = async (text: string) => {
-  // Calculate cohesion score using a language model
-  const languageModel = new LanguageModel('en');
-  const cohesionScore = await languageModel.calculateCohesion(text);
-  return cohesionScore;
+  const cohesionPipeline = pipeline('text-classification', model='distilbert-base-uncased-finetuned-sst-2-english')
+  const result = await cohesionPipeline(text)
+  return result.score
 }
 
 const calculateClarityScore = async (text: string) => {
-  // Calculate clarity score using a language model
-  const languageModel = new LanguageModel('en');
-  const clarityScore = await languageModel.calculateClarity(text);
-  return clarityScore;
+  const clarityPipeline = pipeline('text-classification', model='distilbert-base-uncased-finetuned-sst-2-english')
+  const result = await clarityPipeline(text)
+  return result.score
 }
 
 const calculateSentenceLengthScore = async (text: string) => {
-  // Calculate sentence length score using a language model
-  const languageModel = new LanguageModel('en');
-  const sentenceLengthScore = await languageModel.calculateSentenceLength(text);
-  return sentenceLengthScore;
+  const sentenceLengthPipeline = pipeline('text-classification', model='distilbert-base-uncased-finetuned-sst-2-english')
+  const result = await sentenceLengthPipeline(text)
+  return result.score
 }
 
 const calculateWordLengthScore = async (text: string) => {
-  // Calculate word length score using a language model
-  const languageModel = new LanguageModel('en');
-  const wordLengthScore = await languageModel.calculateWordLength(text);
-  return wordLengthScore;
+  const wordLengthPipeline = pipeline('text-classification', model='distilbert-base-uncased-finetuned-sst-2-english')
+  const result = await wordLengthPipeline(text)
+  return result.score
 }
 
 const calculateSyllableCountScore = async (text: string) => {
-  // Calculate syllable count score using a language model
-  const languageModel = new LanguageModel('en');
-  const syllableCountScore = await languageModel.calculateSyllableCount(text);
-  return syllableCountScore;
+  const syllableCountPipeline = pipeline('text-classification', model='distilbert-base-uncased-finetuned-sst-2-english')
+  const result = await syllableCountPipeline(text)
+  return result.score
 }
 
-const ContentAnalyzerPage = () => {
+const Page = () => {
   const [text, setText] = useState('');
   const [readabilityScore, setReadabilityScore] = useState(0);
   const router = useRouter();
@@ -117,7 +111,7 @@ const ContentAnalyzerPage = () => {
     <div>
       <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
-      <ContentAnalyzerForm text={text} handleTextChange={handleTextChange} handleAnalyze={handleAnalyze} />
+      <ContentAnalyzerForm text={text} onTextChange={handleTextChange} onAnalyze={handleAnalyze} />
       <OptimizationSuggestions readabilityScore={readabilityScore} />
       <EngagementTracker />
       <AlternativeFormats />
@@ -130,6 +124,6 @@ const ContentAnalyzerPage = () => {
       </BarChart>
     </div>
   );
-}
+};
 
-export default ContentAnalyzerPage;
+export default Page;

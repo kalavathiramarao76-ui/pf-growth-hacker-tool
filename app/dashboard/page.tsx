@@ -91,14 +91,8 @@ const initialWidgets: Widget[] = [
         <h1 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '10px', color: '#3498db' }}>Unlock Your Content's Full Potential with Our Premium Plan</h1>
         <p style={{ fontSize: '16px', marginBottom: '20px' }}>Join the ranks of our 10,000+ satisfied customers who have seen an average increase of 25% in engagement and 35% in conversions. Limited time offer: get 15% off your first year and experience the power of AI-driven content optimization!</p>
         <div className="benefits-list" style={{ marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '10px' }}>Unlock Exclusive Benefits:</h2>
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-            <li style={{ marginBottom: '10px' }}>Advanced analytics and insights</li>
-            <li style={{ marginBottom: '10px' }}>Priority support from our expert team</li>
-            <li style={{ marginBottom: '10px' }}>Access to exclusive content optimization tools</li>
-          </ul>
+          <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '10px' }}>Unlock Exclusive</h2>
         </div>
-        <button style={{ backgroundColor: '#3498db', color: '#ffffff', padding: '10px 20px', borderRadius: '10px', border: 'none', cursor: 'pointer' }}>Upgrade Now</button>
       </div>
     )
   },
@@ -107,57 +101,81 @@ const initialWidgets: Widget[] = [
 const Page = () => {
   const router = useRouter();
   const [widgets, setWidgets] = useState(initialWidgets);
-  const [dragging, setDragging] = useState(false);
+  const [layout, setLayout] = useState<WidgetLayout>({ columns: 3, rows: 2, widgets: initialWidgets });
 
-  const handleDragStart = () => {
-    setDragging(true);
+  const handleWidgetClick = (widget: Widget) => {
+    widget.onClick();
   };
 
-  const handleDragEnd = () => {
-    setDragging(false);
+  const handleDragEnd = (result: any) => {
+    if (!result.destination) return;
+    const { source, destination } = result;
+    const newWidgets = [...widgets];
+    const [removed] = newWidgets.splice(source.index, 1);
+    newWidgets.splice(destination.index, 0, removed);
+    setWidgets(newWidgets);
   };
 
-  const handleWidgetClick = (id: number) => {
-    const widget = widgets.find((widget) => widget.id === id);
-    if (widget && widget.onClick) {
-      widget.onClick();
-    }
-  };
+  const chartData = useMemo(() => {
+    const data = {
+      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
+      datasets: [
+        {
+          label: 'Engagement',
+          data: [100, 120, 150, 180, 200],
+          backgroundColor: 'rgba(255, 99, 132, 0.2)',
+          borderColor: 'rgba(255, 99, 132, 1)',
+          borderWidth: 1,
+        },
+        {
+          label: 'Conversions',
+          data: [50, 60, 70, 80, 90],
+          backgroundColor: 'rgba(54, 162, 235, 0.2)',
+          borderColor: 'rgba(54, 162, 235, 1)',
+          borderWidth: 1,
+        },
+      ],
+    };
+    return data;
+  }, []);
+
+  const chartOptions = useMemo(() => {
+    return {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'top' as const,
+        },
+        title: {
+          display: true,
+          text: 'Engagement and Conversions',
+        },
+      },
+    };
+  }, []);
 
   return (
-    <div className="dashboard-page" style={{ padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+    <div className="dashboard">
       <DashboardHeader />
       <NavigationMenu />
       <DndProvider>
-        <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        <DragDropContext onDragEnd={handleDragEnd}>
           <Droppable droppableId="widgets">
             {(provided) => (
-              <div
-                ref={provided.innerRef}
-                {...provided.droppableProps}
-                style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}
-              >
+              <div {...provided.droppableProps} ref={provided.innerRef}>
                 {widgets.map((widget, index) => (
                   <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
                     {(provided) => (
                       <div
-                        ref={provided.innerRef}
                         {...provided.draggableProps}
                         {...provided.dragHandleProps}
-                        style={{
-                          ...provided.draggableProps.style,
-                          padding: '20px',
-                          backgroundColor: '#f7f7f7',
-                          borderRadius: '10px',
-                          boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
-                          margin: '20px',
-                          width: '250px',
-                        }}
+                        ref={provided.innerRef}
+                        className="widget"
                       >
                         <DashboardCard
                           title={widget.title}
                           icon={widget.icon}
-                          onClick={() => handleWidgetClick(widget.id)}
+                          onClick={() => handleWidgetClick(widget)}
                           frequency={widget.frequency}
                           description={widget.description}
                           callToAction={widget.callToAction}
@@ -174,7 +192,7 @@ const Page = () => {
           </Droppable>
         </DragDropContext>
       </DndProvider>
-      <WidgetSettings />
+      <Line options={chartOptions} data={chartData} />
     </div>
   );
 };
