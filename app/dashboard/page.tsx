@@ -67,64 +67,48 @@ const initialWidgets: Widget[] = [
           <ul style={{ listStyle: 'none', padding: '0', margin: '0' }}>
             <li style={{ marginBottom: '10px' }}><strong>AI-Powered Content Insights</strong>: Get data-driven recommendations to boost engagement and conversions</li>
             <li style={{ marginBottom: '10px' }}><strong>Prioritized Support</strong>: Get expert help whenever you need it, with priority access to our support team</li>
+            <li style={{ marginBottom: '10px' }}><strong>Advanced Analytics</strong>: Dive deeper into your content's performance with detailed metrics and insights</li>
+            <li style={{ marginBottom: '10px' }}><strong>Content Optimization Tools</strong>: Get access to our suite of tools to optimize your content for maximum engagement and conversions</li>
+            <li style={{ marginBottom: '10px' }}><strong>Exclusive Community Access</strong>: Join our community of content creators and stay up-to-date with the latest trends and best practices</li>
           </ul>
         </div>
+        <button style={{ backgroundColor: '#3498db', color: '#ffffff', padding: '10px 20px', border: 'none', borderRadius: '5px', cursor: 'pointer' }}><strong>Upgrade to Premium Now</strong></button>
       </div>
     )
   },
 ];
 
-const Page = () => {
+const App = () => {
   const router = useRouter();
-  const [widgets, setWidgets] = useState(initialWidgets);
-
-  const handleDragEnd = (result: any) => {
-    if (!result.destination) return;
-
-    const newWidgets = [...widgets];
-    const [reorderedWidget] = newWidgets.splice(result.source.index, 1);
-    newWidgets.splice(result.destination.index, 0, reorderedWidget);
-
-    setWidgets(newWidgets);
-  };
 
   return (
-    <div className="dashboard-container" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+    <div>
       <DashboardHeader />
-      <div className="dashboard-body" style={{ flex: 1, display: 'flex', flexDirection: 'row' }}>
-        <NavigationMenu />
-        <div className="dashboard-content" style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
-          <DndProvider>
-            <DragDropContext onDragEnd={handleDragEnd}>
-              <Droppable droppableId="widgets">
-                {(provided) => (
-                  <div ref={provided.innerRef} {...provided.droppableProps} style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
-                    {widgets.map((widget, index) => (
-                      <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
-                        {(provided) => (
-                          <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} style={{ margin: '10px' }}>
-                            <DashboardCard
-                              title={widget.title}
-                              icon={widget.icon}
-                              onClick={widget.onClick}
-                              frequency={widget.frequency}
-                              description={widget.description}
-                              callToAction={widget.callToAction}
-                            />
-                          </div>
-                        )}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
-                  </div>
-                )}
-              </Droppable>
-            </DragDropContext>
-          </DndProvider>
-        </div>
+      <NavigationMenu />
+      <div className="dashboard-container">
+        <DndProvider>
+          <DragDropContext>
+            <Droppable droppableId="widgets">
+              {(provided) => (
+                <div ref={provided.innerRef} {...provided.droppableProps}>
+                  {initialWidgets.map((widget, index) => (
+                    <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+                      {(provided) => (
+                        <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                          <DashboardCard widget={widget} />
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
+        </DndProvider>
       </div>
     </div>
   );
 };
 
-export default Page;
+export default App;
