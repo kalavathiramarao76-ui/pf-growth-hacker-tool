@@ -73,97 +73,41 @@ const initialWidgets: Widget[] = [
           <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '10px' }}>Unlock Exclusive Benefits:</h2>
           <ul style={{ listStyle: 'none', padding: '0', margin: '0' }}>
             <li style={{ marginBottom: '10px' }}><strong>AI-Powered Content Insights</strong>: Get data-driven recommendations to boost engagement and conversions</li>
-            <li style={{ marginBottom: '10px' }}><strong>Prioritized Support</strong>: Get expert help whenever you need it, with priority access to our support team</li>
+            <li style={{ marginBottom: '10px' }}><strong>Priority Support</strong>: Get dedicated support from our team of experts to help you achieve your content goals</li>
+            <li style={{ marginBottom: '10px' }}><strong>Advanced Analytics</strong>: Get in-depth analytics and insights to track your content's performance and make data-driven decisions</li>
+            <li style={{ marginBottom: '10px' }}><strong>Content Calendar Pro</strong>: Plan and schedule your content in advance with our intuitive content calendar</li>
+            <li style={{ marginBottom: '10px' }}><strong>Free Trial or Demo</strong>: Try our premium plan risk-free with a 14-day free trial or schedule a demo with our team to see how our premium plan can help you achieve your content goals</li>
           </ul>
         </div>
+        <button style={{ backgroundColor: '#3498db', color: '#ffffff', padding: '10px 20px', borderRadius: '10px', border: 'none', cursor: 'pointer' }} onClick={() => alert('Upgrade to Premium Plan')}>Upgrade Now</button>
       </div>
     )
   },
-  { 
-    id: 6, 
-    title: 'Content Suggestions', 
-    icon: <AiOutlinePlus size={24} />, 
-    onClick: () => {}, 
-    contentSuggestions: [
-      {
-        title: 'Optimize Your Headlines',
-        description: 'Use attention-grabbing headlines to increase engagement and conversions'
-      },
-      {
-        title: 'Use High-Quality Images',
-        description: 'Add high-quality images to your content to make it more visually appealing'
-      }
-    ]
-  }
 ];
 
 const App = () => {
+  const router = useRouter();
   const [widgets, setWidgets] = useState(initialWidgets);
-  const [dragging, setDragging] = useState(false);
 
-  const onDragEnd = (result: any) => {
+  const handleDragEnd = (result: any) => {
     if (!result.destination) return;
-    const { source, destination } = result;
     const newWidgets = [...widgets];
-    const [removed] = newWidgets.splice(source.index, 1);
-    newWidgets.splice(destination.index, 0, removed);
+    const [reorderedItem] = newWidgets.splice(result.source.index, 1);
+    newWidgets.splice(result.destination.index, 0, reorderedItem);
     setWidgets(newWidgets);
-  };
-
-  const handleWidgetClick = (widget: Widget) => {
-    widget.onClick();
   };
 
   return (
     <DndProvider>
-      <DragDropContext onDragEnd={onDragEnd}>
+      <DragDropContext onDragEnd={handleDragEnd}>
         <Droppable droppableId="widgets">
           {(provided) => (
-            <div {...provided.droppableProps} ref={provided.innerRef}>
+            <div ref={provided.innerRef} {...provided.droppableProps}>
               {widgets.map((widget, index) => (
                 <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
                   {(provided) => (
-                    <div
-                      {...provided.draggableProps}
-                      {...provided.dragHandleProps}
-                      ref={provided.innerRef}
-                      style={{
-                        ...provided.draggableProps.style,
-                        backgroundColor: dragging ? '#f7f7f7' : '#fff',
-                        padding: '20px',
-                        border: '1px solid #ddd',
-                        borderRadius: '10px',
-                        marginBottom: '20px'
-                      }}
-                    >
-                      <DashboardCard
-                        title={widget.title}
-                        icon={widget.icon}
-                        onClick={() => handleWidgetClick(widget)}
-                      >
-                        {widget.analyticsData && (
-                          <div style={{ padding: '20px' }}>
-                            <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '10px' }}>Analytics Data:</h2>
-                            <ul style={{ listStyle: 'none', padding: '0', margin: '0' }}>
-                              <li style={{ marginBottom: '10px' }}><strong>Engagement:</strong> {widget.analyticsData.engagement}</li>
-                              <li style={{ marginBottom: '10px' }}><strong>Conversions:</strong> {widget.analyticsData.conversions}</li>
-                              <li style={{ marginBottom: '10px' }}><strong>Views:</strong> {widget.analyticsData.views}</li>
-                            </ul>
-                          </div>
-                        )}
-                        {widget.contentSuggestions && (
-                          <div style={{ padding: '20px' }}>
-                            <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '10px' }}>Content Suggestions:</h2>
-                            <ul style={{ listStyle: 'none', padding: '0', margin: '0' }}>
-                              {widget.contentSuggestions.map((suggestion, index) => (
-                                <li key={index} style={{ marginBottom: '10px' }}>
-                                  <strong>{suggestion.title}:</strong> {suggestion.description}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                      </DashboardCard>
+                    <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                      <DashboardCard widget={widget} />
                     </div>
                   )}
                 </Draggable>

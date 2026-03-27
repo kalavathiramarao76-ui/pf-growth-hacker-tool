@@ -89,70 +89,138 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
     description: 'Connect your Outlook Calendar to view and manage your events',
     authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
   },
+  AppleCalendar: {
+    connect: (token: string) => {
+      // Implement Apple Calendar connection logic
+      localStorage.setItem('appleCalendarToken', token);
+    },
+    getEvents: async () => {
+      // Implement Apple Calendar event retrieval logic
+      const token = localStorage.getItem('appleCalendarToken');
+      if (token) {
+        const response = await fetch('https://api.apple.com/calendars/events', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const data = await response.json();
+        return data.data.map((event: any) => ({
+          id: event.id,
+          title: event.title,
+          start: new Date(event.startDate),
+          end: new Date(event.endDate),
+        }));
+      }
+      return [];
+    },
+    disconnect: () => {
+      // Implement Apple Calendar disconnection logic
+      localStorage.removeItem('appleCalendarToken');
+    },
+    name: 'Apple Calendar',
+    icon: 'https://cdn-icons-png.flaticon.com/512/281/281766.png',
+    description: 'Connect your Apple Calendar to view and manage your events',
+    authUrl: 'https://id.apple.com/auth/authorize',
+  },
+  YahooCalendar: {
+    connect: (token: string) => {
+      // Implement Yahoo Calendar connection logic
+      localStorage.setItem('yahooCalendarToken', token);
+    },
+    getEvents: async () => {
+      // Implement Yahoo Calendar event retrieval logic
+      const token = localStorage.getItem('yahooCalendarToken');
+      if (token) {
+        const response = await fetch('https://api.login.yahoo.com/calendars/events', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const data = await response.json();
+        return data.events.map((event: any) => ({
+          id: event.id,
+          title: event.summary,
+          start: new Date(event.start),
+          end: new Date(event.end),
+        }));
+      }
+      return [];
+    },
+    disconnect: () => {
+      // Implement Yahoo Calendar disconnection logic
+      localStorage.removeItem('yahooCalendarToken');
+    },
+    name: 'Yahoo Calendar',
+    icon: 'https://cdn-icons-png.flaticon.com/512/281/281767.png',
+    description: 'Connect your Yahoo Calendar to view and manage your events',
+    authUrl: 'https://api.login.yahoo.com/oauth2/request_auth',
+  },
 };
 
 const App = () => {
-  const [connectedCalendar, setConnectedCalendar] = useState<string | null>(null);
+  const [selectedCalendar, setSelectedCalendar] = useState<string>('');
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [connected, setConnected] = useState<boolean>(false);
 
   const handleConnect = async (calendar: string) => {
-    const authUrl = calendarIntegrations[calendar].authUrl;
-    const clientId = 'YOUR_CLIENT_ID';
-    const redirectUri = 'YOUR_REDIRECT_URI';
-    const scope = 'YOUR_SCOPE';
-    const url = `${authUrl}?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=code`;
-    window.open(url, '_blank');
+    const token = await getAccessToken(calendar);
+    calendarIntegrations[calendar].connect(token);
+    setConnected(true);
+    setSelectedCalendar(calendar);
   };
 
   const handleDisconnect = () => {
-    calendarIntegrations[connectedCalendar as string].disconnect();
-    setConnectedCalendar(null);
-    setEvents([]);
+    calendarIntegrations[selectedCalendar].disconnect();
+    setConnected(false);
+    setSelectedCalendar('');
   };
 
-  const handleGetEvents = async () => {
-    if (connectedCalendar) {
-      const events = await calendarIntegrations[connectedCalendar].getEvents();
+  const getAccessToken = async (calendar: string) => {
+    const response = await fetch(calendarIntegrations[calendar].authUrl, {
+      method: 'GET',
+      redirect: 'follow',
+    });
+    const url = new URL(response.url);
+    const token = url.searchParams.get('token');
+    return token;
+  };
+
+  const getEvents = async () => {
+    if (connected) {
+      const events = await calendarIntegrations[selectedCalendar].getEvents();
       setEvents(events);
     }
   };
 
   useEffect(() => {
-    const token = localStorage.getItem('googleCalendarToken') || localStorage.getItem('outlookCalendarToken');
-    if (token) {
-      setIsAuthenticated(true);
-      if (localStorage.getItem('googleCalendarToken')) {
-        setConnectedCalendar('GoogleCalendar');
-      } else {
-        setConnectedCalendar('OutlookCalendar');
-      }
-    }
-  }, []);
+    getEvents();
+  }, [connected, selectedCalendar]);
 
   return (
     <Layout>
       <SEO title="AI-Powered Content Optimizer" />
       <DndProvider backend={HTML5Backend}>
-        <Calendar events={events} />
-        {connectedCalendar ? (
-          <div>
-            <button onClick={handleDisconnect}>Disconnect {connectedCalendar}</button>
-            <button onClick={handleGetEvents}>Get Events</button>
-          </div>
-        ) : (
-          <div>
+        <div>
+          <h1>Calendar Integrations</h1>
+          <ul>
             {Object.keys(calendarIntegrations).map((calendar) => (
-              <div key={calendar}>
+              <li key={calendar}>
                 <Image src={calendarIntegrations[calendar].icon} width={20} height={20} />
                 <span>{calendarIntegrations[calendar].name}</span>
                 <button onClick={() => handleConnect(calendar)}>Connect</button>
-              </div>
+              </li>
             ))}
-          </div>
-        )}
-        <Tooltip />
+          </ul>
+          {connected && (
+            <div>
+              <h2>Connected to {selectedCalendar}</h2>
+              <button onClick={handleDisconnect}>Disconnect</button>
+              <Calendar events={events} />
+            </div>
+          )}
+        </div>
       </DndProvider>
+      <Tooltip />
       <Socket />
       <StripeCheckout />
     </Layout>
