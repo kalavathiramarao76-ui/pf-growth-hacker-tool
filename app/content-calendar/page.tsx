@@ -89,106 +89,59 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
     description: 'Connect your Outlook Calendar to view and manage your events',
     authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
   },
-  AppleCalendar: {
-    connect: (token: string) => {
-      // Implement Apple Calendar connection logic
-      localStorage.setItem('appleCalendarToken', token);
-    },
-    getEvents: async () => {
-      // Implement Apple Calendar event retrieval logic
-      const token = localStorage.getItem('appleCalendarToken');
-      if (token) {
-        const response = await fetch('https://api.apple.com/calendars/events', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const data = await response.json();
-        return data.events.map((event: any) => ({
-          id: event.id,
-          title: event.title,
-          start: new Date(event.startDate),
-          end: new Date(event.endDate),
-        }));
-      }
-      return [];
-    },
-    disconnect: () => {
-      // Implement Apple Calendar disconnection logic
-      localStorage.removeItem('appleCalendarToken');
-    },
-    name: 'Apple Calendar',
-    icon: 'https://cdn-icons-png.flaticon.com/512/281/281766.png',
-    description: 'Connect your Apple Calendar to view and manage your events',
-    authUrl: 'https://id.apple.com/auth/authorize',
-  },
-  YahooCalendar: {
-    connect: (token: string) => {
-      // Implement Yahoo Calendar connection logic
-      localStorage.setItem('yahooCalendarToken', token);
-    },
-    getEvents: async () => {
-      // Implement Yahoo Calendar event retrieval logic
-      const token = localStorage.getItem('yahooCalendarToken');
-      if (token) {
-        const response = await fetch('https://api.login.yahoo.com/calendars/events', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const data = await response.json();
-        return data.events.map((event: any) => ({
-          id: event.id,
-          title: event.title,
-          start: new Date(event.startDate),
-          end: new Date(event.endDate),
-        }));
-      }
-      return [];
-    },
-    disconnect: () => {
-      // Implement Yahoo Calendar disconnection logic
-      localStorage.removeItem('yahooCalendarToken');
-    },
-    name: 'Yahoo Calendar',
-    icon: 'https://cdn-icons-png.flaticon.com/512/281/281767.png',
-    description: 'Connect your Yahoo Calendar to view and manage your events',
-    authUrl: 'https://api.login.yahoo.com/oauth2/request_auth',
-  },
 };
 
 const Page = () => {
-  const [selectedCalendar, setSelectedCalendar] = useState<string | null>(null);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [connectedCalendars, setConnectedCalendars] = useState<string[]>([]);
+  const [dragging, setDragging] = useState(false);
+  const [view, setView] = useState('month');
+  const [socket, setSocket] = useState<Socket | null>(null);
 
   useEffect(() => {
-    const storedConnectedCalendars = localStorage.getItem('connectedCalendars');
-    if (storedConnectedCalendars) {
-      setConnectedCalendars(JSON.parse(storedConnectedCalendars));
-    }
+    const socket = new Socket();
+    setSocket(socket);
+    socket.on('connect', () => {
+      console.log('Connected to the server');
+    });
+    socket.on('disconnect', () => {
+      console.log('Disconnected from the server');
+    });
+    socket.on('events', (events: CalendarEvent[]) => {
+      setEvents(events);
+    });
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
-  const handleConnectCalendar = (calendar: string) => {
-    const authUrl = calendarIntegrations[calendar].authUrl;
-    const clientId = 'YOUR_CLIENT_ID';
-    const redirectUri = 'YOUR_REDIRECT_URI';
-    const scope = 'YOUR_SCOPE';
-    const state = 'YOUR_STATE';
-
-    const url = `${authUrl}?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&state=${state}&response_type=code`;
-    window.location.href = url;
+  const handleDragStart = () => {
+    setDragging(true);
   };
 
-  const handleDisconnectCalendar = (calendar: string) => {
-    calendarIntegrations[calendar].disconnect();
-    setConnectedCalendars(connectedCalendars.filter((c) => c !== calendar));
-    localStorage.setItem('connectedCalendars', JSON.stringify(connectedCalendars.filter((c) => c !== calendar)));
+  const handleDragEnd = () => {
+    setDragging(false);
   };
 
-  const handleGetEvents = async (calendar: string) => {
-    const events = await calendarIntegrations[calendar].getEvents();
-    setEvents(events);
+  const handleDrop = (event: CalendarEvent) => {
+    // Update the event in the database
+    fetch('/api/events', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(event),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log(data);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  };
+
+  const handleViewChange = (view: string) => {
+    setView(view);
   };
 
   return (
@@ -197,27 +150,17 @@ const Page = () => {
       <DndProvider backend={HTML5Backend}>
         <Calendar
           events={events}
-          onEventClick={(event) => console.log(event)}
-          onDateClick={(date) => console.log(date)}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          onDrop={handleDrop}
+          view={view}
+          onViewChange={handleViewChange}
         />
-        <div>
-          <h2>Connect a Calendar</h2>
-          {Object.keys(calendarIntegrations).map((calendar) => (
-            <div key={calendar}>
-              <Image src={calendarIntegrations[calendar].icon} alt={calendarIntegrations[calendar].name} width={20} height={20} />
-              <span>{calendarIntegrations[calendar].name}</span>
-              {connectedCalendars.includes(calendar) ? (
-                <button onClick={() => handleDisconnectCalendar(calendar)}>Disconnect</button>
-              ) : (
-                <button onClick={() => handleConnectCalendar(calendar)}>Connect</button>
-              )}
-              {connectedCalendars.includes(calendar) && (
-                <button onClick={() => handleGetEvents(calendar)}>Get Events</button>
-              )}
-            </div>
-          ))}
-        </div>
       </DndProvider>
+      {dragging && <Tooltip>Dragging...</Tooltip>}
+      {socket && (
+        <button onClick={() => socket.emit('getEvents')}>Get Events</button>
+      )}
     </Layout>
   );
 };

@@ -26,6 +26,8 @@ import {
   Legend,
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
+import axios from 'axios';
+import _ from 'lodash';
 
 ChartJS.register(
   CategoryScale,
@@ -120,108 +122,117 @@ const initialWidgets: Widget[] = [
         >
           Join the ranks of our 10,000+ satisfied customers who have seen an
           average increase of 25% in engagement and 35% in conversions. Limited
-          time offer: get 15% off your first year and experience the power of
-          AI-driven content optimization!
+          time offer: get 15% off your
         </p>
-        <div
-          className="benefits-list"
-          style={{
-            marginBottom: '20px',
-          }}
-        >
-          <h2
-            style={{
-              fontSize: '18px',
-              fontWeight: 'bold',
-              marginBottom: '10px',
-            }}
-          >
-            Unlock Exclusive
-          </h2>
-        </div>
       </div>
     ),
   },
 ];
 
+const cache = {};
+
+const fetchAnalyticsData = async (widgetId: number) => {
+  if (cache[widgetId]) {
+    return cache[widgetId];
+  }
+
+  try {
+    const response = await axios.get(`/api/analytics/${widgetId}`);
+    cache[widgetId] = response.data;
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+};
+
+const fetchContentSuggestions = async (widgetId: number) => {
+  if (cache[widgetId]) {
+    return cache[widgetId];
+  }
+
+  try {
+    const response = await axios.get(`/api/content-suggestions/${widgetId}`);
+    cache[widgetId] = response.data;
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+};
+
 const DashboardPage = () => {
+  const router = useRouter();
   const [widgets, setWidgets] = useState(initialWidgets);
-  const [widgetLayout, setWidgetLayout] = useState<WidgetLayout>({
-    columns: 3,
-    rows: 2,
-    widgets: initialWidgets,
-  });
+  const [analyticsData, setAnalyticsData] = useState({});
+  const [contentSuggestions, setContentSuggestions] = useState({});
 
-  const handleWidgetClick = useCallback((widget: Widget) => {
-    widget.onClick();
-  }, []);
+  const fetchAllAnalyticsData = async () => {
+    const promises = widgets.map((widget) => fetchAnalyticsData(widget.id));
+    const results = await Promise.all(promises);
+    setAnalyticsData(_.keyBy(results, 'id'));
+  };
 
-  const handleWidgetDragEnd = useCallback((result: any) => {
-    if (!result.destination) return;
-    const { source, destination } = result;
-    const newWidgets = [...widgets];
-    const [removed] = newWidgets.splice(source.index, 1);
-    newWidgets.splice(destination.index, 0, removed);
-    setWidgets(newWidgets);
-  }, [widgets]);
-
-  const memoizedWidgets = useMemo(() => widgets, [widgets]);
+  const fetchAllContentSuggestions = async () => {
+    const promises = widgets.map((widget) => fetchContentSuggestions(widget.id));
+    const results = await Promise.all(promises);
+    setContentSuggestions(_.keyBy(results, 'id'));
+  };
 
   useEffect(() => {
-    const fetchAnalyticsData = async () => {
-      // Simulate fetching analytics data
-      const analyticsData = {
-        engagement: 100,
-        conversions: 50,
-        views: 1000,
-      };
-      const updatedWidgets = widgets.map((widget) => {
-        if (widget.id === 2) {
-          return { ...widget, analyticsData };
-        }
-        return widget;
-      });
-      setWidgets(updatedWidgets);
-    };
-    fetchAnalyticsData();
-  }, []);
+    fetchAllAnalyticsData();
+    fetchAllContentSuggestions();
+  }, [widgets]);
+
+  const handleWidgetClick = (widget: Widget) => {
+    if (widget.onClick) {
+      widget.onClick();
+    }
+  };
+
+  const handleDragEnd = (result: any) => {
+    if (!result.destination) {
+      return;
+    }
+
+    const newWidgets = [...widgets];
+    const [reorderedWidget] = newWidgets.splice(result.source.index, 1);
+    newWidgets.splice(result.destination.index, 0, reorderedWidget);
+    setWidgets(newWidgets);
+  };
 
   return (
     <DndProvider>
-      <DragDropContext onDragEnd={handleWidgetDragEnd}>
-        <DashboardHeader />
-        <NavigationMenu />
-        <div className="dashboard-container">
-          <Droppable droppableId="widgets">
-            {(provided) => (
-              <div
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                className="widgets-container"
-              >
-                {memoizedWidgets.map((widget, index) => (
-                  <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
-                    {(provided) => (
-                      <div
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        ref={provided.innerRef}
-                        className="widget"
-                      >
-                        <DashboardCard
-                          key={widget.id}
-                          widget={widget}
-                          onClick={() => handleWidgetClick(widget)}
-                        />
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-        </div>
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <Droppable droppableId="widgets">
+          {(provided) => (
+            <div ref={provided.innerRef} {...provided.droppableProps}>
+              {widgets.map((widget, index) => (
+                <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+                  {(provided) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      {...provided.dragHandleProps}
+                    >
+                      <DashboardCard
+                        key={widget.id}
+                        title={widget.title}
+                        icon={widget.icon}
+                        onClick={() => handleWidgetClick(widget)}
+                        analyticsData={analyticsData[widget.id]}
+                        contentSuggestions={contentSuggestions[widget.id]}
+                        description={widget.description}
+                        callToAction={widget.callToAction}
+                      />
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
       </DragDropContext>
     </DndProvider>
   );
