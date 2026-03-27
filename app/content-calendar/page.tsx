@@ -91,78 +91,84 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
   },
 };
 
-const Page = () => {
+const App = () => {
+  const [connectedCalendars, setConnectedCalendars] = useState(
+    Object.keys(calendarIntegrations).filter((integration) =>
+      localStorage.getItem(`${integration}Token`)
+    )
+  );
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [dragging, setDragging] = useState(false);
-  const [view, setView] = useState('month');
-  const [socket, setSocket] = useState<Socket | null>(null);
+  const [connecting, setConnecting] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
+
+  const handleConnect = async (integration: string) => {
+    setConnecting(true);
+    const token = await authenticate(integration);
+    if (token) {
+      calendarIntegrations[integration].connect(token);
+      setConnectedCalendars((prevCalendars) => [...prevCalendars, integration]);
+    }
+    setConnecting(false);
+  };
+
+  const handleDisconnect = (integration: string) => {
+    setDisconnecting(true);
+    calendarIntegrations[integration].disconnect();
+    setConnectedCalendars((prevCalendars) =>
+      prevCalendars.filter((calendar) => calendar !== integration)
+    );
+    setDisconnecting(false);
+  };
+
+  const authenticate = async (integration: string) => {
+    const authUrl = calendarIntegrations[integration].authUrl;
+    const clientId = 'YOUR_CLIENT_ID';
+    const redirectUri = 'YOUR_REDIRECT_URI';
+    const scope = 'YOUR_SCOPE';
+    const url = `${authUrl}?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=token`;
+    const response = await fetch(url, {
+      method: 'GET',
+      redirect: 'follow',
+    });
+    const token = await response.text();
+    return token;
+  };
 
   useEffect(() => {
-    const socket = new Socket();
-    setSocket(socket);
-    socket.on('connect', () => {
-      console.log('Connected to the server');
-    });
-    socket.on('disconnect', () => {
-      console.log('Disconnected from the server');
-    });
-    socket.on('events', (events: CalendarEvent[]) => {
-      setEvents(events);
-    });
-    return () => {
-      socket.disconnect();
+    const fetchEvents = async () => {
+      const allEvents: CalendarEvent[] = [];
+      for (const integration of connectedCalendars) {
+        const events = await calendarIntegrations[integration].getEvents();
+        allEvents.push(...events);
+      }
+      setEvents(allEvents);
     };
-  }, []);
-
-  const handleDragStart = () => {
-    setDragging(true);
-  };
-
-  const handleDragEnd = () => {
-    setDragging(false);
-  };
-
-  const handleDrop = (event: CalendarEvent) => {
-    // Update the event in the database
-    fetch('/api/events', {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(event),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log(data);
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-  };
-
-  const handleViewChange = (view: string) => {
-    setView(view);
-  };
+    fetchEvents();
+  }, [connectedCalendars]);
 
   return (
     <Layout>
       <SEO title="Content Calendar" />
       <DndProvider backend={HTML5Backend}>
-        <Calendar
-          events={events}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-          onDrop={handleDrop}
-          view={view}
-          onViewChange={handleViewChange}
-        />
+        <Calendar events={events} />
+        {Object.keys(calendarIntegrations).map((integration) => (
+          <div key={integration}>
+            <Image src={calendarIntegrations[integration].icon} alt={integration} />
+            <span>{calendarIntegrations[integration].name}</span>
+            {connectedCalendars.includes(integration) ? (
+              <button onClick={() => handleDisconnect(integration)} disabled={disconnecting}>
+                {disconnecting ? 'Disconnecting...' : 'Disconnect'}
+              </button>
+            ) : (
+              <button onClick={() => handleConnect(integration)} disabled={connecting}>
+                {connecting ? 'Connecting...' : 'Connect'}
+              </button>
+            )}
+          </div>
+        ))}
       </DndProvider>
-      {dragging && <Tooltip>Dragging...</Tooltip>}
-      {socket && (
-        <button onClick={() => socket.emit('getEvents')}>Get Events</button>
-      )}
     </Layout>
   );
 };
 
-export default Page;
+export default App;
