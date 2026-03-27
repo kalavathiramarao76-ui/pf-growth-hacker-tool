@@ -100,70 +100,27 @@ const calculateSyllableCountScore = async (text: string) => {
 }
 
 const ContentAnalyzerPage = () => {
-  const router = useRouter();
-  const [content, setContent] = useState('');
+  const [text, setText] = useState('');
   const [readabilityScore, setReadabilityScore] = useState(0);
-  const [optimizationSuggestions, setOptimizationSuggestions] = useState([]);
-  const [engagementTracker, setEngagementTracker] = useState({});
-  const [alternativeFormats, setAlternativeFormats] = useState({});
+  const router = useRouter();
 
-  useEffect(() => {
-    const storedContent = LocalStorage.get('content');
-    if (storedContent) {
-      setContent(storedContent);
-    }
-  }, []);
+  const handleTextChange = (event: any) => {
+    setText(event.target.value);
+  }
 
-  const handleContentChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const content = event.target.value;
-    setContent(content);
-    LocalStorage.set('content', content);
-  };
-
-  const handleAnalyzeContent = async () => {
-    const readabilityScore = await calculateReadabilityScore(content);
-    setReadabilityScore(readabilityScore);
-    const optimizationSuggestions = await getOptimizationSuggestions(content);
-    setOptimizationSuggestions(optimizationSuggestions);
-    const engagementTracker = await getEngagementTracker(content);
-    setEngagementTracker(engagementTracker);
-    const alternativeFormats = await getAlternativeFormats(content);
-    setAlternativeFormats(alternativeFormats);
-  };
-
-  const getOptimizationSuggestions = async (content: string) => {
-    // Get optimization suggestions using a language model
-    const languageModel = new LanguageModel('en');
-    const optimizationSuggestions = await languageModel.getOptimizationSuggestions(content);
-    return optimizationSuggestions;
-  };
-
-  const getEngagementTracker = async (content: string) => {
-    // Get engagement tracker using a language model
-    const languageModel = new LanguageModel('en');
-    const engagementTracker = await languageModel.getEngagementTracker(content);
-    return engagementTracker;
-  };
-
-  const getAlternativeFormats = async (content: string) => {
-    // Get alternative formats using a language model
-    const languageModel = new LanguageModel('en');
-    const alternativeFormats = await languageModel.getAlternativeFormats(content);
-    return alternativeFormats;
-  };
+  const handleAnalyze = async () => {
+    const score = await calculateReadabilityScore(text);
+    setReadabilityScore(score);
+  }
 
   return (
     <div>
       <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
-      <ContentAnalyzerForm
-        content={content}
-        onChange={handleContentChange}
-        onAnalyze={handleAnalyzeContent}
-      />
-      <OptimizationSuggestions suggestions={optimizationSuggestions} />
-      <EngagementTracker engagementTracker={engagementTracker} />
-      <AlternativeFormats alternativeFormats={alternativeFormats} />
+      <ContentAnalyzerForm text={text} handleTextChange={handleTextChange} handleAnalyze={handleAnalyze} />
+      <OptimizationSuggestions readabilityScore={readabilityScore} />
+      <EngagementTracker />
+      <AlternativeFormats />
       <BarChart width={500} height={300} data={[{ name: 'Readability Score', score: readabilityScore }]}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="name" />
@@ -173,6 +130,6 @@ const ContentAnalyzerPage = () => {
       </BarChart>
     </div>
   );
-};
+}
 
 export default ContentAnalyzerPage;

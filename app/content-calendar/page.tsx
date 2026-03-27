@@ -89,118 +89,70 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
     description: 'Connect your Outlook Calendar to view and manage your events',
     authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
   },
-  AppleCalendar: {
-    connect: (token: string) => {
-      // Implement Apple Calendar connection logic
-      localStorage.setItem('appleCalendarToken', token);
-    },
-    getEvents: async () => {
-      // Implement Apple Calendar event retrieval logic
-      const token = localStorage.getItem('appleCalendarToken');
-      if (token) {
-        const response = await fetch('https://api.apple.com/calendars/v1/events', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const data = await response.json();
-        return data.data.map((event: any) => ({
-          id: event.id,
-          title: event.title,
-          start: new Date(event.startDate),
-          end: new Date(event.endDate),
-        }));
-      }
-      return [];
-    },
-    disconnect: () => {
-      // Implement Apple Calendar disconnection logic
-      localStorage.removeItem('appleCalendarToken');
-    },
-    name: 'Apple Calendar',
-    icon: 'https://cdn-icons-png.flaticon.com/512/281/281766.png',
-    description: 'Connect your Apple Calendar to view and manage your events',
-    authUrl: 'https://id.apple.com/auth/authorize',
-  },
-  MicrosoftExchange: {
-    connect: (token: string) => {
-      // Implement Microsoft Exchange connection logic
-      localStorage.setItem('microsoftExchangeToken', token);
-    },
-    getEvents: async () => {
-      // Implement Microsoft Exchange event retrieval logic
-      const token = localStorage.getItem('microsoftExchangeToken');
-      if (token) {
-        const response = await fetch('https://outlook.office.com/api/v2.0/me/events', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const data = await response.json();
-        return data.value.map((event: any) => ({
-          id: event.id,
-          title: event.subject,
-          start: new Date(event.start.dateTime),
-          end: new Date(event.end.dateTime),
-        }));
-      }
-      return [];
-    },
-    disconnect: () => {
-      // Implement Microsoft Exchange disconnection logic
-      localStorage.removeItem('microsoftExchangeToken');
-    },
-    name: 'Microsoft Exchange',
-    icon: 'https://cdn-icons-png.flaticon.com/512/281/281767.png',
-    description: 'Connect your Microsoft Exchange to view and manage your events',
-    authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
-  },
 };
 
-const Page = () => {
+const ContentCalendarPage = () => {
+  const pathname = usePathname();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [selectedCalendar, setSelectedCalendar] = useState<string>('');
+  const [selectedIntegration, setSelectedIntegration] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchEvents = async () => {
-      if (selectedCalendar) {
-        const calendarIntegration = calendarIntegrations[selectedCalendar];
-        if (calendarIntegration) {
-          const events = await calendarIntegration.getEvents();
-          setEvents(events);
-        }
+      if (selectedIntegration) {
+        const integration = calendarIntegrations[selectedIntegration];
+        const fetchedEvents = await integration.getEvents();
+        setEvents(fetchedEvents);
       }
     };
     fetchEvents();
-  }, [selectedCalendar]);
-
-  const handleCalendarSelect = (calendar: string) => {
-    setSelectedCalendar(calendar);
-  };
+  }, [selectedIntegration]);
 
   return (
     <Layout>
-      <SEO title="Content Calendar" />
+      <SEO
+        title="AI-Powered Content Optimizer - Content Calendar"
+        description="Optimize your content with our AI-powered content optimizer and manage your events with our integrated calendar"
+        keywords="content optimizer, ai-powered, content calendar, event management"
+        canonicalUrl="https://example.com/content-calendar"
+        openGraph={{
+          type: 'website',
+          url: 'https://example.com/content-calendar',
+          title: 'AI-Powered Content Optimizer - Content Calendar',
+          description: 'Optimize your content with our AI-powered content optimizer and manage your events with our integrated calendar',
+          images: [
+            {
+              url: 'https://example.com/og-image.jpg',
+              width: 1200,
+              height: 630,
+              alt: 'AI-Powered Content Optimizer - Content Calendar',
+            },
+          ],
+        }}
+        twitter={{
+          handle: '@example',
+          site: '@example',
+          cardType: 'summary_large_image',
+        }}
+      />
       <DndProvider backend={HTML5Backend}>
-        <div className="container">
-          <h1>Content Calendar</h1>
-          <div className="calendar-integrations">
-            {Object.keys(calendarIntegrations).map((calendar) => (
-              <div key={calendar} className="calendar-integration">
-                <Image src={calendarIntegrations[calendar].icon} alt={calendarIntegrations[calendar].name} />
-                <h2>{calendarIntegrations[calendar].name}</h2>
-                <p>{calendarIntegrations[calendar].description}</p>
-                <button onClick={() => handleCalendarSelect(calendar)}>Connect</button>
-              </div>
-            ))}
-          </div>
-          {selectedCalendar && (
-            <Calendar events={events} />
-          )}
-        </div>
+        <Calendar events={events} />
       </DndProvider>
+      <div>
+        {Object.keys(calendarIntegrations).map((integration) => (
+          <div key={integration}>
+            <Image src={calendarIntegrations[integration].icon} alt={calendarIntegrations[integration].name} />
+            <span>{calendarIntegrations[integration].name}</span>
+            <button onClick={() => setSelectedIntegration(integration)}>Connect</button>
+          </div>
+        ))}
+      </div>
+      <Tooltip>
+        <span>Connect your calendar to view and manage your events</span>
+      </Tooltip>
+      <Socket />
+      <StripeCheckout />
     </Layout>
   );
 };
 
-export default Page;
+export default ContentCalendarPage;
