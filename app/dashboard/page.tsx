@@ -19,6 +19,8 @@ interface Widget {
   frequency?: number;
   description?: string;
   callToAction?: JSX.Element;
+  analyticsData?: any;
+  contentSuggestions?: any;
 }
 
 interface WidgetLayout {
@@ -38,7 +40,12 @@ const initialWidgets: Widget[] = [
     id: 2, 
     title: 'View Analytics', 
     icon: <IoMdAnalytics size={24} />, 
-    onClick: () => {} 
+    onClick: () => {}, 
+    analyticsData: {
+      engagement: 100,
+      conversions: 50,
+      views: 1000
+    }
   },
   { 
     id: 3, 
@@ -67,47 +74,106 @@ const initialWidgets: Widget[] = [
           <ul style={{ listStyle: 'none', padding: '0', margin: '0' }}>
             <li style={{ marginBottom: '10px' }}><strong>AI-Powered Content Insights</strong>: Get data-driven recommendations to boost engagement and conversions</li>
             <li style={{ marginBottom: '10px' }}><strong>Prioritized Support</strong>: Get expert help whenever you need it, with priority access to our support team</li>
-            <li style={{ marginBottom: '10px' }}><strong>Advanced Analytics</strong>: Dive deeper into your content's performance with detailed metrics and insights</li>
-            <li style={{ marginBottom: '10px' }}><strong>Content Optimization Tools</strong>: Get access to our suite of tools to optimize your content for maximum engagement and conversions</li>
-            <li style={{ marginBottom: '10px' }}><strong>Exclusive Community Access</strong>: Join our community of content creators and stay up-to-date with the latest trends and best practices</li>
           </ul>
         </div>
-        <button style={{ backgroundColor: '#3498db', color: '#ffffff', padding: '10px 20px', border: 'none', borderRadius: '5px', cursor: 'pointer' }}><strong>Upgrade to Premium Now</strong></button>
       </div>
     )
   },
+  { 
+    id: 6, 
+    title: 'Content Suggestions', 
+    icon: <AiOutlinePlus size={24} />, 
+    onClick: () => {}, 
+    contentSuggestions: [
+      {
+        title: 'Optimize Your Headlines',
+        description: 'Use attention-grabbing headlines to increase engagement and conversions'
+      },
+      {
+        title: 'Use High-Quality Images',
+        description: 'Add high-quality images to your content to make it more visually appealing'
+      }
+    ]
+  }
 ];
 
 const App = () => {
-  const router = useRouter();
+  const [widgets, setWidgets] = useState(initialWidgets);
+  const [dragging, setDragging] = useState(false);
+
+  const onDragEnd = (result: any) => {
+    if (!result.destination) return;
+    const { source, destination } = result;
+    const newWidgets = [...widgets];
+    const [removed] = newWidgets.splice(source.index, 1);
+    newWidgets.splice(destination.index, 0, removed);
+    setWidgets(newWidgets);
+  };
+
+  const handleWidgetClick = (widget: Widget) => {
+    widget.onClick();
+  };
 
   return (
-    <div>
-      <DashboardHeader />
-      <NavigationMenu />
-      <div className="dashboard-container">
-        <DndProvider>
-          <DragDropContext>
-            <Droppable droppableId="widgets">
-              {(provided) => (
-                <div ref={provided.innerRef} {...provided.droppableProps}>
-                  {initialWidgets.map((widget, index) => (
-                    <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
-                      {(provided) => (
-                        <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
-                          <DashboardCard widget={widget} />
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </DragDropContext>
-        </DndProvider>
-      </div>
-    </div>
+    <DndProvider>
+      <DragDropContext onDragEnd={onDragEnd}>
+        <Droppable droppableId="widgets">
+          {(provided) => (
+            <div {...provided.droppableProps} ref={provided.innerRef}>
+              {widgets.map((widget, index) => (
+                <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+                  {(provided) => (
+                    <div
+                      {...provided.draggableProps}
+                      {...provided.dragHandleProps}
+                      ref={provided.innerRef}
+                      style={{
+                        ...provided.draggableProps.style,
+                        backgroundColor: dragging ? '#f7f7f7' : '#fff',
+                        padding: '20px',
+                        border: '1px solid #ddd',
+                        borderRadius: '10px',
+                        marginBottom: '20px'
+                      }}
+                    >
+                      <DashboardCard
+                        title={widget.title}
+                        icon={widget.icon}
+                        onClick={() => handleWidgetClick(widget)}
+                      >
+                        {widget.analyticsData && (
+                          <div style={{ padding: '20px' }}>
+                            <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '10px' }}>Analytics Data:</h2>
+                            <ul style={{ listStyle: 'none', padding: '0', margin: '0' }}>
+                              <li style={{ marginBottom: '10px' }}><strong>Engagement:</strong> {widget.analyticsData.engagement}</li>
+                              <li style={{ marginBottom: '10px' }}><strong>Conversions:</strong> {widget.analyticsData.conversions}</li>
+                              <li style={{ marginBottom: '10px' }}><strong>Views:</strong> {widget.analyticsData.views}</li>
+                            </ul>
+                          </div>
+                        )}
+                        {widget.contentSuggestions && (
+                          <div style={{ padding: '20px' }}>
+                            <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '10px' }}>Content Suggestions:</h2>
+                            <ul style={{ listStyle: 'none', padding: '0', margin: '0' }}>
+                              {widget.contentSuggestions.map((suggestion, index) => (
+                                <li key={index} style={{ marginBottom: '10px' }}>
+                                  <strong>{suggestion.title}:</strong> {suggestion.description}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </DashboardCard>
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
+    </DndProvider>
   );
 };
 

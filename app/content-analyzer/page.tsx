@@ -55,105 +55,75 @@ const calculateReadabilityScore = async (text: string) => {
   const combinedScoreAdvanced = (readabilityScore + readabilityScoreNlp + readabilityScoreSpacy + tfReadabilityScore) / 4;
 
   // Apply a weighted average to the combined scores
-  const weightedAverage = (0.4 * combinedScore) + (0.3 * combinedScoreAdvanced) + (0.3 * readabilityScore);
+  const weightedAverage = (0.3 * combinedScore) + (0.7 * combinedScoreAdvanced);
 
   return weightedAverage;
 }
 
 const calculateComplexityScore = async (text: string) => {
-  const complexityPipeline = pipeline('text-classification', model='distilbert-base-uncased-finetuned-sst-2-english')
-  const result = await complexityPipeline(text)
-  const complexityScore = result.score
+  // Calculate complexity score using a language model
+  const languageModel = new LanguageModel('en');
+  const complexityScore = await languageModel.calculateComplexity(text);
   return complexityScore;
 }
 
 const calculateCohesionScore = async (text: string) => {
-  const cohesionPipeline = pipeline('text-classification', model='distilbert-base-uncased-finetuned-sst-2-english')
-  const result = await cohesionPipeline(text)
-  const cohesionScore = result.score
+  // Calculate cohesion score using a language model
+  const languageModel = new LanguageModel('en');
+  const cohesionScore = await languageModel.calculateCohesion(text);
   return cohesionScore;
 }
 
 const calculateClarityScore = async (text: string) => {
-  const clarityPipeline = pipeline('text-classification', model='distilbert-base-uncased-finetuned-sst-2-english')
-  const result = await clarityPipeline(text)
-  const clarityScore = result.score
+  // Calculate clarity score using a language model
+  const languageModel = new LanguageModel('en');
+  const clarityScore = await languageModel.calculateClarity(text);
   return clarityScore;
 }
 
 const calculateSentenceLengthScore = async (text: string) => {
-  const sentenceLengthPipeline = pipeline('text-classification', model='distilbert-base-uncased-finetuned-sst-2-english')
-  const result = await sentenceLengthPipeline(text)
-  const sentenceLengthScore = result.score
+  // Calculate sentence length score using a language model
+  const languageModel = new LanguageModel('en');
+  const sentenceLengthScore = await languageModel.calculateSentenceLength(text);
   return sentenceLengthScore;
 }
 
 const calculateWordLengthScore = async (text: string) => {
-  const wordLengthPipeline = pipeline('text-classification', model='distilbert-base-uncased-finetuned-sst-2-english')
-  const result = await wordLengthPipeline(text)
-  const wordLengthScore = result.score
+  // Calculate word length score using a language model
+  const languageModel = new LanguageModel('en');
+  const wordLengthScore = await languageModel.calculateWordLength(text);
   return wordLengthScore;
 }
 
 const calculateSyllableCountScore = async (text: string) => {
-  const syllableCountPipeline = pipeline('text-classification', model='distilbert-base-uncased-finetuned-sst-2-english')
-  const result = await syllableCountPipeline(text)
-  const syllableCountScore = result.score
+  // Calculate syllable count score using a language model
+  const languageModel = new LanguageModel('en');
+  const syllableCountScore = await languageModel.calculateSyllableCount(text);
   return syllableCountScore;
 }
 
-const ContentAnalyzerPage = () => {
-  const router = useRouter();
-  const [content, setContent] = useState('');
+const Page = () => {
+  const [text, setText] = useState('');
   const [readabilityScore, setReadabilityScore] = useState(0);
-  const [optimizationSuggestions, setOptimizationSuggestions] = useState([]);
-  const [engagementTracker, setEngagementTracker] = useState({});
-  const [alternativeFormats, setAlternativeFormats] = useState({});
+  const router = useRouter();
 
-  const handleContentChange = (event: any) => {
-    setContent(event.target.value);
+  const handleTextChange = (event: any) => {
+    setText(event.target.value);
   }
 
-  const handleAnalyzeContent = async () => {
-    const readabilityScore = await calculateReadabilityScore(content);
-    setReadabilityScore(readabilityScore);
-    const optimizationSuggestions = await getOptimizationSuggestions(content);
-    setOptimizationSuggestions(optimizationSuggestions);
-    const engagementTracker = await getEngagementTracker(content);
-    setEngagementTracker(engagementTracker);
-    const alternativeFormats = await getAlternativeFormats(content);
-    setAlternativeFormats(alternativeFormats);
-  }
-
-  const getOptimizationSuggestions = async (content: string) => {
-    const optimizationSuggestionsPipeline = pipeline('text-classification', model='distilbert-base-uncased-finetuned-sst-2-english')
-    const result = await optimizationSuggestionsPipeline(content)
-    const optimizationSuggestions = result.score
-    return optimizationSuggestions;
-  }
-
-  const getEngagementTracker = async (content: string) => {
-    const engagementTrackerPipeline = pipeline('text-classification', model='distilbert-base-uncased-finetuned-sst-2-english')
-    const result = await engagementTrackerPipeline(content)
-    const engagementTracker = result.score
-    return engagementTracker;
-  }
-
-  const getAlternativeFormats = async (content: string) => {
-    const alternativeFormatsPipeline = pipeline('text-classification', model='distilbert-base-uncased-finetuned-sst-2-english')
-    const result = await alternativeFormatsPipeline(content)
-    const alternativeFormats = result.score
-    return alternativeFormats;
+  const handleAnalyze = async () => {
+    const score = await calculateReadabilityScore(text);
+    setReadabilityScore(score);
   }
 
   return (
     <div>
       <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
-      <ContentAnalyzerForm content={content} handleContentChange={handleContentChange} handleAnalyzeContent={handleAnalyzeContent} />
-      <OptimizationSuggestions optimizationSuggestions={optimizationSuggestions} />
-      <EngagementTracker engagementTracker={engagementTracker} />
-      <AlternativeFormats alternativeFormats={alternativeFormats} />
+      <ContentAnalyzerForm text={text} handleTextChange={handleTextChange} handleAnalyze={handleAnalyze} />
+      <OptimizationSuggestions readabilityScore={readabilityScore} />
+      <EngagementTracker />
+      <AlternativeFormats />
       <BarChart width={500} height={300} data={[{ name: 'Readability Score', score: readabilityScore }]}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="name" />
@@ -163,6 +133,6 @@ const ContentAnalyzerPage = () => {
       </BarChart>
     </div>
   );
-};
+}
 
-export default ContentAnalyzerPage;
+export default Page;

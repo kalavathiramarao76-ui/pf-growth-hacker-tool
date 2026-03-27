@@ -92,73 +92,66 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
 };
 
 const App = () => {
-  const [connectedCalendars, setConnectedCalendars] = useState<string[]>([]);
+  const [connectedCalendar, setConnectedCalendar] = useState<string | null>(null);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [isDisconnecting, setIsDisconnecting] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  const handleConnect = async (calendarName: string) => {
-    setIsConnecting(true);
-    const token = await getToken(calendarName);
-    if (token) {
-      calendarIntegrations[calendarName].connect(token);
-      setConnectedCalendars([...connectedCalendars, calendarName]);
+  const handleConnect = async (calendar: string) => {
+    const authUrl = calendarIntegrations[calendar].authUrl;
+    const clientId = 'YOUR_CLIENT_ID';
+    const redirectUri = 'YOUR_REDIRECT_URI';
+    const scope = 'YOUR_SCOPE';
+    const url = `${authUrl}?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=code`;
+    window.open(url, '_blank');
+  };
+
+  const handleDisconnect = () => {
+    calendarIntegrations[connectedCalendar as string].disconnect();
+    setConnectedCalendar(null);
+    setEvents([]);
+  };
+
+  const handleGetEvents = async () => {
+    if (connectedCalendar) {
+      const events = await calendarIntegrations[connectedCalendar].getEvents();
+      setEvents(events);
     }
-    setIsConnecting(false);
-  };
-
-  const handleDisconnect = async (calendarName: string) => {
-    setIsDisconnecting(true);
-    calendarIntegrations[calendarName].disconnect();
-    setConnectedCalendars(connectedCalendars.filter((calendar) => calendar !== calendarName));
-    setIsDisconnecting(false);
-  };
-
-  const getToken = async (calendarName: string) => {
-    const authUrl = calendarIntegrations[calendarName].authUrl;
-    const response = await fetch(authUrl, {
-      method: 'GET',
-      redirect: 'follow',
-    });
-    const url = new URL(response.url);
-    const token = url.searchParams.get('token');
-    return token;
-  };
-
-  const fetchEvents = async () => {
-    const allEvents: CalendarEvent[] = [];
-    for (const calendarName of connectedCalendars) {
-      const events = await calendarIntegrations[calendarName].getEvents();
-      allEvents.push(...events);
-    }
-    setEvents(allEvents);
   };
 
   useEffect(() => {
-    fetchEvents();
-  }, [connectedCalendars]);
+    const token = localStorage.getItem('googleCalendarToken') || localStorage.getItem('outlookCalendarToken');
+    if (token) {
+      setIsAuthenticated(true);
+      if (localStorage.getItem('googleCalendarToken')) {
+        setConnectedCalendar('GoogleCalendar');
+      } else {
+        setConnectedCalendar('OutlookCalendar');
+      }
+    }
+  }, []);
 
   return (
     <Layout>
       <SEO title="AI-Powered Content Optimizer" />
       <DndProvider backend={HTML5Backend}>
         <Calendar events={events} />
-        {Object.keys(calendarIntegrations).map((calendarName) => (
-          <div key={calendarName}>
-            <Image src={calendarIntegrations[calendarName].icon} alt={calendarIntegrations[calendarName].name} />
-            <span>{calendarIntegrations[calendarName].name}</span>
-            {connectedCalendars.includes(calendarName) ? (
-              <button onClick={() => handleDisconnect(calendarName)} disabled={isDisconnecting}>
-                {isDisconnecting ? 'Disconnecting...' : 'Disconnect'}
-              </button>
-            ) : (
-              <button onClick={() => handleConnect(calendarName)} disabled={isConnecting}>
-                {isConnecting ? 'Connecting...' : 'Connect'}
-              </button>
-            )}
-            <Tooltip description={calendarIntegrations[calendarName].description} />
+        {connectedCalendar ? (
+          <div>
+            <button onClick={handleDisconnect}>Disconnect {connectedCalendar}</button>
+            <button onClick={handleGetEvents}>Get Events</button>
           </div>
-        ))}
+        ) : (
+          <div>
+            {Object.keys(calendarIntegrations).map((calendar) => (
+              <div key={calendar}>
+                <Image src={calendarIntegrations[calendar].icon} width={20} height={20} />
+                <span>{calendarIntegrations[calendar].name}</span>
+                <button onClick={() => handleConnect(calendar)}>Connect</button>
+              </div>
+            ))}
+          </div>
+        )}
+        <Tooltip />
       </DndProvider>
       <Socket />
       <StripeCheckout />
