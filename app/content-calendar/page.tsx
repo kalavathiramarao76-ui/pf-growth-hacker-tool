@@ -91,83 +91,70 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
   },
 };
 
-const App = () => {
-  const [connectedCalendar, setConnectedCalendar] = useState<string | null>(null);
+const ContentCalendarPage = () => {
+  const pathname = usePathname();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [isDisconnecting, setIsDisconnecting] = useState(false);
-
-  const handleConnect = async (calendarName: string) => {
-    setIsConnecting(true);
-    const calendar = calendarIntegrations[calendarName];
-    if (calendar) {
-      const token = await getToken(calendar.authUrl);
-      calendar.connect(token);
-      setConnectedCalendar(calendarName);
-    }
-    setIsConnecting(false);
-  };
-
-  const handleDisconnect = async () => {
-    setIsDisconnecting(true);
-    if (connectedCalendar) {
-      const calendar = calendarIntegrations[connectedCalendar];
-      if (calendar) {
-        calendar.disconnect();
-        setConnectedCalendar(null);
-      }
-    }
-    setIsDisconnecting(false);
-  };
-
-  const getToken = async (authUrl: string) => {
-    const response = await fetch(authUrl);
-    const data = await response.json();
-    return data.access_token;
-  };
+  const [selectedCalendar, setSelectedCalendar] = useState<string>('');
 
   useEffect(() => {
     const fetchEvents = async () => {
-      if (connectedCalendar) {
-        const calendar = calendarIntegrations[connectedCalendar];
-        if (calendar) {
-          const events = await calendar.getEvents();
-          setEvents(events);
+      if (selectedCalendar) {
+        const integration = calendarIntegrations[selectedCalendar];
+        if (integration) {
+          const fetchedEvents = await integration.getEvents();
+          setEvents(fetchedEvents);
         }
       }
     };
     fetchEvents();
-  }, [connectedCalendar]);
+  }, [selectedCalendar]);
 
   return (
     <Layout>
-      <SEO title="Content Calendar" />
+      <SEO
+        title="AI-Powered Content Optimizer - Content Calendar"
+        description="Optimize your content with our AI-powered content calendar"
+        keywords="content calendar, ai-powered, content optimizer"
+        canonicalUrl={pathname}
+        openGraph={{
+          type: 'website',
+          url: pathname,
+          title: 'AI-Powered Content Optimizer - Content Calendar',
+          description: 'Optimize your content with our AI-powered content calendar',
+          images: [
+            {
+              url: 'https://example.com/content-calendar-image.jpg',
+              width: 1200,
+              height: 630,
+              alt: 'Content Calendar Image',
+            },
+          ],
+        }}
+        twitter={{
+          handle: '@contentoptimizer',
+          site: '@contentoptimizer',
+          cardType: 'summary_large_image',
+        }}
+      />
       <DndProvider backend={HTML5Backend}>
         <Calendar events={events} />
-        {connectedCalendar ? (
-          <div>
-            <p>Connected to {connectedCalendar}</p>
-            <button onClick={handleDisconnect} disabled={isDisconnecting}>
-              {isDisconnecting ? 'Disconnecting...' : 'Disconnect'}
-            </button>
-          </div>
-        ) : (
-          <div>
-            <h2>Connect a calendar</h2>
-            {Object.keys(calendarIntegrations).map((calendarName) => (
-              <div key={calendarName}>
-                <Image src={calendarIntegrations[calendarName].icon} width={20} height={20} />
-                <span>{calendarIntegrations[calendarName].name}</span>
-                <button onClick={() => handleConnect(calendarName)} disabled={isConnecting}>
-                  {isConnecting ? 'Connecting...' : 'Connect'}
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
       </DndProvider>
+      <div>
+        {Object.keys(calendarIntegrations).map((integration) => (
+          <div key={integration}>
+            <Image src={calendarIntegrations[integration].icon} width={24} height={24} />
+            <span>{calendarIntegrations[integration].name}</span>
+            <button onClick={() => setSelectedCalendar(integration)}>Connect</button>
+          </div>
+        ))}
+      </div>
+      <Tooltip>
+        <span>Drag and drop events to schedule your content</span>
+      </Tooltip>
+      <Socket />
+      <StripeCheckout />
     </Layout>
   );
 };
 
-export default App;
+export default ContentCalendarPage;

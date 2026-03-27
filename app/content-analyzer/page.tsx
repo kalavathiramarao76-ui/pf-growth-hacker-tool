@@ -54,74 +54,116 @@ const calculateReadabilityScore = async (text: string) => {
 
   const combinedScoreAdvanced = (readabilityScore * 0.3 + readabilityScoreNlp * 0.2 + readabilityScoreSpacy * 0.2 + tfReadabilityScore.dataSync()[0] * 0.3);
 
-  // Provide actiona
-  return combinedScoreAdvanced;
-}
+  // Provide actionable insights and recommendations to improve the content's readability
+  const insights = [
+    `Readability Score: ${combinedScoreAdvanced.toFixed(2)}`,
+    `Complexity Score: ${complexityScore.toFixed(2)}`,
+    `Cohesion Score: ${cohesionScore.toFixed(2)}`,
+    `Clarity Score: ${clarityScore.toFixed(2)}`,
+    `Sentence Length Score: ${sentenceLengthScore.toFixed(2)}`,
+    `Word Length Score: ${wordLengthScore.toFixed(2)}`,
+    `Syllable Count Score: ${syllableCountScore.toFixed(2)}`,
+  ];
+
+  const recommendations = [
+    'Use shorter sentences to improve clarity',
+    'Use simpler vocabulary to reduce complexity',
+    'Use transitional phrases to improve cohesion',
+    'Use active voice to improve readability',
+    'Use concise language to reduce word count',
+  ];
+
+  return { combinedScoreAdvanced, insights, recommendations };
+};
 
 const calculateComplexityScore = async (text: string) => {
-  const complexityPipeline = pipeline('text-classification', model='distilbert-base-uncased-finetuned-sst-2-english')
-  const result = await complexityPipeline(text)
-  return result.score
-}
+  // Calculate the complexity score using a language model
+  const nlp = new NlpManager({ languages: ['en'] });
+  const doc = await nlp.process('en', text);
+  const complexityScore = doc.complexity;
+  return complexityScore;
+};
 
 const calculateCohesionScore = async (text: string) => {
-  const cohesionPipeline = pipeline('text-classification', model='distilbert-base-uncased-finetuned-sst-2-english')
-  const result = await cohesionPipeline(text)
-  return result.score
-}
+  // Calculate the cohesion score using a language model
+  const nlp = new NlpManager({ languages: ['en'] });
+  const doc = await nlp.process('en', text);
+  const cohesionScore = doc.cohesion;
+  return cohesionScore;
+};
 
 const calculateClarityScore = async (text: string) => {
-  const clarityPipeline = pipeline('text-classification', model='distilbert-base-uncased-finetuned-sst-2-english')
-  const result = await clarityPipeline(text)
-  return result.score
-}
+  // Calculate the clarity score using a language model
+  const nlp = new NlpManager({ languages: ['en'] });
+  const doc = await nlp.process('en', text);
+  const clarityScore = doc.clarity;
+  return clarityScore;
+};
 
 const calculateSentenceLengthScore = async (text: string) => {
-  const sentenceLengthPipeline = pipeline('text-classification', model='distilbert-base-uncased-finetuned-sst-2-english')
-  const result = await sentenceLengthPipeline(text)
-  return result.score
-}
+  // Calculate the sentence length score using a language model
+  const nlp = new NlpManager({ languages: ['en'] });
+  const doc = await nlp.process('en', text);
+  const sentenceLengthScore = doc.sentenceLength;
+  return sentenceLengthScore;
+};
 
 const calculateWordLengthScore = async (text: string) => {
-  const wordLengthPipeline = pipeline('text-classification', model='distilbert-base-uncased-finetuned-sst-2-english')
-  const result = await wordLengthPipeline(text)
-  return result.score
-}
+  // Calculate the word length score using a language model
+  const nlp = new NlpManager({ languages: ['en'] });
+  const doc = await nlp.process('en', text);
+  const wordLengthScore = doc.wordLength;
+  return wordLengthScore;
+};
 
 const calculateSyllableCountScore = async (text: string) => {
-  const syllableCountPipeline = pipeline('text-classification', model='distilbert-base-uncased-finetuned-sst-2-english')
-  const result = await syllableCountPipeline(text)
-  return result.score
-}
+  // Calculate the syllable count score using a language model
+  const nlp = new NlpManager({ languages: ['en'] });
+  const doc = await nlp.process('en', text);
+  const syllableCountScore = doc.syllableCount;
+  return syllableCountScore;
+};
 
 const Page = () => {
   const [text, setText] = useState('');
   const [readabilityScore, setReadabilityScore] = useState(0);
+  const [insights, setInsights] = useState([]);
+  const [recommendations, setRecommendations] = useState([]);
   const router = useRouter();
 
-  const handleTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleTextChange = (event: any) => {
     setText(event.target.value);
   };
 
-  const handleAnalyze = async () => {
-    const score = await calculateReadabilityScore(text);
-    setReadabilityScore(score);
+  const handleAnalyzeClick = async () => {
+    const result = await calculateReadabilityScore(text);
+    setReadabilityScore(result.combinedScoreAdvanced);
+    setInsights(result.insights);
+    setRecommendations(result.recommendations);
   };
 
   return (
     <div>
       <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
-      <ContentAnalyzerForm text={text} onTextChange={handleTextChange} onAnalyze={handleAnalyze} />
-      <OptimizationSuggestions readabilityScore={readabilityScore} />
+      <ContentAnalyzerForm
+        text={text}
+        onChange={handleTextChange}
+        onAnalyzeClick={handleAnalyzeClick}
+      />
+      <OptimizationSuggestions
+        readabilityScore={readabilityScore}
+        insights={insights}
+        recommendations={recommendations}
+      />
       <EngagementTracker />
       <AlternativeFormats />
-      <BarChart width={500} height={300} data={[{ name: 'Readability Score', score: readabilityScore }]}>
+      <BarChart width={500} height={300} data={insights}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="name" />
         <YAxis />
         <Tooltip />
-        <Bar dataKey="score" fill="#8884d8" />
+        <Bar dataKey="value" fill="#8884d8" />
       </BarChart>
     </div>
   );
