@@ -92,80 +92,73 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
 };
 
 const App = () => {
-  const [connectedCalendars, setConnectedCalendars] = useState(
-    Object.keys(calendarIntegrations).filter((integration) =>
-      localStorage.getItem(`${integration}Token`)
-    )
-  );
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [connecting, setConnecting] = useState(false);
-  const [disconnecting, setDisconnecting] = useState(false);
+  const [connectedCalendars, setConnectedCalendars] = useState<string[]>([]);
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
 
-  const handleConnect = async (integration: string) => {
-    setConnecting(true);
-    const token = await authenticate(integration);
+  const handleConnect = async (calendarName: string) => {
+    setIsConnecting(true);
+    const token = await getAuthorizationToken(calendarName);
     if (token) {
-      calendarIntegrations[integration].connect(token);
-      setConnectedCalendars((prevCalendars) => [...prevCalendars, integration]);
+      calendarIntegrations[calendarName].connect(token);
+      setConnectedCalendars([...connectedCalendars, calendarName]);
     }
-    setConnecting(false);
+    setIsConnecting(false);
   };
 
-  const handleDisconnect = (integration: string) => {
-    setDisconnecting(true);
-    calendarIntegrations[integration].disconnect();
-    setConnectedCalendars((prevCalendars) =>
-      prevCalendars.filter((calendar) => calendar !== integration)
-    );
-    setDisconnecting(false);
+  const handleDisconnect = async (calendarName: string) => {
+    setIsDisconnecting(true);
+    calendarIntegrations[calendarName].disconnect();
+    setConnectedCalendars(connectedCalendars.filter((calendar) => calendar !== calendarName));
+    setIsDisconnecting(false);
   };
 
-  const authenticate = async (integration: string) => {
-    const authUrl = calendarIntegrations[integration].authUrl;
-    const clientId = 'YOUR_CLIENT_ID';
-    const redirectUri = 'YOUR_REDIRECT_URI';
-    const scope = 'YOUR_SCOPE';
-    const url = `${authUrl}?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=token`;
-    const response = await fetch(url, {
+  const getAuthorizationToken = async (calendarName: string) => {
+    const response = await fetch(calendarIntegrations[calendarName].authUrl, {
       method: 'GET',
       redirect: 'follow',
     });
-    const token = await response.text();
+    const url = new URL(response.url);
+    const token = url.searchParams.get('token');
     return token;
   };
 
+  const getCalendarEvents = async () => {
+    const events: CalendarEvent[] = [];
+    for (const calendarName of connectedCalendars) {
+      const calendarEvents = await calendarIntegrations[calendarName].getEvents();
+      events.push(...calendarEvents);
+    }
+    setCalendarEvents(events);
+  };
+
   useEffect(() => {
-    const fetchEvents = async () => {
-      const allEvents: CalendarEvent[] = [];
-      for (const integration of connectedCalendars) {
-        const events = await calendarIntegrations[integration].getEvents();
-        allEvents.push(...events);
-      }
-      setEvents(allEvents);
-    };
-    fetchEvents();
+    getCalendarEvents();
   }, [connectedCalendars]);
 
   return (
     <Layout>
       <SEO title="Content Calendar" />
       <DndProvider backend={HTML5Backend}>
-        <Calendar events={events} />
-        {Object.keys(calendarIntegrations).map((integration) => (
-          <div key={integration}>
-            <Image src={calendarIntegrations[integration].icon} alt={integration} />
-            <span>{calendarIntegrations[integration].name}</span>
-            {connectedCalendars.includes(integration) ? (
-              <button onClick={() => handleDisconnect(integration)} disabled={disconnecting}>
-                {disconnecting ? 'Disconnecting...' : 'Disconnect'}
-              </button>
-            ) : (
-              <button onClick={() => handleConnect(integration)} disabled={connecting}>
-                {connecting ? 'Connecting...' : 'Connect'}
-              </button>
-            )}
-          </div>
-        ))}
+        <Calendar events={calendarEvents} />
+        <div>
+          {Object.keys(calendarIntegrations).map((calendarName) => (
+            <div key={calendarName}>
+              <Image src={calendarIntegrations[calendarName].icon} width={20} height={20} />
+              <span>{calendarIntegrations[calendarName].name}</span>
+              {connectedCalendars.includes(calendarName) ? (
+                <button onClick={() => handleDisconnect(calendarName)} disabled={isDisconnecting}>
+                  {isDisconnecting ? 'Disconnecting...' : 'Disconnect'}
+                </button>
+              ) : (
+                <button onClick={() => handleConnect(calendarName)} disabled={isConnecting}>
+                  {isConnecting ? 'Connecting...' : 'Connect'}
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
       </DndProvider>
     </Layout>
   );
