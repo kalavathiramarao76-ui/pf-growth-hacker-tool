@@ -121,74 +121,75 @@ const initialWidgets: Widget[] = [
           }}
         >
           Join the ranks of our 10,000+ satisfied customers who have seen an
-          average increase of 25% in engagement and 35% in conversions
+          average increase of 25% in engagement and 35% in conversions.
         </p>
       </div>
     ),
   },
 ];
 
-const DashboardPage = () => {
-  const router = useRouter();
-  const [widgets, setWidgets] = useState(initialWidgets);
-  const [widgetLayout, setWidgetLayout] = useState<WidgetLayout>({
-    columns: 4,
-    rows: 2,
-    widgets: initialWidgets,
-  });
+const initialWidgetLayout: WidgetLayout = {
+  columns: 2,
+  rows: 3,
+  widgets: initialWidgets,
+};
 
-  const memoizedWidgets = useMemo(() => widgets, [widgets]);
-  const memoizedWidgetLayout = useMemo(() => widgetLayout, [widgetLayout]);
+const App = () => {
+  const [widgetLayout, setWidgetLayout] = useState(initialWidgetLayout);
+  const [dragging, setDragging] = useState(false);
 
-  const handleWidgetClick = useCallback((widget: Widget) => {
-    widget.onClick();
-  }, []);
-
-  const handleWidgetDragEnd = useCallback((result: any) => {
+  const onDragEnd = (result: any) => {
     if (!result.destination) return;
 
-    const newWidgets = [...memoizedWidgets];
-    const [reorderedWidget] = newWidgets.splice(result.source.index, 1);
-    newWidgets.splice(result.destination.index, 0, reorderedWidget);
+    const { source, destination } = result;
+    const newWidgets = [...widgetLayout.widgets];
+    const [removed] = newWidgets.splice(source.index, 1);
 
-    setWidgets(newWidgets);
-  }, [memoizedWidgets]);
+    newWidgets.splice(destination.index, 0, removed);
 
-  useEffect(() => {
-    const fetchAnalyticsData = async () => {
-      try {
-        const response = await axios.get('/api/analytics');
-        const analyticsData = response.data;
-        setWidgets((prevWidgets) =>
-          prevWidgets.map((widget) => {
-            if (widget.id === 2) {
-              return { ...widget, analyticsData };
-            }
-            return widget;
-          })
-        );
-      } catch (error) {
-        console.error(error);
-      }
+    setWidgetLayout({
+      ...widgetLayout,
+      widgets: newWidgets,
+    });
+  };
+
+  const handleAddWidget = () => {
+    const newWidget: Widget = {
+      id: widgetLayout.widgets.length + 1,
+      title: 'New Widget',
+      icon: <AiOutlinePlus size={24} />,
+      onClick: () => {},
     };
 
-    fetchAnalyticsData();
-  }, []);
+    setWidgetLayout({
+      ...widgetLayout,
+      widgets: [...widgetLayout.widgets, newWidget],
+    });
+  };
+
+  const handleRemoveWidget = (id: number) => {
+    const newWidgets = widgetLayout.widgets.filter((widget) => widget.id !== id);
+
+    setWidgetLayout({
+      ...widgetLayout,
+      widgets: newWidgets,
+    });
+  };
 
   return (
     <DndProvider>
-      <DragDropContext onDragEnd={handleWidgetDragEnd}>
+      <DragDropContext onDragEnd={onDragEnd}>
         <DashboardHeader />
         <NavigationMenu />
-        <div className="dashboard-content">
+        <div className="dashboard-container">
           <Droppable droppableId="widgets">
             {(provided) => (
               <div
                 {...provided.droppableProps}
                 ref={provided.innerRef}
-                className="widgets-container"
+                className="widget-grid"
               >
-                {memoizedWidgetLayout.widgets.map((widget, index) => (
+                {widgetLayout.widgets.map((widget, index) => (
                   <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
                     {(provided) => (
                       <div
@@ -200,12 +201,13 @@ const DashboardPage = () => {
                         <DashboardCard
                           title={widget.title}
                           icon={widget.icon}
-                          onClick={() => handleWidgetClick(widget)}
+                          onClick={widget.onClick}
                           frequency={widget.frequency}
                           description={widget.description}
                           callToAction={widget.callToAction}
                           analyticsData={widget.analyticsData}
                           contentSuggestions={widget.contentSuggestions}
+                          onRemove={() => handleRemoveWidget(widget.id)}
                         />
                       </div>
                     )}
@@ -215,11 +217,13 @@ const DashboardPage = () => {
               </div>
             )}
           </Droppable>
-          <WidgetSettings />
+          <button className="add-widget-button" onClick={handleAddWidget}>
+            Add Widget
+          </button>
         </div>
       </DragDropContext>
     </DndProvider>
   );
 };
 
-export default DashboardPage;
+export default App;
