@@ -65,90 +65,59 @@ const calculateReadabilityScore = async (text: string) => {
 };
 
 const calculateFleschKincaidGradeLevel = (text: string) => {
-  const sentences = text.split('.').length;
-  const words = text.split(' ').length;
-  const syllables = countSyllables(text);
-  const gradeLevel = (0.39 * (words / sentences)) + (0.11 * (syllables / words)) + 0.58;
+  const sentences = text.split('.').filter(sentence => sentence.trim() !== '');
+  const words = text.split(' ').filter(word => word.trim() !== '');
+  const syllables = words.reduce((acc, word) => acc + countSyllables(word), 0);
+  const gradeLevel = 206.835 - 1.015 * (words.length / sentences.length) - 84.6 * (syllables / words.length);
   return gradeLevel;
 };
 
 const calculateGunningFogIndex = (text: string) => {
-  const sentences = text.split('.').length;
-  const words = text.split(' ').length;
-  const complexWords = countComplexWords(text);
-  const gunningFogIndex = 0.4 * ((words / sentences) + (complexWords / words));
-  return gunningFogIndex;
+  const sentences = text.split('.').filter(sentence => sentence.trim() !== '');
+  const words = text.split(' ').filter(word => word.trim() !== '');
+  const complexWords = words.filter(word => countSyllables(word) > 2);
+  const percentage = (complexWords.length / words.length) * 100;
+  const gradeLevel = 0.4 * (words.length / sentences.length) + percentage;
+  return gradeLevel;
 };
 
 const calculateSMOGReadabilityFormula = (text: string) => {
-  const sentences = text.split('.').length;
-  const words = text.split(' ').length;
-  const complexWords = countComplexWords(text);
-  const smogReadabilityFormula = 1.043 * Math.sqrt(complexWords * (30 / sentences)) + 3.1291;
-  return smogReadabilityFormula;
+  const sentences = text.split('.').filter(sentence => sentence.trim() !== '');
+  const words = text.split(' ').filter(word => word.trim() !== '');
+  const complexWords = words.filter(word => countSyllables(word) > 2);
+  const gradeLevel = 1.043 * Math.sqrt(complexWords.length * (30 / sentences.length)) + 3.1291;
+  return gradeLevel;
 };
 
 const calculateColemanLiauIndex = (text: string) => {
-  const letters = countLetters(text);
-  const words = text.split(' ').length;
-  const sentences = text.split('.').length;
-  const colemanLiauIndex = (0.0588 * (letters / words * 100)) - (0.296 * (sentences / words * 100)) - 15.8;
-  return colemanLiauIndex;
+  const sentences = text.split('.').filter(sentence => sentence.trim() !== '');
+  const words = text.split(' ').filter(word => word.trim() !== '');
+  const letters = words.reduce((acc, word) => acc + word.length, 0);
+  const l = (letters / words.length) * 100;
+  const s = (sentences.length / words.length) * 100;
+  const gradeLevel = 0.0588 * l - 0.296 * s - 15.8;
+  return gradeLevel;
 };
 
-const countSyllables = (text: string) => {
-  const words = text.split(' ');
-  let syllableCount = 0;
-  for (const word of words) {
-    syllableCount += countSyllablesInWord(word);
-  }
-  return syllableCount;
-};
-
-const countSyllablesInWord = (word: string) => {
+const countSyllables = (word: string) => {
   word = word.toLowerCase();
   const vowels = 'aeiouy';
-  let syllableCount = 0;
-  let vowelCount = 0;
+  const diphthongs = 'ai,au,ay,ea,ee,ei,ey,oa,oe,oi,oo,ou,oy';
+  let count = 0;
+  let prev = '';
   for (let i = 0; i < word.length; i++) {
-    if (vowels.includes(word[i])) {
-      vowelCount++;
-    } else if (vowelCount > 0) {
-      syllableCount++;
-      vowelCount = 0;
+    if (vowels.includes(word[i]) && !prev.includes(word[i])) {
+      count++;
+      prev = word[i];
     }
-  }
-  if (vowelCount > 0) {
-    syllableCount++;
   }
   if (word.endsWith('e')) {
-    syllableCount--;
+    count--;
   }
-  if (syllableCount === 0) {
-    syllableCount = 1;
+  if (count === 0) {
+    count = 1;
   }
-  return syllableCount;
-};
-
-const countComplexWords = (text: string) => {
-  const words = text.split(' ');
-  let complexWordCount = 0;
-  for (const word of words) {
-    if (countSyllablesInWord(word) > 2) {
-      complexWordCount++;
-    }
-  }
-  return complexWordCount;
-};
-
-const countLetters = (text: string) => {
-  let letterCount = 0;
-  for (const char of text) {
-    if (char.match(/[a-z]/i)) {
-      letterCount++;
-    }
-  }
-  return letterCount;
+  return count;
 };
 
 const calculateComplexityScore = async (text: string) => {
@@ -181,7 +150,7 @@ const calculateSyllableCountScore = async (text: string) => {
   return 0;
 };
 
-const App = () => {
+export default function ContentAnalyzerPage() {
   const [text, setText] = useState('');
   const [readabilityScore, setReadabilityScore] = useState(0);
   const router = useRouter();
@@ -199,7 +168,7 @@ const App = () => {
     <div>
       <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
-      <ContentAnalyzerForm text={text} onTextChange={handleTextChange} onAnalyze={handleAnalyze} />
+      <ContentAnalyzerForm text={text} onChange={handleTextChange} onAnalyze={handleAnalyze} />
       <OptimizationSuggestions readabilityScore={readabilityScore} />
       <EngagementTracker />
       <AlternativeFormats />
@@ -212,6 +181,4 @@ const App = () => {
       </BarChart>
     </div>
   );
-};
-
-export default App;
+}

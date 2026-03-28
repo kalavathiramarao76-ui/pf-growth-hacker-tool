@@ -135,52 +135,29 @@ const DashboardPage = () => {
     rows: 2,
     widgets: initialWidgets,
   });
-  const [analyticsData, setAnalyticsData] = useState({});
-  const [contentSuggestions, setContentSuggestions] = useState({});
 
-  const fetchAnalyticsData = useCallback(async () => {
-    try {
-      const response = await axios.get('/api/analytics');
-      setAnalyticsData(response.data);
-    } catch (error) {
-      console.error(error);
-    }
-  }, []);
-
-  const fetchContentSuggestions = useCallback(async () => {
-    try {
-      const response = await axios.get('/api/content-suggestions');
-      setContentSuggestions(response.data);
-    } catch (error) {
-      console.error(error);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchAnalyticsData();
-    fetchContentSuggestions();
-  }, [fetchAnalyticsData, fetchContentSuggestions]);
-
-  const handleWidgetClick = (widget: Widget) => {
-    if (widget.onClick) {
-      widget.onClick();
-    }
-  };
-
-  const handleWidgetDragEnd = (result: any) => {
+  const handleDragEnd = useCallback((result) => {
     if (!result.destination) return;
-    const { source, destination } = result;
     const newWidgets = [...widgets];
-    const [removed] = newWidgets.splice(source.index, 1);
-    newWidgets.splice(destination.index, 0, removed);
+    const [reorderedWidget] = newWidgets.splice(result.source.index, 1);
+    newWidgets.splice(result.destination.index, 0, reorderedWidget);
     setWidgets(newWidgets);
-  };
+  }, [widgets]);
 
   const memoizedWidgets = useMemo(() => widgets, [widgets]);
 
+  useEffect(() => {
+    const calculateWidgetLayout = () => {
+      const columns = 3;
+      const rows = Math.ceil(widgets.length / columns);
+      setWidgetLayout({ columns, rows, widgets });
+    };
+    calculateWidgetLayout();
+  }, [widgets]);
+
   return (
     <DndProvider>
-      <DragDropContext onDragEnd={handleWidgetDragEnd}>
+      <DragDropContext onDragEnd={handleDragEnd}>
         <DashboardHeader />
         <NavigationMenu />
         <div className="dashboard-container">
@@ -200,13 +177,7 @@ const DashboardPage = () => {
                         ref={provided.innerRef}
                         className="widget"
                       >
-                        <DashboardCard
-                          title={widget.title}
-                          icon={widget.icon}
-                          onClick={() => handleWidgetClick(widget)}
-                          analyticsData={widget.analyticsData}
-                          contentSuggestions={widget.contentSuggestions}
-                        />
+                        <DashboardCard widget={widget} />
                       </div>
                     )}
                   </Draggable>

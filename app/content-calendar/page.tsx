@@ -20,6 +20,11 @@ interface CalendarIntegration {
   description: string;
   authUrl: string;
   isAuthenticated: () => boolean;
+  onboardingSteps: {
+    title: string;
+    description: string;
+    action: () => void;
+  }[];
 }
 
 // Calendar Integrations
@@ -75,6 +80,29 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
     icon: 'https://cdn-icons-png.flaticon.com/512/281/281764.png',
     description: 'Connect your Google Calendar to view and manage your events',
     authUrl: 'https://accounts.google.com/o/oauth2/auth',
+    onboardingSteps: [
+      {
+        title: 'Step 1: Click on the "Connect" button',
+        description: 'Click on the "Connect" button to start the authentication process',
+        action: () => {
+          window.open('https://accounts.google.com/o/oauth2/auth', '_blank');
+        },
+      },
+      {
+        title: 'Step 2: Authenticate with Google',
+        description: 'Enter your Google credentials to authenticate',
+        action: () => {
+          console.log('Authenticate with Google');
+        },
+      },
+      {
+        title: 'Step 3: Grant permissions',
+        description: 'Grant the necessary permissions to access your Google Calendar',
+        action: () => {
+          console.log('Grant permissions');
+        },
+      },
+    ],
   },
   OutlookCalendar: {
     connect: (token: string) => {
@@ -90,7 +118,7 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
         // Implement Outlook Calendar event retrieval logic
         const token = localStorage.getItem('outlookCalendarToken');
         if (token) {
-          const response = await fetch('https://graph.microsoft.com/v1.0/me/events', {
+          const response = await fetch('https://outlook.office.com/api/v2.0/me/events', {
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -127,88 +155,116 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
     icon: 'https://cdn-icons-png.flaticon.com/512/281/281765.png',
     description: 'Connect your Outlook Calendar to view and manage your events',
     authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
+    onboardingSteps: [
+      {
+        title: 'Step 1: Click on the "Connect" button',
+        description: 'Click on the "Connect" button to start the authentication process',
+        action: () => {
+          window.open('https://login.microsoftonline.com/common/oauth2/v2.0/authorize', '_blank');
+        },
+      },
+      {
+        title: 'Step 2: Authenticate with Microsoft',
+        description: 'Enter your Microsoft credentials to authenticate',
+        action: () => {
+          console.log('Authenticate with Microsoft');
+        },
+      },
+      {
+        title: 'Step 3: Grant permissions',
+        description: 'Grant the necessary permissions to access your Outlook Calendar',
+        action: () => {
+          console.log('Grant permissions');
+        },
+      },
+    ],
   },
 };
 
-const ConnectionStatus = {
-  DISCONNECTED: 'disconnected',
-  CONNECTING: 'connecting',
-  CONNECTED: 'connected',
-  DISCONNECTING: 'disconnecting',
+const OnboardingModal = ({ integration, isOpen, onClose }) => {
+  const [currentStep, setCurrentStep] = useState(0);
+
+  const handleNextStep = () => {
+    if (currentStep < integration.onboardingSteps.length - 1) {
+      setCurrentStep(currentStep + 1);
+    } else {
+      onClose();
+    }
+  };
+
+  const handlePrevStep = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          backgroundColor: '#fff',
+          padding: '20px',
+          borderRadius: '10px',
+          boxShadow: '0px 0px 10px rgba(0, 0, 0, 0.2)',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2>{integration.name} Onboarding</h2>
+        <p>{integration.onboardingSteps[currentStep].description}</p>
+        <button onClick={integration.onboardingSteps[currentStep].action}>
+          {integration.onboardingSteps[currentStep].title}
+        </button>
+        <button onClick={handlePrevStep}>Previous</button>
+        <button onClick={handleNextStep}>Next</button>
+      </div>
+    </div>
+  );
 };
 
 const App = () => {
-  const [selectedCalendar, setSelectedCalendar] = useState<string | null>(null);
-  const [connectionStatus, setConnectionStatus] = useState(ConnectionStatus.DISCONNECTED);
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [selectedIntegration, setSelectedIntegration] = useState(null);
+  const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState(false);
 
-  const handleConnect = async (calendar: string) => {
-    setConnectionStatus(ConnectionStatus.CONNECTING);
-    try {
-      const token = await getAuthorizationToken(calendar);
-      calendarIntegrations[calendar].connect(token);
-      setConnectionStatus(ConnectionStatus.CONNECTED);
-      const events = await calendarIntegrations[calendar].getEvents();
-      setEvents(events);
-    } catch (error) {
-      console.error('Error connecting to calendar:', error);
-      setConnectionStatus(ConnectionStatus.DISCONNECTED);
-    }
-  };
-
-  const handleDisconnect = async (calendar: string) => {
-    setConnectionStatus(ConnectionStatus.DISCONNECTING);
-    try {
-      calendarIntegrations[calendar].disconnect();
-      setConnectionStatus(ConnectionStatus.DISCONNECTED);
-      setEvents([]);
-    } catch (error) {
-      console.error('Error disconnecting from calendar:', error);
-      setConnectionStatus(ConnectionStatus.CONNECTED);
-    }
-  };
-
-  const getAuthorizationToken = async (calendar: string) => {
-    const authUrl = calendarIntegrations[calendar].authUrl;
-    const response = await fetch(authUrl, {
-      method: 'GET',
-      redirect: 'follow',
-    });
-    const url = new URL(response.url);
-    const token = url.searchParams.get('token');
-    return token;
+  const handleConnect = (integration) => {
+    setSelectedIntegration(integration);
+    setIsOnboardingModalOpen(true);
   };
 
   return (
     <Layout>
-      <SEO title="Content Calendar" />
+      <SEO title="AI-Powered Content Optimizer" />
       <DndProvider backend={HTML5Backend}>
-        <Calendar
-          events={events}
-          onConnect={(calendar) => handleConnect(calendar)}
-          onDisconnect={(calendar) => handleDisconnect(calendar)}
-          connectionStatus={connectionStatus}
-        />
+        <Calendar>
+          {Object.keys(calendarIntegrations).map((integrationName) => (
+            <CalendarEvent
+              key={integrationName}
+              title={calendarIntegrations[integrationName].name}
+              icon={calendarIntegrations[integrationName].icon}
+              description={calendarIntegrations[integrationName].description}
+              onClick={() => handleConnect(calendarIntegrations[integrationName])}
+            />
+          ))}
+        </Calendar>
       </DndProvider>
-      {selectedCalendar && (
-        <div>
-          <h2>Connected to {selectedCalendar}</h2>
-          <button onClick={() => handleDisconnect(selectedCalendar)}>Disconnect</button>
-        </div>
-      )}
-      {!selectedCalendar && (
-        <div>
-          <h2>Available Calendars</h2>
-          <ul>
-            {Object.keys(calendarIntegrations).map((calendar) => (
-              <li key={calendar}>
-                <Image src={calendarIntegrations[calendar].icon} alt={calendarIntegrations[calendar].name} />
-                <span>{calendarIntegrations[calendar].name}</span>
-                <button onClick={() => handleConnect(calendar)}>Connect</button>
-              </li>
-            ))}
-          </ul>
-        </div>
+      {isOnboardingModalOpen && selectedIntegration && (
+        <OnboardingModal
+          integration={selectedIntegration}
+          isOpen={isOnboardingModalOpen}
+          onClose={() => setIsOnboardingModalOpen(false)}
+        />
       )}
     </Layout>
   );
