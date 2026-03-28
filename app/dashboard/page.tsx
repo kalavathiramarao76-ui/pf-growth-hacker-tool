@@ -121,93 +121,89 @@ const initialWidgets: Widget[] = [
           }}
         >
           Join the ranks of our 10,000+ satisfied customers who have seen an
-          average increase of 25% in engagement and 35% in conversions.
+          average increase of 25% in engagement and 35% in conversions with
+          our premium plan.
         </p>
+        <button
+          style={{
+            padding: '10px 20px',
+            backgroundColor: '#3498db',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '5px',
+            cursor: 'pointer',
+          }}
+        >
+          Upgrade Now
+        </button>
       </div>
     ),
   },
 ];
 
-const initialWidgetLayout: WidgetLayout = {
-  columns: 2,
-  rows: 3,
-  widgets: initialWidgets,
-};
-
-const App = () => {
-  const [widgetLayout, setWidgetLayout] = useState(initialWidgetLayout);
+const DashboardPage = () => {
+  const [widgets, setWidgets] = useState(initialWidgets);
+  const [layout, setLayout] = useState<WidgetLayout>({
+    columns: 2,
+    rows: 3,
+    widgets: initialWidgets,
+  });
   const [dragging, setDragging] = useState(false);
+  const router = useRouter();
 
-  const onDragEnd = (result: any) => {
-    if (!result.destination) return;
-
-    const { source, destination } = result;
-    const newWidgets = [...widgetLayout.widgets];
-    const [removed] = newWidgets.splice(source.index, 1);
-
-    newWidgets.splice(destination.index, 0, removed);
-
-    setWidgetLayout({
-      ...widgetLayout,
-      widgets: newWidgets,
-    });
+  const handleDragStart = () => {
+    setDragging(true);
   };
 
-  const handleAddWidget = () => {
-    const newWidget: Widget = {
-      id: widgetLayout.widgets.length + 1,
-      title: 'New Widget',
-      icon: <AiOutlinePlus size={24} />,
-      onClick: () => {},
-    };
-
-    setWidgetLayout({
-      ...widgetLayout,
-      widgets: [...widgetLayout.widgets, newWidget],
-    });
+  const handleDragEnd = () => {
+    setDragging(false);
   };
 
-  const handleRemoveWidget = (id: number) => {
-    const newWidgets = widgetLayout.widgets.filter((widget) => widget.id !== id);
+  const handleDrop = (droppedWidget: Widget) => {
+    const newWidgets = [...widgets];
+    const index = newWidgets.findIndex((widget) => widget.id === droppedWidget.id);
+    if (index !== -1) {
+      newWidgets.splice(index, 1);
+      newWidgets.push(droppedWidget);
+      setWidgets(newWidgets);
+    }
+  };
 
-    setWidgetLayout({
-      ...widgetLayout,
-      widgets: newWidgets,
-    });
+  const handleWidgetClick = (widget: Widget) => {
+    if (widget.onClick) {
+      widget.onClick();
+    }
+  };
+
+  const handleLayoutChange = (newLayout: WidgetLayout) => {
+    setLayout(newLayout);
   };
 
   return (
     <DndProvider>
-      <DragDropContext onDragEnd={onDragEnd}>
+      <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <DashboardHeader />
         <NavigationMenu />
         <div className="dashboard-container">
           <Droppable droppableId="widgets">
             {(provided) => (
-              <div
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                className="widget-grid"
-              >
-                {widgetLayout.widgets.map((widget, index) => (
+              <div ref={provided.innerRef} {...provided.droppableProps}>
+                {layout.widgets.map((widget, index) => (
                   <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
                     {(provided) => (
                       <div
+                        ref={provided.innerRef}
                         {...provided.draggableProps}
                         {...provided.dragHandleProps}
-                        ref={provided.innerRef}
                         className="widget"
                       >
                         <DashboardCard
                           title={widget.title}
                           icon={widget.icon}
-                          onClick={widget.onClick}
-                          frequency={widget.frequency}
-                          description={widget.description}
-                          callToAction={widget.callToAction}
+                          onClick={() => handleWidgetClick(widget)}
                           analyticsData={widget.analyticsData}
                           contentSuggestions={widget.contentSuggestions}
-                          onRemove={() => handleRemoveWidget(widget.id)}
+                          callToAction={widget.callToAction}
                         />
                       </div>
                     )}
@@ -217,13 +213,16 @@ const App = () => {
               </div>
             )}
           </Droppable>
-          <button className="add-widget-button" onClick={handleAddWidget}>
-            Add Widget
-          </button>
         </div>
+        <WidgetSettings
+          widgets={widgets}
+          layout={layout}
+          onLayoutChange={handleLayoutChange}
+          onWidgetDrop={handleDrop}
+        />
       </DragDropContext>
     </DndProvider>
   );
 };
 
-export default App;
+export default DashboardPage;

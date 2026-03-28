@@ -55,50 +55,85 @@ const calculateReadabilityScore = async (text: string) => {
 
   // Implement a more accurate readability score calculation using a combination of natural language processing and machine learning algorithms
   const tfReadabilityScore = tfModel.predict(tf.tensor2d([readabilityScore]));
-  const combinedScoreAdvanced = (readabilityScore * 0.3 + readabilityScoreNlp * 0.2 + readabilityScoreSpacy * 0.2 + tfReadabilityScore.dataSync()[0] * 0.3);
+  const combinedScoreAdvanced = (tfReadabilityScore.dataSync()[0] + complexityScore + cohesionScore + clarityScore + sentenceLengthScore + wordLengthScore + syllableCountScore) / 8;
 
-  return combinedScoreAdvanced;
+  // Train the machine learning model using the combined score
+  const trainingData = [
+    { input: readabilityScore, output: combinedScoreAdvanced },
+    { input: complexityScore, output: combinedScoreAdvanced },
+    { input: cohesionScore, output: combinedScoreAdvanced },
+    { input: clarityScore, output: combinedScoreAdvanced },
+    { input: sentenceLengthScore, output: combinedScoreAdvanced },
+    { input: wordLengthScore, output: combinedScoreAdvanced },
+    { input: syllableCountScore, output: combinedScoreAdvanced },
+  ];
+
+  tfModel.fit(tf.tensor2d(trainingData.map(data => [data.input])), tf.tensor2d(trainingData.map(data => [data.output])), { epochs: 100 });
+
+  // Use the trained model to predict the readability score
+  const predictedReadabilityScore = tfModel.predict(tf.tensor2d([readabilityScore]));
+
+  return predictedReadabilityScore.dataSync()[0];
 }
 
-const Page = () => {
-  const router = useRouter();
+const calculateComplexityScore = async (text: string) => {
+  // Calculate complexity score using natural language processing
+  const complexityScore = await natural.PorterStemmer.stem(text);
+  return complexityScore;
+}
+
+const calculateCohesionScore = async (text: string) => {
+  // Calculate cohesion score using natural language processing
+  const cohesionScore = await natural.LancasterStemmer.stem(text);
+  return cohesionScore;
+}
+
+const calculateClarityScore = async (text: string) => {
+  // Calculate clarity score using natural language processing
+  const clarityScore = await natural.WordTokenizer.tokenize(text);
+  return clarityScore.length;
+}
+
+const calculateSentenceLengthScore = async (text: string) => {
+  // Calculate sentence length score using natural language processing
+  const sentenceLengthScore = await natural.SentenceTokenizer.tokenize(text);
+  return sentenceLengthScore.length;
+}
+
+const calculateWordLengthScore = async (text: string) => {
+  // Calculate word length score using natural language processing
+  const wordLengthScore = await natural.WordTokenizer.tokenize(text);
+  return wordLengthScore.length;
+}
+
+const calculateSyllableCountScore = async (text: string) => {
+  // Calculate syllable count score using natural language processing
+  const syllableCountScore = await natural.PorterStemmer.stem(text);
+  return syllableCountScore;
+}
+
+const ContentAnalyzerPage = () => {
   const [text, setText] = useState('');
   const [readabilityScore, setReadabilityScore] = useState(0);
-  const [optimizationSuggestions, setOptimizationSuggestions] = useState([]);
-  const [engagementTracker, setEngagementTracker] = useState({});
-  const [alternativeFormats, setAlternativeFormats] = useState({});
+  const router = useRouter();
 
-  useEffect(() => {
-    const storedText = LocalStorage.get('text');
-    if (storedText) {
-      setText(storedText);
-    }
-  }, []);
-
-  const handleTextChange = (newText: string) => {
-    setText(newText);
-    LocalStorage.set('text', newText);
-  };
+  const handleTextChange = (event: any) => {
+    setText(event.target.value);
+  }
 
   const handleAnalyze = async () => {
     const score = await calculateReadabilityScore(text);
     setReadabilityScore(score);
-    const suggestions = await getOptimizationSuggestions(text);
-    setOptimizationSuggestions(suggestions);
-    const engagement = await getEngagementTracker(text);
-    setEngagementTracker(engagement);
-    const formats = await getAlternativeFormats(text);
-    setAlternativeFormats(formats);
-  };
+  }
 
   return (
     <div>
-      <SEO title="AI-Powered Content Optimizer" />
-      <PageHeader title="AI-Powered Content Optimizer" />
+      <SEO title="Content Analyzer" />
+      <PageHeader title="Content Analyzer" />
       <ContentAnalyzerForm text={text} onChange={handleTextChange} onAnalyze={handleAnalyze} />
-      <OptimizationSuggestions suggestions={optimizationSuggestions} />
-      <EngagementTracker engagement={engagementTracker} />
-      <AlternativeFormats formats={alternativeFormats} />
+      <OptimizationSuggestions readabilityScore={readabilityScore} />
+      <EngagementTracker />
+      <AlternativeFormats />
       <BarChart width={500} height={300} data={[{ name: 'Readability Score', score: readabilityScore }]}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="name" />
@@ -108,6 +143,6 @@ const Page = () => {
       </BarChart>
     </div>
   );
-};
+}
 
-export default Page;
+export default ContentAnalyzerPage;
