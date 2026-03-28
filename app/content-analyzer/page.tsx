@@ -57,60 +57,57 @@ const calculateReadabilityScore = async (text: string) => {
   const tfReadabilityScore = tfModel.predict(tf.tensor2d([readabilityScore]));
   const combinedScoreAdvanced = (tfReadabilityScore.dataSync()[0] + complexityScore + cohesionScore + clarityScore + sentenceLengthScore + wordLengthScore + syllableCountScore) / 8;
 
-  // Train the machine learning model using the combined score
+  // Train the machine learning model to improve readability score calculation
   const trainingData = [
     { input: readabilityScore, output: combinedScoreAdvanced },
-    { input: complexityScore, output: combinedScoreAdvanced },
-    { input: cohesionScore, output: combinedScoreAdvanced },
-    { input: clarityScore, output: combinedScoreAdvanced },
-    { input: sentenceLengthScore, output: combinedScoreAdvanced },
-    { input: wordLengthScore, output: combinedScoreAdvanced },
-    { input: syllableCountScore, output: combinedScoreAdvanced },
+    { input: readabilityScoreNlp, output: combinedScoreAdvanced },
+    { input: readabilityScoreSpacy, output: combinedScoreAdvanced },
   ];
 
   tfModel.fit(tf.tensor2d(trainingData.map(data => [data.input])), tf.tensor2d(trainingData.map(data => [data.output])), { epochs: 100 });
 
   // Use the trained model to predict the readability score
   const predictedReadabilityScore = tfModel.predict(tf.tensor2d([readabilityScore]));
+  const predictedReadabilityScoreValue = predictedReadabilityScore.dataSync()[0];
 
-  return predictedReadabilityScore.dataSync()[0];
-}
+  return predictedReadabilityScoreValue;
+};
 
 const calculateComplexityScore = async (text: string) => {
   // Calculate complexity score using natural language processing
   const complexityScore = await natural.PorterStemmer.stem(text);
   return complexityScore;
-}
+};
 
 const calculateCohesionScore = async (text: string) => {
   // Calculate cohesion score using natural language processing
   const cohesionScore = await natural.LancasterStemmer.stem(text);
   return cohesionScore;
-}
+};
 
 const calculateClarityScore = async (text: string) => {
   // Calculate clarity score using natural language processing
-  const clarityScore = await natural.WordTokenizer.tokenize(text);
-  return clarityScore.length;
-}
+  const clarityScore = await natural.JaroWinklerDistance(text, 'clear');
+  return clarityScore;
+};
 
 const calculateSentenceLengthScore = async (text: string) => {
   // Calculate sentence length score using natural language processing
   const sentenceLengthScore = await natural.SentenceTokenizer.tokenize(text);
   return sentenceLengthScore.length;
-}
+};
 
 const calculateWordLengthScore = async (text: string) => {
   // Calculate word length score using natural language processing
   const wordLengthScore = await natural.WordTokenizer.tokenize(text);
   return wordLengthScore.length;
-}
+};
 
 const calculateSyllableCountScore = async (text: string) => {
   // Calculate syllable count score using natural language processing
-  const syllableCountScore = await natural.PorterStemmer.stem(text);
-  return syllableCountScore;
-}
+  const syllableCountScore = await natural.SyllableTokenizer.tokenize(text);
+  return syllableCountScore.length;
+};
 
 const ContentAnalyzerPage = () => {
   const [text, setText] = useState('');
@@ -119,18 +116,18 @@ const ContentAnalyzerPage = () => {
 
   const handleTextChange = (event: any) => {
     setText(event.target.value);
-  }
+  };
 
-  const handleAnalyze = async () => {
+  const handleAnalyzeClick = async () => {
     const score = await calculateReadabilityScore(text);
     setReadabilityScore(score);
-  }
+  };
 
   return (
     <div>
       <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
-      <ContentAnalyzerForm text={text} onChange={handleTextChange} onAnalyze={handleAnalyze} />
+      <ContentAnalyzerForm text={text} onTextChange={handleTextChange} onAnalyzeClick={handleAnalyzeClick} />
       <OptimizationSuggestions readabilityScore={readabilityScore} />
       <EngagementTracker />
       <AlternativeFormats />
@@ -143,6 +140,6 @@ const ContentAnalyzerPage = () => {
       </BarChart>
     </div>
   );
-}
+};
 
 export default ContentAnalyzerPage;
