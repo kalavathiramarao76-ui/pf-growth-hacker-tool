@@ -133,61 +133,66 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
 
 const ContentCalendarPage = () => {
   const pathname = usePathname();
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [selectedCalendar, setSelectedCalendar] = useState<string>('');
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      if (selectedCalendar) {
+        const calendarIntegration = calendarIntegrations[selectedCalendar];
+        if (calendarIntegration) {
+          const events = await calendarIntegration.getEvents();
+          setEvents(events);
+        }
+      }
+    };
+    fetchEvents();
+  }, [selectedCalendar]);
 
   return (
     <Layout>
       <SEO
         title="AI-Powered Content Optimizer - Content Calendar"
-        description="Optimize your content with our AI-powered content calendar"
-        keywords={[
-          'content calendar',
-          'ai-powered content optimizer',
-          'content optimization',
-          'content marketing',
-          'seo',
-        ]}
-        metaTags={[
-          {
-            name: 'robots',
-            content: 'index, follow',
-          },
-          {
-            name: 'og:title',
-            content: 'AI-Powered Content Optimizer - Content Calendar',
-          },
-          {
-            name: 'og:description',
-            content: 'Optimize your content with our AI-powered content calendar',
-          },
-          {
-            name: 'og:url',
-            content: pathname,
-          },
-          {
-            name: 'og:image',
-            content: 'https://example.com/image.jpg',
-          },
-          {
-            name: 'twitter:card',
-            content: 'summary_large_image',
-          },
-          {
-            name: 'twitter:title',
-            content: 'AI-Powered Content Optimizer - Content Calendar',
-          },
-          {
-            name: 'twitter:description',
-            content: 'Optimize your content with our AI-powered content calendar',
-          },
-          {
-            name: 'twitter:image',
-            content: 'https://example.com/image.jpg',
-          },
-        ]}
+        description="Optimize your content calendar with AI-powered insights and recommendations"
+        keywords="content calendar, ai-powered, optimization, seo"
+        canonicalUrl="https://example.com/content-calendar"
+        openGraph={{
+          type: 'website',
+          url: 'https://example.com/content-calendar',
+          title: 'AI-Powered Content Optimizer - Content Calendar',
+          description: 'Optimize your content calendar with AI-powered insights and recommendations',
+          images: [
+            {
+              url: 'https://example.com/image.jpg',
+              width: 800,
+              height: 600,
+              alt: 'Content Calendar Image',
+            },
+          ],
+        }}
+        twitter={{
+          card: 'summary_large_image',
+          site: '@example',
+          title: 'AI-Powered Content Optimizer - Content Calendar',
+          description: 'Optimize your content calendar with AI-powered insights and recommendations',
+          images: ['https://example.com/image.jpg'],
+        }}
       />
       <DndProvider backend={HTML5Backend}>
-        <Calendar />
+        <Calendar events={events} />
       </DndProvider>
+      <div>
+        {Object.keys(calendarIntegrations).map((calendar) => (
+          <button key={calendar} onClick={() => setSelectedCalendar(calendar)}>
+            {calendarIntegrations[calendar].name}
+          </button>
+        ))}
+      </div>
+      <Tooltip>
+        <Image src={calendarIntegrations[selectedCalendar]?.icon} alt={calendarIntegrations[selectedCalendar]?.name} />
+      </Tooltip>
+      <Socket />
+      <StripeCheckout />
     </Layout>
   );
 };
