@@ -128,153 +128,56 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
     description: 'Connect your Outlook Calendar to view and manage your events',
     authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
   },
-  AppleCalendar: {
-    connect: (token: string) => {
-      try {
-        // Implement Apple Calendar connection logic
-        localStorage.setItem('appleCalendarToken', token);
-      } catch (error) {
-        console.error('Error connecting to Apple Calendar:', error);
-      }
-    },
-    getEvents: async () => {
-      try {
-        // Implement Apple Calendar event retrieval logic
-        const token = localStorage.getItem('appleCalendarToken');
-        if (token) {
-          const response = await fetch('https://api.apple.com/calendars/events', {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-          if (!response.ok) {
-            throw new Error(`Error fetching Apple Calendar events: ${response.status}`);
-          }
-          const data = await response.json();
-          return data.events.map((event: any) => ({
-            id: event.id,
-            title: event.title,
-            start: new Date(event.startDate),
-            end: new Date(event.endDate),
-          }));
-        }
-        return [];
-      } catch (error) {
-        console.error('Error fetching Apple Calendar events:', error);
-        return [];
-      }
-    },
-    disconnect: () => {
-      try {
-        // Implement Apple Calendar disconnection logic
-        localStorage.removeItem('appleCalendarToken');
-      } catch (error) {
-        console.error('Error disconnecting from Apple Calendar:', error);
-      }
-    },
-    isAuthenticated: () => {
-      return localStorage.getItem('appleCalendarToken') !== null;
-    },
-    name: 'Apple Calendar',
-    icon: 'https://cdn-icons-png.flaticon.com/512/281/281766.png',
-    description: 'Connect your Apple Calendar to view and manage your events',
-    authUrl: 'https://id.apple.com/auth/authorize',
-  },
-  YahooCalendar: {
-    connect: (token: string) => {
-      try {
-        // Implement Yahoo Calendar connection logic
-        localStorage.setItem('yahooCalendarToken', token);
-      } catch (error) {
-        console.error('Error connecting to Yahoo Calendar:', error);
-      }
-    },
-    getEvents: async () => {
-      try {
-        // Implement Yahoo Calendar event retrieval logic
-        const token = localStorage.getItem('yahooCalendarToken');
-        if (token) {
-          const response = await fetch('https://api.login.yahoo.com/oauth2/get_token', {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-          if (!response.ok) {
-            throw new Error(`Error fetching Yahoo Calendar events: ${response.status}`);
-          }
-          const data = await response.json();
-          return data.events.map((event: any) => ({
-            id: event.id,
-            title: event.title,
-            start: new Date(event.start),
-            end: new Date(event.end),
-          }));
-        }
-        return [];
-      } catch (error) {
-        console.error('Error fetching Yahoo Calendar events:', error);
-        return [];
-      }
-    },
-    disconnect: () => {
-      try {
-        // Implement Yahoo Calendar disconnection logic
-        localStorage.removeItem('yahooCalendarToken');
-      } catch (error) {
-        console.error('Error disconnecting from Yahoo Calendar:', error);
-      }
-    },
-    isAuthenticated: () => {
-      return localStorage.getItem('yahooCalendarToken') !== null;
-    },
-    name: 'Yahoo Calendar',
-    icon: 'https://cdn-icons-png.flaticon.com/512/281/281767.png',
-    description: 'Connect your Yahoo Calendar to view and manage your events',
-    authUrl: 'https://api.login.yahoo.com/oauth2/request_auth',
-  },
 };
 
-const Page = () => {
-  const [selectedCalendar, setSelectedCalendar] = useState<string>('');
+const ConnectionStatus = {
+  DISCONNECTED: 'disconnected',
+  CONNECTING: 'connecting',
+  CONNECTED: 'connected',
+  DISCONNECTING: 'disconnecting',
+};
+
+const App = () => {
+  const [selectedCalendar, setSelectedCalendar] = useState<string | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState(ConnectionStatus.DISCONNECTED);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
-  const handleConnect = (calendar: string) => {
-    const integration = calendarIntegrations[calendar];
-    if (integration) {
-      const token = prompt('Enter your token:');
-      if (token) {
-        integration.connect(token);
-        setIsAuthenticated(integration.isAuthenticated());
-      }
-    }
-  };
-
-  const handleDisconnect = (calendar: string) => {
-    const integration = calendarIntegrations[calendar];
-    if (integration) {
-      integration.disconnect();
-      setIsAuthenticated(integration.isAuthenticated());
-    }
-  };
-
-  const handleGetEvents = async (calendar: string) => {
-    const integration = calendarIntegrations[calendar];
-    if (integration) {
-      const events = await integration.getEvents();
+  const handleConnect = async (calendar: string) => {
+    setConnectionStatus(ConnectionStatus.CONNECTING);
+    try {
+      const token = await getAuthorizationToken(calendar);
+      calendarIntegrations[calendar].connect(token);
+      setConnectionStatus(ConnectionStatus.CONNECTED);
+      const events = await calendarIntegrations[calendar].getEvents();
       setEvents(events);
+    } catch (error) {
+      console.error('Error connecting to calendar:', error);
+      setConnectionStatus(ConnectionStatus.DISCONNECTED);
     }
   };
 
-  useEffect(() => {
-    const pathname = usePathname();
-    if (pathname) {
-      const calendar = pathname.split('/').pop();
-      if (calendar) {
-        setSelectedCalendar(calendar);
-      }
+  const handleDisconnect = async (calendar: string) => {
+    setConnectionStatus(ConnectionStatus.DISCONNECTING);
+    try {
+      calendarIntegrations[calendar].disconnect();
+      setConnectionStatus(ConnectionStatus.DISCONNECTED);
+      setEvents([]);
+    } catch (error) {
+      console.error('Error disconnecting from calendar:', error);
+      setConnectionStatus(ConnectionStatus.CONNECTED);
     }
-  }, []);
+  };
+
+  const getAuthorizationToken = async (calendar: string) => {
+    const authUrl = calendarIntegrations[calendar].authUrl;
+    const response = await fetch(authUrl, {
+      method: 'GET',
+      redirect: 'follow',
+    });
+    const url = new URL(response.url);
+    const token = url.searchParams.get('token');
+    return token;
+  };
 
   return (
     <Layout>
@@ -284,19 +187,31 @@ const Page = () => {
           events={events}
           onConnect={(calendar) => handleConnect(calendar)}
           onDisconnect={(calendar) => handleDisconnect(calendar)}
-          onGetEvents={(calendar) => handleGetEvents(calendar)}
-          isAuthenticated={isAuthenticated}
-          selectedCalendar={selectedCalendar}
-          calendarIntegrations={calendarIntegrations}
+          connectionStatus={connectionStatus}
         />
       </DndProvider>
-      <Tooltip>
-        <Image src="/tooltip-icon.png" alt="Tooltip icon" />
-      </Tooltip>
-      <Socket />
-      <StripeCheckout />
+      {selectedCalendar && (
+        <div>
+          <h2>Connected to {selectedCalendar}</h2>
+          <button onClick={() => handleDisconnect(selectedCalendar)}>Disconnect</button>
+        </div>
+      )}
+      {!selectedCalendar && (
+        <div>
+          <h2>Available Calendars</h2>
+          <ul>
+            {Object.keys(calendarIntegrations).map((calendar) => (
+              <li key={calendar}>
+                <Image src={calendarIntegrations[calendar].icon} alt={calendarIntegrations[calendar].name} />
+                <span>{calendarIntegrations[calendar].name}</span>
+                <button onClick={() => handleConnect(calendar)}>Connect</button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </Layout>
   );
 };
 
-export default Page;
+export default App;
