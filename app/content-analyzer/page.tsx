@@ -54,99 +54,98 @@ const calculateReadabilityScore = async (text: string) => {
 
   const combinedScoreAdvanced = (readabilityScore * 0.3 + readabilityScoreNlp * 0.2 + readabilityScoreSpacy * 0.2 + tfReadabilityScore.dataSync()[0] * 0.3);
 
-  // Provide actionable suggestions for improvement
-  let suggestions = [];
-  if (combinedScoreAdvanced < 0.5) {
-    suggestions.push("Use simpler vocabulary and sentence structures to improve readability.");
-  }
-  if (complexityScore < 0.5) {
-    suggestions.push("Use more complex sentence structures and vocabulary to improve complexity.");
-  }
-  if (cohesionScore < 0.5) {
-    suggestions.push("Use transitional phrases and words to improve cohesion.");
-  }
-  if (clarityScore < 0.5) {
-    suggestions.push("Use clear and concise language to improve clarity.");
-  }
-  if (sentenceLengthScore < 0.5) {
-    suggestions.push("Vary sentence length to improve readability.");
-  }
-  if (wordLengthScore < 0.5) {
-    suggestions.push("Use a mix of short and long words to improve readability.");
-  }
-  if (syllableCountScore < 0.5) {
-    suggestions.push("Use words with fewer syllables to improve readability.");
-  }
-
-  return { combinedScoreAdvanced, suggestions };
+  return combinedScoreAdvanced;
 }
 
 const calculateComplexityScore = async (text: string) => {
-  // Calculate complexity score using a language model
-  const nlp = new NlpManager({ languages: ['en'] });
-  const doc = await nlp.process('en', text);
-  return doc.score;
+  const complexityPipeline = pipeline('text-classification', model='distilbert-base-uncased-finetuned-sst-2-english')
+  const result = await complexityPipeline(text)
+  return result.score
 }
 
 const calculateCohesionScore = async (text: string) => {
-  // Calculate cohesion score using a language model
-  const nlp = new NlpManager({ languages: ['en'] });
-  const doc = await nlp.process('en', text);
-  return doc.score;
+  const cohesionPipeline = pipeline('text-classification', model='distilbert-base-uncased-finetuned-sst-2-english')
+  const result = await cohesionPipeline(text)
+  return result.score
 }
 
 const calculateClarityScore = async (text: string) => {
-  // Calculate clarity score using a language model
-  const nlp = new NlpManager({ languages: ['en'] });
-  const doc = await nlp.process('en', text);
-  return doc.score;
+  const clarityPipeline = pipeline('text-classification', model='distilbert-base-uncased-finetuned-sst-2-english')
+  const result = await clarityPipeline(text)
+  return result.score
 }
 
 const calculateSentenceLengthScore = async (text: string) => {
-  // Calculate sentence length score using a language model
-  const nlp = new NlpManager({ languages: ['en'] });
-  const doc = await nlp.process('en', text);
-  return doc.score;
+  const sentenceLengthPipeline = pipeline('text-classification', model='distilbert-base-uncased-finetuned-sst-2-english')
+  const result = await sentenceLengthPipeline(text)
+  return result.score
 }
 
 const calculateWordLengthScore = async (text: string) => {
-  // Calculate word length score using a language model
-  const nlp = new NlpManager({ languages: ['en'] });
-  const doc = await nlp.process('en', text);
-  return doc.score;
+  const wordLengthPipeline = pipeline('text-classification', model='distilbert-base-uncased-finetuned-sst-2-english')
+  const result = await wordLengthPipeline(text)
+  return result.score
 }
 
 const calculateSyllableCountScore = async (text: string) => {
-  // Calculate syllable count score using a language model
-  const nlp = new NlpManager({ languages: ['en'] });
-  const doc = await nlp.process('en', text);
-  return doc.score;
+  const syllableCountPipeline = pipeline('text-classification', model='distilbert-base-uncased-finetuned-sst-2-english')
+  const result = await syllableCountPipeline(text)
+  return result.score
 }
 
 const Page = () => {
+  const router = useRouter();
   const [text, setText] = useState('');
   const [readabilityScore, setReadabilityScore] = useState(0);
-  const [suggestions, setSuggestions] = useState([]);
-  const router = useRouter();
+  const [optimizationSuggestions, setOptimizationSuggestions] = useState([]);
+  const [engagementTracker, setEngagementTracker] = useState({});
+  const [alternativeFormats, setAlternativeFormats] = useState({});
 
   const handleTextChange = (event: any) => {
     setText(event.target.value);
-  }
+  };
 
   const handleAnalyze = async () => {
-    const result = await calculateReadabilityScore(text);
-    setReadabilityScore(result.combinedScoreAdvanced);
-    setSuggestions(result.suggestions);
-  }
+    const score = await calculateReadabilityScore(text);
+    setReadabilityScore(score);
+    const suggestions = await getOptimizationSuggestions(text);
+    setOptimizationSuggestions(suggestions);
+    const engagement = await getEngagementTracker(text);
+    setEngagementTracker(engagement);
+    const formats = await getAlternativeFormats(text);
+    setAlternativeFormats(formats);
+  };
+
+  const getOptimizationSuggestions = async (text: string) => {
+    const suggestions = [];
+    // Implement optimization suggestions logic here
+    return suggestions;
+  };
+
+  const getEngagementTracker = async (text: string) => {
+    const engagement = {};
+    // Implement engagement tracker logic here
+    return engagement;
+  };
+
+  const getAlternativeFormats = async (text: string) => {
+    const formats = {};
+    // Implement alternative formats logic here
+    return formats;
+  };
 
   return (
     <div>
       <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
-      <ContentAnalyzerForm text={text} handleTextChange={handleTextChange} handleAnalyze={handleAnalyze} />
-      <OptimizationSuggestions suggestions={suggestions} />
-      <EngagementTracker />
-      <AlternativeFormats />
+      <ContentAnalyzerForm
+        text={text}
+        onChange={handleTextChange}
+        onAnalyze={handleAnalyze}
+      />
+      <OptimizationSuggestions suggestions={optimizationSuggestions} />
+      <EngagementTracker engagement={engagementTracker} />
+      <AlternativeFormats formats={alternativeFormats} />
       <BarChart width={500} height={300} data={[{ name: 'Readability Score', score: readabilityScore }]}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="name" />
@@ -156,6 +155,6 @@ const Page = () => {
       </BarChart>
     </div>
   );
-}
+};
 
 export default Page;

@@ -158,38 +158,25 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
 };
 
 const App = () => {
-  const [selectedCalendar, setSelectedCalendar] = useState<string>('');
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [connected, setConnected] = useState<boolean>(false);
-
-  const handleConnect = async (calendar: string) => {
-    const authUrl = calendarIntegrations[calendar].authUrl;
-    const response = await fetch(authUrl, {
-      method: 'GET',
-      redirect: 'follow',
-    });
-    const url = response.url;
-    window.location.href = url;
-  };
-
-  const handleDisconnect = () => {
-    calendarIntegrations[selectedCalendar].disconnect();
-    setConnected(false);
-  };
-
-  const handleGetEvents = async () => {
-    if (connected) {
-      const events = await calendarIntegrations[selectedCalendar].getEvents();
-      setEvents(events);
-    }
-  };
+  const [selectedCalendar, setSelectedCalendar] = useState<string>('');
 
   useEffect(() => {
-    const token = localStorage.getItem(`${selectedCalendar}Token`);
-    if (token) {
-      setConnected(true);
-    }
+    const fetchEvents = async () => {
+      if (selectedCalendar) {
+        const calendarIntegration = calendarIntegrations[selectedCalendar];
+        if (calendarIntegration) {
+          const events = await calendarIntegration.getEvents();
+          setEvents(events);
+        }
+      }
+    };
+    fetchEvents();
   }, [selectedCalendar]);
+
+  const handleCalendarSelect = (calendar: string) => {
+    setSelectedCalendar(calendar);
+  };
 
   return (
     <Layout>
@@ -201,13 +188,7 @@ const App = () => {
             <div key={calendar}>
               <Image src={calendarIntegrations[calendar].icon} width={20} height={20} />
               <span>{calendarIntegrations[calendar].name}</span>
-              <button onClick={() => handleConnect(calendar)}>Connect</button>
-              {connected && selectedCalendar === calendar && (
-                <button onClick={handleDisconnect}>Disconnect</button>
-              )}
-              {connected && selectedCalendar === calendar && (
-                <button onClick={handleGetEvents}>Get Events</button>
-              )}
+              <button onClick={() => handleCalendarSelect(calendar)}>Connect</button>
             </div>
           ))}
         </div>

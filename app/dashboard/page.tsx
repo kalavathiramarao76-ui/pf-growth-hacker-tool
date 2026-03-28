@@ -129,46 +129,23 @@ const initialWidgets: Widget[] = [
 ];
 
 const DashboardPage = () => {
-  const router = useRouter();
   const [widgets, setWidgets] = useState(initialWidgets);
   const [widgetLayout, setWidgetLayout] = useState<WidgetLayout>({
     columns: 3,
     rows: 2,
     widgets: initialWidgets,
   });
-  const [analyticsData, setAnalyticsData] = useState<any>(null);
-  const [contentSuggestions, setContentSuggestions] = useState<any>(null);
+  const [dragging, setDragging] = useState(false);
 
-  const fetchAnalyticsData = useCallback(async () => {
-    try {
-      const response = await axios.get('/api/analytics');
-      setAnalyticsData(response.data);
-    } catch (error) {
-      console.error(error);
-    }
-  }, []);
-
-  const fetchContentSuggestions = useCallback(async () => {
-    try {
-      const response = await axios.get('/api/content-suggestions');
-      setContentSuggestions(response.data);
-    } catch (error) {
-      console.error(error);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchAnalyticsData();
-    fetchContentSuggestions();
-  }, [fetchAnalyticsData, fetchContentSuggestions]);
-
-  const handleWidgetClick = (widget: Widget) => {
-    if (widget.onClick) {
-      widget.onClick();
-    }
+  const handleDragStart = () => {
+    setDragging(true);
   };
 
-  const handleWidgetDragEnd = (result: any) => {
+  const handleDragEnd = () => {
+    setDragging(false);
+  };
+
+  const handleDragUpdate = (result: any) => {
     if (!result.destination) return;
     const newWidgets = [...widgets];
     const [reorderedWidget] = newWidgets.splice(result.source.index, 1);
@@ -176,52 +153,58 @@ const DashboardPage = () => {
     setWidgets(newWidgets);
   };
 
-  const memoizedWidgets = useMemo(() => widgets, [widgets]);
+  const handleWidgetClick = (widget: Widget) => {
+    widget.onClick();
+  };
+
+  const handleWidgetSettingsClick = (widget: Widget) => {
+    // Open widget settings modal
+  };
+
+  const handleAddWidgetClick = () => {
+    // Add new widget to the dashboard
+  };
 
   return (
-    <DndProvider>
-      <DragDropContext onDragEnd={handleWidgetDragEnd}>
-        <DashboardHeader />
-        <NavigationMenu />
-        <div className="dashboard-container">
-          <Droppable droppableId="widgets">
-            {(provided) => (
-              <div
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                className="widgets-container"
-              >
-                {memoizedWidgets.map((widget, index) => (
-                  <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
-                    {(provided) => (
-                      <div
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        ref={provided.innerRef}
-                        className="widget"
-                      >
-                        <DashboardCard
-                          title={widget.title}
-                          icon={widget.icon}
-                          onClick={() => handleWidgetClick(widget)}
-                          frequency={widget.frequency}
-                          description={widget.description}
-                          callToAction={widget.callToAction}
-                          analyticsData={analyticsData}
-                          contentSuggestions={contentSuggestions}
-                        />
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-        </div>
-        <WidgetSettings />
-      </DragDropContext>
-    </DndProvider>
+    <div className="dashboard-container">
+      <DashboardHeader />
+      <NavigationMenu />
+      <DndProvider>
+        <DragDropContext
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          onDragUpdate={handleDragUpdate}
+        >
+          <div className="dashboard-grid">
+            {widgets.map((widget, index) => (
+              <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+                {(provided) => (
+                  <div
+                    ref={provided.innerRef}
+                    {...provided.draggableProps}
+                    {...provided.dragHandleProps}
+                    className="dashboard-widget"
+                  >
+                    <DashboardCard
+                      title={widget.title}
+                      icon={widget.icon}
+                      onClick={() => handleWidgetClick(widget)}
+                      settingsClick={() => handleWidgetSettingsClick(widget)}
+                    />
+                  </div>
+                )}
+              </Draggable>
+            ))}
+          </div>
+        </DragDropContext>
+      </DndProvider>
+      <div className="add-widget-button">
+        <button onClick={handleAddWidgetClick}>
+          <AiOutlinePlus size={24} />
+          Add Widget
+        </button>
+      </div>
+    </div>
   );
 };
 
