@@ -129,9 +129,10 @@ const initialWidgets: Widget[] = [
 ];
 
 const DashboardPage = () => {
+  const router = useRouter();
   const [widgets, setWidgets] = useState(initialWidgets);
   const [widgetLayout, setWidgetLayout] = useState<WidgetLayout>({
-    columns: 4,
+    columns: 3,
     rows: 2,
     widgets: initialWidgets,
   });
@@ -161,7 +162,7 @@ const DashboardPage = () => {
     widget.onClick();
   };
 
-  const handleWidgetDragEnd = (result: any) => {
+  const handleDragEnd = (result: any) => {
     if (!result.destination) return;
     const { source, destination } = result;
     const newWidgets = [...widgets];
@@ -170,9 +171,11 @@ const DashboardPage = () => {
     setWidgets(newWidgets);
   };
 
+  const memoizedWidgets = useMemo(() => widgets, [widgets]);
+
   return (
     <DndProvider>
-      <DragDropContext onDragEnd={handleWidgetDragEnd}>
+      <DragDropContext onDragEnd={handleDragEnd}>
         <DashboardHeader />
         <NavigationMenu />
         <div className="dashboard-container">
@@ -183,7 +186,7 @@ const DashboardPage = () => {
                 ref={provided.innerRef}
                 className="widgets-container"
               >
-                {widgets.map((widget, index) => (
+                {memoizedWidgets.map((widget, index) => (
                   <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
                     {(provided) => (
                       <div
@@ -196,10 +199,11 @@ const DashboardPage = () => {
                           title={widget.title}
                           icon={widget.icon}
                           onClick={() => handleWidgetClick(widget)}
-                          analyticsData={widget.analyticsData}
-                          contentSuggestions={widget.contentSuggestions}
+                          frequency={widget.frequency}
                           description={widget.description}
                           callToAction={widget.callToAction}
+                          analyticsData={widget.analyticsData}
+                          contentSuggestions={widget.contentSuggestions}
                         />
                       </div>
                     )}
@@ -210,6 +214,7 @@ const DashboardPage = () => {
             )}
           </Droppable>
         </div>
+        <WidgetSettings />
       </DragDropContext>
     </DndProvider>
   );

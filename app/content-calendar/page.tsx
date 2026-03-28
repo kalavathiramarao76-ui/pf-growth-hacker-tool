@@ -72,12 +72,10 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
     disconnect: () => {
       try {
         // Implement Google Calendar disconnection logic
-        localStorage.removeItem('googleCalendarToken');
-        // Automatically clear events after disconnecting
-        setEvents([]);
-        // Prompt user to confirm disconnection
         if (confirm('Are you sure you want to disconnect from Google Calendar?')) {
-          // Disconnect and clear events
+          localStorage.removeItem('googleCalendarToken');
+          // Automatically clear events after disconnecting
+          setEvents([]);
           setConnected(false);
         }
       } catch (error) {
@@ -88,37 +86,39 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
       return localStorage.getItem('googleCalendarToken') !== null;
     },
     name: 'Google Calendar',
-    icon: 'https://cdn-icons-png.flaticon.com/512/281/281764.png',
+    icon: 'https://www.google.com/calendar/images/favicon_v2016.ico',
     description: 'Connect your Google Calendar to view and manage your events',
     authUrl: 'https://accounts.google.com/o/oauth2/auth',
     onboardingSteps: [
       {
         title: 'Step 1: Connect your Google Calendar',
-        description: 'Click the "Connect" button to authorize access to your Google Calendar',
+        description: 'Click the "Connect" button to authenticate with Google Calendar',
         action: () => {
           window.open(calendarIntegrations.GoogleCalendar.authUrl, '_blank');
         },
       },
       {
-        title: 'Step 2: Authenticate with Google',
-        description: 'Enter your Google account credentials to authenticate',
+        title: 'Step 2: Authorize access',
+        description: 'Grant permission for our app to access your Google Calendar',
         action: () => {
-          // Handle authentication logic
+          // Implement authorization logic
         },
       },
       {
-        title: 'Step 3: Authorize access to your Google Calendar',
-        description: 'Click "Allow" to grant access to your Google Calendar',
+        title: 'Step 3: Verify connection',
+        description: 'Verify that your Google Calendar is connected and events are being retrieved',
         action: () => {
-          // Handle authorization logic
+          calendarIntegrations.GoogleCalendar.getEvents().then((events) => {
+            setEvents(events);
+          });
         },
       },
     ],
   },
 };
 
-const [events, setEvents] = useState<CalendarEvent[]>([]);
 const [connected, setConnected] = useState(false);
+const [events, setEvents] = useState<CalendarEvent[]>([]);
 
 useEffect(() => {
   if (calendarIntegrations.GoogleCalendar.isAuthenticated()) {
@@ -130,35 +130,59 @@ useEffect(() => {
 }, []);
 
 const handleConnect = () => {
-  // Prompt user to confirm connection
-  if (confirm('Are you sure you want to connect to Google Calendar?')) {
-    // Connect and retrieve events
-    calendarIntegrations.GoogleCalendar.connect('');
-    setConnected(true);
-  }
+  calendarIntegrations.GoogleCalendar.onboardingSteps[0].action();
 };
 
 const handleDisconnect = () => {
   calendarIntegrations.GoogleCalendar.disconnect();
 };
 
-const App = () => {
-  return (
-    <Layout>
-      <SEO title="AI-Powered Content Optimizer" />
-      <DndProvider backend={HTML5Backend}>
-        <Calendar events={events} />
-        {connected ? (
-          <button onClick={handleDisconnect}>Disconnect from Google Calendar</button>
-        ) : (
-          <button onClick={handleConnect}>Connect to Google Calendar</button>
-        )}
-        <Tooltip>
-          <Image src={calendarIntegrations.GoogleCalendar.icon} alt={calendarIntegrations.GoogleCalendar.name} />
-        </Tooltip>
-      </DndProvider>
-    </Layout>
-  );
+const [disconnectModalOpen, setDisconnectModalOpen] = useState(false);
+
+const handleDisconnectModalOpen = () => {
+  setDisconnectModalOpen(true);
 };
 
-export default App;
+const handleDisconnectModalClose = () => {
+  setDisconnectModalOpen(false);
+};
+
+const handleConfirmDisconnect = () => {
+  calendarIntegrations.GoogleCalendar.disconnect();
+  setDisconnectModalOpen(false);
+};
+
+return (
+  <Layout>
+    <SEO title="Content Calendar" />
+    <DndProvider backend={HTML5Backend}>
+      <div className="container">
+        <h1>Content Calendar</h1>
+        <div className="calendar-container">
+          <Calendar events={events} />
+        </div>
+        <div className="connection-status">
+          {connected ? (
+            <div>
+              <p>Connected to Google Calendar</p>
+              <button onClick={handleDisconnectModalOpen}>Disconnect</button>
+            </div>
+          ) : (
+            <div>
+              <p>Not connected to Google Calendar</p>
+              <button onClick={handleConnect}>Connect</button>
+            </div>
+          )}
+        </div>
+        {disconnectModalOpen && (
+          <div className="disconnect-modal">
+            <h2>Disconnect from Google Calendar</h2>
+            <p>Are you sure you want to disconnect from Google Calendar?</p>
+            <button onClick={handleConfirmDisconnect}>Confirm</button>
+            <button onClick={handleDisconnectModalClose}>Cancel</button>
+          </div>
+        )}
+      </div>
+    </DndProvider>
+  </Layout>
+);
