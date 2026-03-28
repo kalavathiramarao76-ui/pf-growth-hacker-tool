@@ -86,7 +86,7 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
       return localStorage.getItem('googleCalendarToken') !== null;
     },
     name: 'Google Calendar',
-    icon: 'https://www.google.com/calendar/images/favicon_v2016.ico',
+    icon: 'https://developers.google.com/identity/images/g-logo.png',
     description: 'Connect your Google Calendar to view and manage your events',
     authUrl: 'https://accounts.google.com/o/oauth2/auth',
     onboardingSteps: [
@@ -94,95 +94,206 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
         title: 'Step 1: Connect your Google Calendar',
         description: 'Click the "Connect" button to authenticate with Google Calendar',
         action: () => {
-          window.open(calendarIntegrations.GoogleCalendar.authUrl, '_blank');
+          window.location.href = calendarIntegrations.GoogleCalendar.authUrl;
         },
       },
-      {
-        title: 'Step 2: Authorize access',
-        description: 'Grant permission for our app to access your Google Calendar',
-        action: () => {
-          // Implement authorization logic
-        },
-      },
-      {
-        title: 'Step 3: Verify connection',
-        description: 'Verify that your Google Calendar is connected and events are being retrieved',
-        action: () => {
-          calendarIntegrations.GoogleCalendar.getEvents().then((events) => {
-            setEvents(events);
+    ],
+  },
+  MicrosoftOutlook: {
+    connect: (token: string) => {
+      try {
+        // Implement Microsoft Outlook connection logic
+        localStorage.setItem('microsoftOutlookToken', token);
+        // Automatically retrieve events after connecting
+        calendarIntegrations.MicrosoftOutlook.getEvents().then((events) => {
+          setEvents(events);
+        });
+      } catch (error) {
+        console.error('Error connecting to Microsoft Outlook:', error);
+      }
+    },
+    getEvents: async () => {
+      try {
+        // Implement Microsoft Outlook event retrieval logic
+        const token = localStorage.getItem('microsoftOutlookToken');
+        if (token) {
+          const response = await fetch('https://graph.microsoft.com/v1.0/me/events', {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           });
+          if (!response.ok) {
+            throw new Error(`Error fetching Microsoft Outlook events: ${response.status}`);
+          }
+          const data = await response.json();
+          return data.value.map((event: any) => ({
+            id: event.id,
+            title: event.subject,
+            start: new Date(event.start.dateTime),
+            end: new Date(event.end.dateTime),
+          }));
+        }
+        return [];
+      } catch (error) {
+        console.error('Error fetching Microsoft Outlook events:', error);
+        return [];
+      }
+    },
+    disconnect: () => {
+      try {
+        // Implement Microsoft Outlook disconnection logic
+        if (confirm('Are you sure you want to disconnect from Microsoft Outlook?')) {
+          localStorage.removeItem('microsoftOutlookToken');
+          // Automatically clear events after disconnecting
+          setEvents([]);
+          setConnected(false);
+        }
+      } catch (error) {
+        console.error('Error disconnecting from Microsoft Outlook:', error);
+      }
+    },
+    isAuthenticated: () => {
+      return localStorage.getItem('microsoftOutlookToken') !== null;
+    },
+    name: 'Microsoft Outlook',
+    icon: 'https://developer.microsoft.com/en-us/graph/images/microsoft-graph-logo.png',
+    description: 'Connect your Microsoft Outlook to view and manage your events',
+    authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
+    onboardingSteps: [
+      {
+        title: 'Step 1: Connect your Microsoft Outlook',
+        description: 'Click the "Connect" button to authenticate with Microsoft Outlook',
+        action: () => {
+          window.location.href = calendarIntegrations.MicrosoftOutlook.authUrl;
+        },
+      },
+    ],
+  },
+  AppleCalendar: {
+    connect: (token: string) => {
+      try {
+        // Implement Apple Calendar connection logic
+        localStorage.setItem('appleCalendarToken', token);
+        // Automatically retrieve events after connecting
+        calendarIntegrations.AppleCalendar.getEvents().then((events) => {
+          setEvents(events);
+        });
+      } catch (error) {
+        console.error('Error connecting to Apple Calendar:', error);
+      }
+    },
+    getEvents: async () => {
+      try {
+        // Implement Apple Calendar event retrieval logic
+        const token = localStorage.getItem('appleCalendarToken');
+        if (token) {
+          const response = await fetch('https://api.apple.com/calendars/events', {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          if (!response.ok) {
+            throw new Error(`Error fetching Apple Calendar events: ${response.status}`);
+          }
+          const data = await response.json();
+          return data.events.map((event: any) => ({
+            id: event.id,
+            title: event.title,
+            start: new Date(event.startDate),
+            end: new Date(event.endDate),
+          }));
+        }
+        return [];
+      } catch (error) {
+        console.error('Error fetching Apple Calendar events:', error);
+        return [];
+      }
+    },
+    disconnect: () => {
+      try {
+        // Implement Apple Calendar disconnection logic
+        if (confirm('Are you sure you want to disconnect from Apple Calendar?')) {
+          localStorage.removeItem('appleCalendarToken');
+          // Automatically clear events after disconnecting
+          setEvents([]);
+          setConnected(false);
+        }
+      } catch (error) {
+        console.error('Error disconnecting from Apple Calendar:', error);
+      }
+    },
+    isAuthenticated: () => {
+      return localStorage.getItem('appleCalendarToken') !== null;
+    },
+    name: 'Apple Calendar',
+    icon: 'https://developer.apple.com/assets/elements/icons/apple-logo/apple-logo.png',
+    description: 'Connect your Apple Calendar to view and manage your events',
+    authUrl: 'https://id.apple.com/auth/authorize',
+    onboardingSteps: [
+      {
+        title: 'Step 1: Connect your Apple Calendar',
+        description: 'Click the "Connect" button to authenticate with Apple Calendar',
+        action: () => {
+          window.location.href = calendarIntegrations.AppleCalendar.authUrl;
         },
       },
     ],
   },
 };
 
-const [connected, setConnected] = useState(false);
 const [events, setEvents] = useState<CalendarEvent[]>([]);
+const [connected, setConnected] = useState(false);
+const [selectedCalendar, setSelectedCalendar] = useState<CalendarIntegration | null>(null);
 
 useEffect(() => {
-  if (calendarIntegrations.GoogleCalendar.isAuthenticated()) {
-    setConnected(true);
-    calendarIntegrations.GoogleCalendar.getEvents().then((events) => {
-      setEvents(events);
-    });
+  const storedToken = localStorage.getItem('googleCalendarToken');
+  if (storedToken) {
+    calendarIntegrations.GoogleCalendar.connect(storedToken);
   }
 }, []);
 
-const handleConnect = () => {
-  calendarIntegrations.GoogleCalendar.onboardingSteps[0].action();
+const handleConnect = (calendar: CalendarIntegration) => {
+  setSelectedCalendar(calendar);
+  window.location.href = calendar.authUrl;
 };
 
 const handleDisconnect = () => {
-  calendarIntegrations.GoogleCalendar.disconnect();
+  if (selectedCalendar) {
+    selectedCalendar.disconnect();
+  }
 };
 
-const [disconnectModalOpen, setDisconnectModalOpen] = useState(false);
-
-const handleDisconnectModalOpen = () => {
-  setDisconnectModalOpen(true);
-};
-
-const handleDisconnectModalClose = () => {
-  setDisconnectModalOpen(false);
-};
-
-const handleConfirmDisconnect = () => {
-  calendarIntegrations.GoogleCalendar.disconnect();
-  setDisconnectModalOpen(false);
+const handleGetEvents = () => {
+  if (selectedCalendar) {
+    selectedCalendar.getEvents().then((events) => {
+      setEvents(events);
+    });
+  }
 };
 
 return (
   <Layout>
     <SEO title="Content Calendar" />
     <DndProvider backend={HTML5Backend}>
-      <div className="container">
-        <h1>Content Calendar</h1>
-        <div className="calendar-container">
-          <Calendar events={events} />
-        </div>
-        <div className="connection-status">
-          {connected ? (
-            <div>
-              <p>Connected to Google Calendar</p>
-              <button onClick={handleDisconnectModalOpen}>Disconnect</button>
-            </div>
-          ) : (
-            <div>
-              <p>Not connected to Google Calendar</p>
-              <button onClick={handleConnect}>Connect</button>
-            </div>
-          )}
-        </div>
-        {disconnectModalOpen && (
-          <div className="disconnect-modal">
-            <h2>Disconnect from Google Calendar</h2>
-            <p>Are you sure you want to disconnect from Google Calendar?</p>
-            <button onClick={handleConfirmDisconnect}>Confirm</button>
-            <button onClick={handleDisconnectModalClose}>Cancel</button>
+      <Calendar events={events} />
+      <div>
+        {Object.values(calendarIntegrations).map((calendar) => (
+          <div key={calendar.name}>
+            <Image src={calendar.icon} alt={calendar.name} />
+            <p>{calendar.description}</p>
+            {calendar.isAuthenticated() ? (
+              <button onClick={handleDisconnect}>Disconnect</button>
+            ) : (
+              <button onClick={() => handleConnect(calendar)}>Connect</button>
+            )}
           </div>
-        )}
+        ))}
       </div>
+      <Tooltip>
+        <p>Connect your calendar to view and manage your events</p>
+      </Tooltip>
+      <Socket />
+      <StripeCheckout />
     </DndProvider>
   </Layout>
 );
