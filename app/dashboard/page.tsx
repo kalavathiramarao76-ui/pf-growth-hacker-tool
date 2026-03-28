@@ -121,79 +121,124 @@ const initialWidgets: Widget[] = [
           }}
         >
           Join the ranks of our 10,000+ satisfied customers who have seen an
-          average increase of 25% in engagement and 35% in conversions.
+          average increase of 25% in engagement and 35% in conversio
         </p>
       </div>
     ),
   },
 ];
 
+const cache = {
+  analyticsData: null,
+  contentSuggestions: null,
+};
+
+const fetchAnalyticsData = async () => {
+  if (cache.analyticsData) {
+    return cache.analyticsData;
+  }
+
+  try {
+    const response = await axios.get('/api/analytics');
+    cache.analyticsData = response.data;
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+};
+
+const fetchContentSuggestions = async () => {
+  if (cache.contentSuggestions) {
+    return cache.contentSuggestions;
+  }
+
+  try {
+    const response = await axios.get('/api/content-suggestions');
+    cache.contentSuggestions = response.data;
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+};
+
 const DashboardPage = () => {
   const router = useRouter();
   const [widgets, setWidgets] = useState(initialWidgets);
-  const [dragging, setDragging] = useState(false);
+  const [analyticsData, setAnalyticsData] = useState(null);
+  const [contentSuggestions, setContentSuggestions] = useState(null);
 
-  const handleDragStart = () => {
-    setDragging(true);
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      const analyticsDataResponse = await fetchAnalyticsData();
+      const contentSuggestionsResponse = await fetchContentSuggestions();
+
+      setAnalyticsData(analyticsDataResponse);
+      setContentSuggestions(contentSuggestionsResponse);
+    };
+
+    fetchInitialData();
+  }, []);
+
+  const handleWidgetClick = (widget: Widget) => {
+    if (widget.onClick) {
+      widget.onClick();
+    }
   };
 
-  const handleDragEnd = () => {
-    setDragging(false);
-  };
+  const handleDragEnd = (result: any) => {
+    if (!result.destination) {
+      return;
+    }
 
-  const onDragEnd = (result: any) => {
-    if (!result.destination) return;
-
-    const { source, destination } = result;
     const newWidgets = [...widgets];
-
-    const [removed] = newWidgets.splice(source.index, 1);
-    newWidgets.splice(destination.index, 0, removed);
+    const [reorderedWidget] = newWidgets.splice(result.source.index, 1);
+    newWidgets.splice(result.destination.index, 0, reorderedWidget);
 
     setWidgets(newWidgets);
   };
 
   return (
-    <div className="dashboard-container">
-      <DashboardHeader />
-      <NavigationMenu />
-      <div className="dashboard-content">
-        <DndProvider backend={require('react-beautiful-dnd').backend}>
-          <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-            <Droppable droppableId="widgets">
-              {(provided) => (
-                <div ref={provided.innerRef} {...provided.droppableProps}>
-                  {widgets.map((widget, index) => (
-                    <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
-                      {(provided) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          className="widget"
-                        >
-                          <DashboardCard
-                            title={widget.title}
-                            icon={widget.icon}
-                            onClick={widget.onClick}
-                            frequency={widget.frequency}
-                            description={widget.description}
-                            callToAction={widget.callToAction}
-                            analyticsData={widget.analyticsData}
-                            contentSuggestions={widget.contentSuggestions}
-                          />
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </DragDropContext>
-        </DndProvider>
-      </div>
-    </div>
+    <DndProvider>
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <DashboardHeader />
+        <NavigationMenu />
+        <div className="dashboard-container">
+          <Droppable droppableId="widgets">
+            {(provided) => (
+              <div
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                className="widgets-container"
+              >
+                {widgets.map((widget, index) => (
+                  <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+                    {(provided) => (
+                      <div
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        ref={provided.innerRef}
+                        className="widget"
+                      >
+                        <DashboardCard
+                          title={widget.title}
+                          icon={widget.icon}
+                          onClick={() => handleWidgetClick(widget)}
+                          analyticsData={analyticsData}
+                          contentSuggestions={contentSuggestions}
+                        />
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </div>
+      </DragDropContext>
+    </DndProvider>
   );
 };
 
