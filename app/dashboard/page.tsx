@@ -121,125 +121,89 @@ const initialWidgets: Widget[] = [
           }}
         >
           Join the ranks of our 10,000+ satisfied customers who have seen an
-          average increase of 25% in engagement and 35% in conversio
+          average increase of 25% in engagement and 35% in conversions.
         </p>
       </div>
     ),
   },
 ];
 
-const cache = {
-  analyticsData: null,
-  contentSuggestions: null,
-};
-
-const fetchAnalyticsData = async () => {
-  if (cache.analyticsData) {
-    return cache.analyticsData;
-  }
-
-  try {
-    const response = await axios.get('/api/analytics');
-    cache.analyticsData = response.data;
-    return response.data;
-  } catch (error) {
-    console.error(error);
-    return null;
-  }
-};
-
-const fetchContentSuggestions = async () => {
-  if (cache.contentSuggestions) {
-    return cache.contentSuggestions;
-  }
-
-  try {
-    const response = await axios.get('/api/content-suggestions');
-    cache.contentSuggestions = response.data;
-    return response.data;
-  } catch (error) {
-    console.error(error);
-    return null;
-  }
-};
-
-const DashboardPage = () => {
-  const router = useRouter();
+const App = () => {
   const [widgets, setWidgets] = useState(initialWidgets);
-  const [analyticsData, setAnalyticsData] = useState(null);
-  const [contentSuggestions, setContentSuggestions] = useState(null);
+  const [widgetLayout, setWidgetLayout] = useState<WidgetLayout>({
+    columns: 3,
+    rows: 2,
+    widgets: initialWidgets,
+  });
 
-  useEffect(() => {
-    const fetchInitialData = async () => {
-      const analyticsDataResponse = await fetchAnalyticsData();
-      const contentSuggestionsResponse = await fetchContentSuggestions();
+  const onDragEnd = (result: any) => {
+    if (!result.destination) return;
 
-      setAnalyticsData(analyticsDataResponse);
-      setContentSuggestions(contentSuggestionsResponse);
-    };
-
-    fetchInitialData();
-  }, []);
-
-  const handleWidgetClick = (widget: Widget) => {
-    if (widget.onClick) {
-      widget.onClick();
-    }
-  };
-
-  const handleDragEnd = (result: any) => {
-    if (!result.destination) {
-      return;
-    }
-
+    const { source, destination } = result;
     const newWidgets = [...widgets];
-    const [reorderedWidget] = newWidgets.splice(result.source.index, 1);
-    newWidgets.splice(result.destination.index, 0, reorderedWidget);
+
+    const [removed] = newWidgets.splice(source.index, 1);
+    newWidgets.splice(destination.index, 0, removed);
 
     setWidgets(newWidgets);
   };
 
+  const handleWidgetAdd = () => {
+    const newWidget: Widget = {
+      id: widgets.length + 1,
+      title: 'New Widget',
+      icon: <AiOutlinePlus size={24} />,
+      onClick: () => {},
+    };
+    setWidgets([...widgets, newWidget]);
+  };
+
+  const handleWidgetRemove = (id: number) => {
+    setWidgets(widgets.filter((widget) => widget.id !== id));
+  };
+
+  const handleWidgetEdit = (id: number, newTitle: string) => {
+    setWidgets(
+      widgets.map((widget) =>
+        widget.id === id ? { ...widget, title: newTitle } : widget
+      )
+    );
+  };
+
   return (
-    <DndProvider>
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <DashboardHeader />
-        <NavigationMenu />
-        <div className="dashboard-container">
-          <Droppable droppableId="widgets">
-            {(provided) => (
-              <div
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                className="widgets-container"
-              >
-                {widgets.map((widget, index) => (
-                  <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
-                    {(provided) => (
-                      <div
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        ref={provided.innerRef}
-                        className="widget"
-                      >
-                        <DashboardCard
-                          title={widget.title}
-                          icon={widget.icon}
-                          onClick={() => handleWidgetClick(widget)}
-                          analyticsData={analyticsData}
-                          contentSuggestions={contentSuggestions}
-                        />
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-        </div>
-      </DragDropContext>
-    </DndProvider>
+    <div className="dashboard-container">
+      <DashboardHeader />
+      <NavigationMenu />
+      <DndProvider>
+        <DragDropContext onDragEnd={onDragEnd}>
+          <div className="widget-grid">
+            {widgets.map((widget, index) => (
+              <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+                {(provided) => (
+                  <div
+                    ref={provided.innerRef}
+                    {...provided.draggableProps}
+                    {...provided.dragHandleProps}
+                    className="widget"
+                  >
+                    <DashboardCard
+                      title={widget.title}
+                      icon={widget.icon}
+                      onClick={widget.onClick}
+                      onAdd={handleWidgetAdd}
+                      onRemove={() => handleWidgetRemove(widget.id)}
+                      onEdit={(newTitle) => handleWidgetEdit(widget.id, newTitle)}
+                    />
+                  </div>
+                )}
+              </Draggable>
+            ))}
+          </div>
+        </DragDropContext>
+      </DndProvider>
+      <WidgetSettings />
+    </div>
   );
 };
 
-export default DashboardPage;
+export default App;
