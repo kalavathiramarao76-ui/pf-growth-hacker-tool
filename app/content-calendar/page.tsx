@@ -19,6 +19,7 @@ interface CalendarIntegration {
   icon: string;
   description: string;
   authUrl: string;
+  isAuthenticated: () => boolean;
 }
 
 // Calendar Integrations
@@ -50,6 +51,9 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
     disconnect: () => {
       // Implement Google Calendar disconnection logic
       localStorage.removeItem('googleCalendarToken');
+    },
+    isAuthenticated: () => {
+      return localStorage.getItem('googleCalendarToken') !== null;
     },
     name: 'Google Calendar',
     icon: 'https://cdn-icons-png.flaticon.com/512/281/281764.png',
@@ -84,118 +88,95 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
       // Implement Outlook Calendar disconnection logic
       localStorage.removeItem('outlookCalendarToken');
     },
+    isAuthenticated: () => {
+      return localStorage.getItem('outlookCalendarToken') !== null;
+    },
     name: 'Outlook Calendar',
     icon: 'https://cdn-icons-png.flaticon.com/512/281/281765.png',
     description: 'Connect your Outlook Calendar to view and manage your events',
     authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
   },
-  AppleCalendar: {
-    connect: (token: string) => {
-      // Implement Apple Calendar connection logic
-      localStorage.setItem('appleCalendarToken', token);
-    },
-    getEvents: async () => {
-      // Implement Apple Calendar event retrieval logic
-      const token = localStorage.getItem('appleCalendarToken');
-      if (token) {
-        const response = await fetch('https://api.apple.com/calendars/v1/events', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const data = await response.json();
-        return data.data.map((event: any) => ({
-          id: event.id,
-          title: event.title,
-          start: new Date(event.startDate),
-          end: new Date(event.endDate),
-        }));
-      }
-      return [];
-    },
-    disconnect: () => {
-      // Implement Apple Calendar disconnection logic
-      localStorage.removeItem('appleCalendarToken');
-    },
-    name: 'Apple Calendar',
-    icon: 'https://cdn-icons-png.flaticon.com/512/281/281766.png',
-    description: 'Connect your Apple Calendar to view and manage your events',
-    authUrl: 'https://id.apple.com/auth/authorize',
-  },
-  YahooCalendar: {
-    connect: (token: string) => {
-      // Implement Yahoo Calendar connection logic
-      localStorage.setItem('yahooCalendarToken', token);
-    },
-    getEvents: async () => {
-      // Implement Yahoo Calendar event retrieval logic
-      const token = localStorage.getItem('yahooCalendarToken');
-      if (token) {
-        const response = await fetch('https://api.login.yahoo.com/oauth2/get_token', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const data = await response.json();
-        return data.events.map((event: any) => ({
-          id: event.id,
-          title: event.title,
-          start: new Date(event.start),
-          end: new Date(event.end),
-        }));
-      }
-      return [];
-    },
-    disconnect: () => {
-      // Implement Yahoo Calendar disconnection logic
-      localStorage.removeItem('yahooCalendarToken');
-    },
-    name: 'Yahoo Calendar',
-    icon: 'https://cdn-icons-png.flaticon.com/512/281/281767.png',
-    description: 'Connect your Yahoo Calendar to view and manage your events',
-    authUrl: 'https://api.login.yahoo.com/oauth2/request_auth',
-  },
 };
 
 const App = () => {
+  const [selectedCalendar, setSelectedCalendar] = useState<CalendarIntegration | null>(null);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [selectedCalendar, setSelectedCalendar] = useState<string>('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  const handleConnect = (calendar: CalendarIntegration) => {
+    const token = prompt('Enter your token');
+    if (token) {
+      calendar.connect(token);
+      setSelectedCalendar(calendar);
+      setIsAuthenticated(calendar.isAuthenticated());
+    }
+  };
+
+  const handleDisconnect = () => {
+    if (selectedCalendar) {
+      selectedCalendar.disconnect();
+      setSelectedCalendar(null);
+      setIsAuthenticated(false);
+    }
+  };
+
+  const handleGetEvents = async () => {
+    if (selectedCalendar) {
+      const events = await selectedCalendar.getEvents();
+      setEvents(events);
+    }
+  };
 
   useEffect(() => {
-    const fetchEvents = async () => {
-      if (selectedCalendar) {
-        const calendarIntegration = calendarIntegrations[selectedCalendar];
-        if (calendarIntegration) {
-          const events = await calendarIntegration.getEvents();
-          setEvents(events);
-        }
+    const storedCalendar = localStorage.getItem('selectedCalendar');
+    if (storedCalendar) {
+      const calendar = calendarIntegrations[storedCalendar];
+      if (calendar) {
+        setSelectedCalendar(calendar);
+        setIsAuthenticated(calendar.isAuthenticated());
       }
-    };
-    fetchEvents();
-  }, [selectedCalendar]);
-
-  const handleCalendarSelect = (calendar: string) => {
-    setSelectedCalendar(calendar);
-  };
+    }
+  }, []);
 
   return (
     <Layout>
       <SEO title="Content Calendar" />
       <DndProvider backend={HTML5Backend}>
-        <Calendar events={events} />
-        <div>
-          {Object.keys(calendarIntegrations).map((calendar) => (
-            <div key={calendar}>
-              <Image src={calendarIntegrations[calendar].icon} width={20} height={20} />
-              <span>{calendarIntegrations[calendar].name}</span>
-              <button onClick={() => handleCalendarSelect(calendar)}>Connect</button>
+        <div className="flex flex-col h-screen">
+          <div className="flex justify-between items-center p-4 border-b border-gray-200">
+            <h1 className="text-2xl font-bold">Content Calendar</h1>
+            <div className="flex items-center">
+              {Object.values(calendarIntegrations).map((calendar) => (
+                <button
+                  key={calendar.name}
+                  className={`mr-4 ${selectedCalendar === calendar ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-600'}`}
+                  onClick={() => handleConnect(calendar)}
+                >
+                  <Image src={calendar.icon} width={24} height={24} alt={calendar.name} />
+                  {calendar.name}
+                </button>
+              ))}
+              {selectedCalendar && (
+                <button className="bg-red-500 text-white" onClick={handleDisconnect}>
+                  Disconnect
+                </button>
+              )}
             </div>
-          ))}
+          </div>
+          <div className="flex-1 p-4">
+            {selectedCalendar && (
+              <div>
+                <h2 className="text-xl font-bold">{selectedCalendar.name}</h2>
+                <p>{selectedCalendar.description}</p>
+                <button className="bg-blue-500 text-white" onClick={handleGetEvents}>
+                  Get Events
+                </button>
+                <Calendar events={events} />
+              </div>
+            )}
+          </div>
         </div>
       </DndProvider>
-      <Socket />
-      <StripeCheckout />
-      <Tooltip />
     </Layout>
   );
 };
