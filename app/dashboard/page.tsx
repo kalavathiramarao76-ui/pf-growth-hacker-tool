@@ -121,133 +121,95 @@ const initialWidgets: Widget[] = [
           }}
         >
           Join the ranks of our 10,000+ satisfied customers who have seen an
-          average increase of 25% in engagement and 35% in conversio
+          average increase of 25% in engagement and 35% in conversions
         </p>
       </div>
     ),
   },
 ];
 
-const DashboardPage = () => {
+const initialLayout: WidgetLayout = {
+  columns: 2,
+  rows: 3,
+  widgets: initialWidgets,
+};
+
+const App = () => {
   const [widgets, setWidgets] = useState(initialWidgets);
-  const [widgetLayout, setWidgetLayout] = useState<WidgetLayout>({
-    columns: 3,
-    rows: 2,
-    widgets: initialWidgets,
-  });
-  const [apiData, setApiData] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const [layout, setLayout] = useState(initialLayout);
+  const [dragging, setDragging] = useState(false);
 
-  const fetchApiData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await axios.get('/api/data');
-      setApiData(response.data);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchApiData();
-  }, [fetchApiData]);
-
-  const handleWidgetClick = (widget: Widget) => {
-    if (widget.onClick) {
-      widget.onClick();
-    }
-  };
-
-  const handleWidgetDragEnd = (result: any) => {
+  const onDragEnd = (result: any) => {
     if (!result.destination) return;
+    const { source, destination } = result;
     const newWidgets = [...widgets];
-    const [reorderedWidget] = newWidgets.splice(result.source.index, 1);
-    newWidgets.splice(result.destination.index, 0, reorderedWidget);
+    const [removed] = newWidgets.splice(source.index, 1);
+    newWidgets.splice(destination.index, 0, removed);
     setWidgets(newWidgets);
   };
 
-  const memoizedWidgets = useMemo(() => {
-    return widgets.map((widget) => {
-      return (
-        <Draggable key={widget.id} draggableId={widget.id.toString()} index={widgets.indexOf(widget)}>
-          {(provided) => (
-            <div
-              ref={provided.innerRef}
-              {...provided.draggableProps}
-              {...provided.dragHandleProps}
-            >
-              <DashboardCard
-                title={widget.title}
-                icon={widget.icon}
-                onClick={() => handleWidgetClick(widget)}
-                frequency={widget.frequency}
-                description={widget.description}
-                callToAction={widget.callToAction}
-                analyticsData={widget.analyticsData}
-                contentSuggestions={widget.contentSuggestions}
-              />
-            </div>
-          )}
-        </Draggable>
-      );
-    });
-  }, [widgets]);
+  const handleWidgetClick = (widget: Widget) => {
+    widget.onClick();
+  };
+
+  const handleLayoutChange = (newLayout: WidgetLayout) => {
+    setLayout(newLayout);
+  };
+
+  const handleWidgetSettingsChange = (widget: Widget, newSettings: any) => {
+    const newWidgets = [...widgets];
+    const index = newWidgets.findIndex((w) => w.id === widget.id);
+    if (index !== -1) {
+      newWidgets[index] = { ...widget, ...newSettings };
+    }
+    setWidgets(newWidgets);
+  };
 
   return (
-    <div>
-      <DashboardHeader />
-      <NavigationMenu />
-      <DndProvider>
-        <DragDropContext onDragEnd={handleWidgetDragEnd}>
+    <DndProvider>
+      <DragDropContext onDragEnd={onDragEnd}>
+        <DashboardHeader />
+        <NavigationMenu />
+        <div className="dashboard-container">
           <Droppable droppableId="widgets">
             {(provided) => (
-              <div {...provided.droppableProps} ref={provided.innerRef}>
-                {memoizedWidgets}
+              <div
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                className="widget-container"
+              >
+                {layout.widgets.map((widget, index) => (
+                  <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+                    {(provided) => (
+                      <div
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        ref={provided.innerRef}
+                        className="widget"
+                      >
+                        <DashboardCard
+                          widget={widget}
+                          onClick={() => handleWidgetClick(widget)}
+                          onSettingsChange={(newSettings) =>
+                            handleWidgetSettingsChange(widget, newSettings)
+                          }
+                        />
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
                 {provided.placeholder}
               </div>
             )}
           </Droppable>
-        </DragDropContext>
-      </DndProvider>
-      <WidgetSettings />
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        <Line
-          data={{
-            labels: ['January', 'February', 'March', 'April', 'May'],
-            datasets: [
-              {
-                label: 'Engagement',
-                data: [100, 200, 300, 400, 500],
-                backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                borderColor: 'rgba(255, 99, 132, 1)',
-                borderWidth: 1,
-              },
-            ],
-          }}
-          options={{
-            title: {
-              display: true,
-              text: 'Engagement Over Time',
-            },
-            scales: {
-              yAxes: [
-                {
-                  ticks: {
-                    beginAtZero: true,
-                  },
-                },
-              ],
-            },
-          }}
+        </div>
+        <WidgetSettings
+          widgets={widgets}
+          onSettingsChange={(widget, newSettings) => handleWidgetSettingsChange(widget, newSettings)}
         />
-      )}
-    </div>
+      </DragDropContext>
+    </DndProvider>
   );
 };
 
-export default DashboardPage;
+export default App;
