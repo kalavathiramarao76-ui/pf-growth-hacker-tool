@@ -121,53 +121,58 @@ const initialWidgets: Widget[] = [
           }}
         >
           Join the ranks of our 10,000+ satisfied customers who have seen an
-          average increase of 25% in engagement and 35% in conversions
+          average increase of 25% in engagement and 35% in conversio
         </p>
       </div>
     ),
   },
 ];
 
-const Page = () => {
-  const router = useRouter();
+const DashboardPage = () => {
   const [widgets, setWidgets] = useState(initialWidgets);
   const [widgetLayout, setWidgetLayout] = useState<WidgetLayout>({
-    columns: 3,
+    columns: 4,
     rows: 2,
     widgets: initialWidgets,
   });
 
-  const handleDragEnd = useCallback((result) => {
-    if (!result.destination) return;
-
-    const { source, destination } = result;
-    const newWidgets = [...widgets];
-
-    const [removed] = newWidgets.splice(source.index, 1);
-    newWidgets.splice(destination.index, 0, removed);
-
-    setWidgets(newWidgets);
-  }, [widgets]);
-
-  const memoizedWidgets = useMemo(() => widgets, [widgets]);
-  const memoizedWidgetLayout = useMemo(() => widgetLayout, [widgetLayout]);
+  const fetchAnalyticsData = useCallback(async () => {
+    try {
+      const response = await axios.get('/api/analytics');
+      const analyticsData = response.data;
+      setWidgets((prevWidgets) =>
+        prevWidgets.map((widget) => {
+          if (widget.id === 2) {
+            return { ...widget, analyticsData };
+          }
+          return widget;
+        })
+      );
+    } catch (error) {
+      console.error(error);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchWidgetData = async () => {
-      try {
-        const response = await axios.get('/api/widgets');
-        const data = response.data;
-        setWidgets(data);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    fetchWidgetData();
-  }, []);
+    fetchAnalyticsData();
+  }, [fetchAnalyticsData]);
+
+  const handleWidgetClick = (widget: Widget) => {
+    widget.onClick();
+  };
+
+  const handleWidgetDragEnd = (result: any) => {
+    if (!result.destination) return;
+    const { source, destination } = result;
+    const newWidgets = [...widgets];
+    const [removed] = newWidgets.splice(source.index, 1);
+    newWidgets.splice(destination.index, 0, removed);
+    setWidgets(newWidgets);
+  };
 
   return (
     <DndProvider>
-      <DragDropContext onDragEnd={handleDragEnd}>
+      <DragDropContext onDragEnd={handleWidgetDragEnd}>
         <DashboardHeader />
         <NavigationMenu />
         <div className="dashboard-container">
@@ -176,9 +181,9 @@ const Page = () => {
               <div
                 {...provided.droppableProps}
                 ref={provided.innerRef}
-                className="widget-grid"
+                className="widgets-container"
               >
-                {memoizedWidgets.map((widget, index) => (
+                {widgets.map((widget, index) => (
                   <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
                     {(provided) => (
                       <div
@@ -187,7 +192,15 @@ const Page = () => {
                         ref={provided.innerRef}
                         className="widget"
                       >
-                        <DashboardCard widget={widget} />
+                        <DashboardCard
+                          title={widget.title}
+                          icon={widget.icon}
+                          onClick={() => handleWidgetClick(widget)}
+                          analyticsData={widget.analyticsData}
+                          contentSuggestions={widget.contentSuggestions}
+                          description={widget.description}
+                          callToAction={widget.callToAction}
+                        />
                       </div>
                     )}
                   </Draggable>
@@ -197,10 +210,9 @@ const Page = () => {
             )}
           </Droppable>
         </div>
-        <WidgetSettings widgets={memoizedWidgets} />
       </DragDropContext>
     </DndProvider>
   );
 };
 
-export default Page;
+export default DashboardPage;

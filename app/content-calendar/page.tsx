@@ -75,6 +75,11 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
         localStorage.removeItem('googleCalendarToken');
         // Automatically clear events after disconnecting
         setEvents([]);
+        // Prompt user to confirm disconnection
+        if (confirm('Are you sure you want to disconnect from Google Calendar?')) {
+          // Disconnect and clear events
+          setConnected(false);
+        }
       } catch (error) {
         console.error('Error disconnecting from Google Calendar:', error);
       }
@@ -88,65 +93,70 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
     authUrl: 'https://accounts.google.com/o/oauth2/auth',
     onboardingSteps: [
       {
-        title: 'Step 1: Click on the "Connect" button',
-        description: 'Click on the "Connect" button to start the authentication process',
+        title: 'Step 1: Connect your Google Calendar',
+        description: 'Click the "Connect" button to authorize access to your Google Calendar',
         action: () => {
-          window.location.href = calendarIntegrations.GoogleCalendar.authUrl;
+          window.open(calendarIntegrations.GoogleCalendar.authUrl, '_blank');
         },
       },
       {
         title: 'Step 2: Authenticate with Google',
-        description: 'Authenticate with Google to grant access to your calendar',
+        description: 'Enter your Google account credentials to authenticate',
         action: () => {
-          // Handle authentication callback
-          const urlParams = new URLSearchParams(window.location.search);
-          const token = urlParams.get('token');
-          if (token) {
-            calendarIntegrations.GoogleCalendar.connect(token);
-          }
+          // Handle authentication logic
+        },
+      },
+      {
+        title: 'Step 3: Authorize access to your Google Calendar',
+        description: 'Click "Allow" to grant access to your Google Calendar',
+        action: () => {
+          // Handle authorization logic
         },
       },
     ],
   },
 };
 
+const [events, setEvents] = useState<CalendarEvent[]>([]);
+const [connected, setConnected] = useState(false);
+
+useEffect(() => {
+  if (calendarIntegrations.GoogleCalendar.isAuthenticated()) {
+    setConnected(true);
+    calendarIntegrations.GoogleCalendar.getEvents().then((events) => {
+      setEvents(events);
+    });
+  }
+}, []);
+
+const handleConnect = () => {
+  // Prompt user to confirm connection
+  if (confirm('Are you sure you want to connect to Google Calendar?')) {
+    // Connect and retrieve events
+    calendarIntegrations.GoogleCalendar.connect('');
+    setConnected(true);
+  }
+};
+
+const handleDisconnect = () => {
+  calendarIntegrations.GoogleCalendar.disconnect();
+};
+
 const App = () => {
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [selectedCalendar, setSelectedCalendar] = useState<string>('GoogleCalendar');
-
-  useEffect(() => {
-    if (calendarIntegrations[selectedCalendar].isAuthenticated()) {
-      calendarIntegrations[selectedCalendar].getEvents().then((events) => {
-        setEvents(events);
-      });
-    }
-  }, [selectedCalendar]);
-
-  const handleConnect = () => {
-    window.location.href = calendarIntegrations[selectedCalendar].authUrl;
-  };
-
-  const handleDisconnect = () => {
-    calendarIntegrations[selectedCalendar].disconnect();
-  };
-
   return (
     <Layout>
-      <SEO title="Content Calendar" />
+      <SEO title="AI-Powered Content Optimizer" />
       <DndProvider backend={HTML5Backend}>
-        <Calendar
-          events={events}
-          onConnect={handleConnect}
-          onDisconnect={handleDisconnect}
-          selectedCalendar={selectedCalendar}
-          onSelectCalendar={(calendar) => setSelectedCalendar(calendar)}
-        />
+        <Calendar events={events} />
+        {connected ? (
+          <button onClick={handleDisconnect}>Disconnect from Google Calendar</button>
+        ) : (
+          <button onClick={handleConnect}>Connect to Google Calendar</button>
+        )}
+        <Tooltip>
+          <Image src={calendarIntegrations.GoogleCalendar.icon} alt={calendarIntegrations.GoogleCalendar.name} />
+        </Tooltip>
       </DndProvider>
-      <Tooltip>
-        <Image src={calendarIntegrations[selectedCalendar].icon} alt={calendarIntegrations[selectedCalendar].name} />
-      </Tooltip>
-      <Socket />
-      <StripeCheckout />
     </Layout>
   );
 };
