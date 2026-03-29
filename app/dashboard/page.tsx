@@ -134,14 +134,9 @@ const initialWidgets: Widget[] = [
   },
 ];
 
-const getAnalyticsData = async (widgetId: number) => {
-  if (cache.analyticsData[widgetId]) {
-    return cache.analyticsData[widgetId];
-  }
-
+const fetchAnalyticsData = async (widgetId: number) => {
   try {
     const response = await axios.get(`/api/analytics/${widgetId}`);
-    cache.analyticsData[widgetId] = response.data;
     return response.data;
   } catch (error) {
     console.error(error);
@@ -149,14 +144,9 @@ const getAnalyticsData = async (widgetId: number) => {
   }
 };
 
-const getContentSuggestions = async (widgetId: number) => {
-  if (cache.contentSuggestions[widgetId]) {
-    return cache.contentSuggestions[widgetId];
-  }
-
+const fetchContentSuggestions = async (widgetId: number) => {
   try {
     const response = await axios.get(`/api/content-suggestions/${widgetId}`);
-    cache.contentSuggestions[widgetId] = response.data;
     return response.data;
   } catch (error) {
     console.error(error);
@@ -167,70 +157,80 @@ const getContentSuggestions = async (widgetId: number) => {
 const DashboardPage = () => {
   const router = useRouter();
   const [widgets, setWidgets] = useState(initialWidgets);
-  const [widgetLayout, setWidgetLayout] = useState<WidgetLayout>({
-    columns: 3,
-    rows: 2,
-    widgets: initialWidgets,
-  });
+  const [analyticsData, setAnalyticsData] = useState(cache.analyticsData);
+  const [contentSuggestions, setContentSuggestions] = useState(cache.contentSuggestions);
 
-  const handleWidgetClick = async (widget: Widget) => {
-    if (widget.analyticsData) {
-      const analyticsData = await getAnalyticsData(widget.id);
-      if (analyticsData) {
-        widget.analyticsData = analyticsData;
+  const fetchAndCacheAnalyticsData = async (widgetId: number) => {
+    if (!analyticsData[widgetId]) {
+      const data = await fetchAnalyticsData(widgetId);
+      if (data) {
+        setAnalyticsData((prevData) => ({ ...prevData, [widgetId]: data }));
       }
     }
-
-    if (widget.contentSuggestions) {
-      const contentSuggestions = await getContentSuggestions(widget.id);
-      if (contentSuggestions) {
-        widget.contentSuggestions = contentSuggestions;
-      }
-    }
-
-    widget.onClick();
   };
 
-  const handleDragEnd = (result: any) => {
-    if (!result.destination) return;
+  const fetchAndCacheContentSuggestions = async (widgetId: number) => {
+    if (!contentSuggestions[widgetId]) {
+      const data = await fetchContentSuggestions(widgetId);
+      if (data) {
+        setContentSuggestions((prevData) => ({ ...prevData, [widgetId]: data }));
+      }
+    }
+  };
 
-    const { source, destination } = result;
-    const newWidgets = [...widgets];
-    const [removed] = newWidgets.splice(source.index, 1);
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      await Promise.all(
+        widgets.map((widget) => {
+          if (widget.analyticsData) {
+            return fetchAndCacheAnalyticsData(widget.id);
+          }
+          if (widget.contentSuggestions) {
+            return fetchAndCacheContentSuggestions(widget.id);
+          }
+          return null;
+        })
+      );
+    };
+    fetchInitialData();
+  }, [widgets]);
 
-    newWidgets.splice(destination.index, 0, removed);
-
-    setWidgets(newWidgets);
+  const handleWidgetClick = async (widget: Widget) => {
+    if (widget.onClick) {
+      widget.onClick();
+    }
+    if (widget.analyticsData) {
+      await fetchAndCacheAnalyticsData(widget.id);
+    }
+    if (widget.contentSuggestions) {
+      await fetchAndCacheContentSuggestions(widget.id);
+    }
   };
 
   return (
     <DndProvider>
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <DashboardHeader />
-        <NavigationMenu />
-        <div className="dashboard-container">
-          <Droppable droppableId="widgets">
-            {(provided) => (
-              <div
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                className="widgets-container"
-              >
+      <DragDropContext>
+        <Droppable droppableId="dashboard">
+          {(provided) => (
+            <div ref={provided.innerRef} {...provided.droppableProps}>
+              <DashboardHeader />
+              <NavigationMenu />
+              <div className="dashboard-widgets">
                 {widgets.map((widget, index) => (
                   <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
                     {(provided) => (
                       <div
+                        ref={provided.innerRef}
                         {...provided.draggableProps}
                         {...provided.dragHandleProps}
-                        ref={provided.innerRef}
-                        className="widget"
+                        className="dashboard-widget"
                       >
                         <DashboardCard
                           title={widget.title}
                           icon={widget.icon}
                           onClick={() => handleWidgetClick(widget)}
-                          analyticsData={widget.analyticsData}
-                          contentSuggestions={widget.contentSuggestions}
+                          analyticsData={analyticsData[widget.id]}
+                          contentSuggestions={contentSuggestions[widget.id]}
                           isInteractive={widget.isInteractive}
                           isCustomizable={widget.isCustomizable}
                         />
@@ -240,9 +240,9 @@ const DashboardPage = () => {
                 ))}
                 {provided.placeholder}
               </div>
-            )}
-          </Droppable>
-        </div>
+            </div>
+          )}
+        </Droppable>
       </DragDropContext>
     </DndProvider>
   );

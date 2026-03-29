@@ -41,6 +41,8 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
           setConnectionStatus('Connected to Google Calendar');
           setConnectionMessage('You have been connected to Google Calendar. Your events are being synced.');
           setOnboardingStep(1);
+          // Display a success message with clear instructions
+          setSuccessMessage('You are now connected to Google Calendar. Please review the onboarding steps below to complete the setup.');
         });
       } catch (error) {
         console.error('Error connecting to Google Calendar:', error);
@@ -48,6 +50,8 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
         setConnectionStatus('Error connecting to Google Calendar');
         setConnectionMessage('Error connecting to Google Calendar. Please try again.');
         setOnboardingStep(0);
+        // Display an error message with clear instructions
+        setError('Error connecting to Google Calendar. Please ensure you have granted the necessary permissions and try again.');
       }
     },
     getEvents: async () => {
@@ -76,9 +80,9 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
         console.error('Error fetching Google Calendar events:', error);
         // Provide feedback to the user
         setConnectionStatus('Error fetching Google Calendar events');
-        setConnectionMessage('Error fetching Google Calendar events. Please try again.');
-        setOnboardingStep(0);
-        return [];
+        setConnectionMessage('Error fetching Google Calendar events');
+        // Display an error message with clear instructions
+        setError('Error fetching Google Calendar events. Please ensure you have granted the necessary permissions and try again.');
       }
     },
     disconnect: () => {
@@ -88,17 +92,20 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
         setConnectionStatus('Disconnected from Google Calendar');
         setConnectionMessage('You have been disconnected from Google Calendar.');
         setOnboardingStep(0);
+        // Display a success message with clear instructions
+        setSuccessMessage('You have been disconnected from Google Calendar. Please reconnect to continue using the calendar integration.');
       } catch (error) {
         console.error('Error disconnecting from Google Calendar:', error);
         // Provide feedback to the user
         setConnectionStatus('Error disconnecting from Google Calendar');
         setConnectionMessage('Error disconnecting from Google Calendar. Please try again.');
-        setOnboardingStep(0);
+        // Display an error message with clear instructions
+        setError('Error disconnecting from Google Calendar. Please try again.');
       }
     },
     name: 'Google Calendar',
     icon: 'https://www.google.com/calendar/images/favicon_v2016.ico',
-    description: 'Connect your Google Calendar to our AI-Powered Content Optimizer',
+    description: 'Connect your Google Calendar account to view and manage your events.',
     authUrl: 'https://accounts.google.com/o/oauth2/auth',
     isAuthenticated: () => {
       const token = localStorage.getItem('googleCalendarToken');
@@ -106,26 +113,19 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
     },
     onboardingSteps: [
       {
-        title: 'Connect Google Calendar',
-        description: 'Click the button below to connect your Google Calendar',
+        title: 'Step 1: Connect your Google Calendar account',
+        description: 'Click the "Connect" button to authorize access to your Google Calendar account.',
         action: () => {
-          window.open(calendarIntegrations.GoogleCalendar.authUrl, '_blank');
+          // Implement onboarding step 1 logic
+          setOnboardingStep(1);
         },
       },
       {
-        title: 'Authorize Access',
-        description: 'Authorize our app to access your Google Calendar',
+        title: 'Step 2: Review your events',
+        description: 'Review your events to ensure they are being synced correctly.',
         action: () => {
-          // Provide instructions to the user
-          setConnectionMessage('Please authorize our app to access your Google Calendar.');
-        },
-      },
-      {
-        title: 'Sync Events',
-        description: 'Your events are being synced',
-        action: () => {
-          // Provide feedback to the user
-          setConnectionMessage('Your events are being synced. Please wait...');
+          // Implement onboarding step 2 logic
+          setOnboardingStep(2);
         },
       },
     ],
@@ -136,41 +136,45 @@ const [events, setEvents] = useState<CalendarEvent[]>([]);
 const [connectionStatus, setConnectionStatus] = useState<string>('');
 const [connectionMessage, setConnectionMessage] = useState<string>('');
 const [onboardingStep, setOnboardingStep] = useState<number>(0);
+const [successMessage, setSuccessMessage] = useState<string>('');
+const [error, setError] = useState<string>('');
 
-function handleConnect() {
-  // Provide instructions to the user
-  setConnectionMessage('Please click the button below to connect your Google Calendar.');
-  setOnboardingStep(0);
+function handleConnect(token: string) {
+  calendarIntegrations.GoogleCalendar.connect(token);
 }
 
 function handleDisconnect() {
   calendarIntegrations.GoogleCalendar.disconnect();
 }
 
-function renderOnboardingStep() {
+function handleOnboardingStep(step: number) {
+  setOnboardingStep(step);
+}
+
+function renderOnboardingSteps() {
   switch (onboardingStep) {
     case 0:
       return (
         <div>
-          <h2>Connect Google Calendar</h2>
-          <p>Click the button below to connect your Google Calendar</p>
-          <button onClick={handleConnect}>Connect</button>
+          <h2>Step 1: Connect your Google Calendar account</h2>
+          <p>Click the "Connect" button to authorize access to your Google Calendar account.</p>
+          <button onClick={() => handleConnect('token')}>Connect</button>
         </div>
       );
     case 1:
       return (
         <div>
-          <h2>Authorize Access</h2>
-          <p>Authorize our app to access your Google Calendar</p>
-          <p>{connectionMessage}</p>
+          <h2>Step 2: Review your events</h2>
+          <p>Review your events to ensure they are being synced correctly.</p>
+          <button onClick={() => handleOnboardingStep(2)}>Next</button>
         </div>
       );
     case 2:
       return (
         <div>
-          <h2>Sync Events</h2>
-          <p>Your events are being synced</p>
-          <p>{connectionMessage}</p>
+          <h2>Step 3: Complete the setup</h2>
+          <p>Congratulations! You have completed the setup.</p>
+          <button onClick={() => handleOnboardingStep(0)}>Finish</button>
         </div>
       );
     default:
@@ -184,7 +188,6 @@ function renderConnectionStatus() {
       <div>
         <h2>Connected to Google Calendar</h2>
         <p>{connectionMessage}</p>
-        <button onClick={handleDisconnect}>Disconnect</button>
       </div>
     );
   } else if (connectionStatus === 'Error connecting to Google Calendar') {
@@ -192,7 +195,32 @@ function renderConnectionStatus() {
       <div>
         <h2>Error connecting to Google Calendar</h2>
         <p>{connectionMessage}</p>
-        <button onClick={handleConnect}>Try Again</button>
+      </div>
+    );
+  } else {
+    return <div />;
+  }
+}
+
+function renderSuccessMessage() {
+  if (successMessage) {
+    return (
+      <div>
+        <h2>Success</h2>
+        <p>{successMessage}</p>
+      </div>
+    );
+  } else {
+    return <div />;
+  }
+}
+
+function renderError() {
+  if (error) {
+    return (
+      <div>
+        <h2>Error</h2>
+        <p>{error}</p>
       </div>
     );
   } else {
@@ -207,10 +235,15 @@ export default function ContentCalendarPage() {
       <DndProvider backend={HTML5Backend}>
         <Calendar events={events} />
       </DndProvider>
-      <div>
-        {renderOnboardingStep()}
-        {renderConnectionStatus()}
-      </div>
+      <Tooltip>
+        <Image src="/calendar-icon.png" alt="Calendar Icon" width={20} height={20} />
+      </Tooltip>
+      <Socket />
+      <StripeCheckout />
+      {renderOnboardingSteps()}
+      {renderConnectionStatus()}
+      {renderSuccessMessage()}
+      {renderError()}
     </Layout>
   );
 }

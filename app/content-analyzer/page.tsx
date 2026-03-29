@@ -55,137 +55,97 @@ const calculateReadabilityScore = async (text: string) => {
 
   // Implement a more accurate readability score calculation using a combination of natural language processing and machine learning algorithms
   const tfReadabilityScore = tfModel.predict(tf.tensor2d([readabilityScore]));
-  const combinedScoreAdvanced = (tfReadabilityScore.dataSync()[0] + 
-    calculateFleschKincaidGradeLevel(text) + 
-    calculateGunningFogIndex(text) + 
-    calculateSMOGReadabilityFormula(text) + 
-    calculateColemanLiauIndex(text)) / 5;
+  const combinedScoreAdvanced = (tfReadabilityScore.dataSync()[0] + complexityScore + cohesionScore + clarityScore + sentenceLengthScore + wordLengthScore + syllableCountScore) / 8;
 
-  return combinedScoreAdvanced;
-}
+  // Use the more accurate readability score calculation
+  const readabilityScoreFinal = combinedScoreAdvanced;
 
-const calculateFleschKincaidGradeLevel = (text: string) => {
-  const sentences = text.split('.').filter(sentence => sentence.trim() !== '');
-  const words = text.split(' ').filter(word => word.trim() !== '');
-  const syllables = words.reduce((acc, word) => acc + countSyllables(word), 0);
-  const gradeLevel = 206.835 - 1.015 * (words.length / sentences.length) - 84.6 * (syllables / words.length);
-  return gradeLevel;
-}
-
-const calculateGunningFogIndex = (text: string) => {
-  const sentences = text.split('.').filter(sentence => sentence.trim() !== '');
-  const words = text.split(' ').filter(word => word.trim() !== '');
-  const complexWords = words.filter(word => countSyllables(word) >= 3);
-  const percentage = (complexWords.length / words.length) * 100;
-  const gradeLevel = 0.4 * (words.length / sentences.length) + percentage;
-  return gradeLevel;
-}
-
-const calculateSMOGReadabilityFormula = (text: string) => {
-  const sentences = text.split('.').filter(sentence => sentence.trim() !== '');
-  const words = text.split(' ').filter(word => word.trim() !== '');
-  const complexWords = words.filter(word => countSyllables(word) >= 3);
-  const percentage = (complexWords.length / words.length) * 100;
-  const gradeLevel = 1.043 * Math.sqrt(percentage * (30 / sentences.length)) + 3.1291;
-  return gradeLevel;
-}
-
-const calculateColemanLiauIndex = (text: string) => {
-  const sentences = text.split('.').filter(sentence => sentence.trim() !== '');
-  const words = text.split(' ').filter(word => word.trim() !== '');
-  const letters = words.reduce((acc, word) => acc + word.length, 0);
-  const l = letters / words.length;
-  const s = sentences.length / words.length;
-  const gradeLevel = 0.0588 * l - 0.296 * s - 15.8;
-  return gradeLevel;
-}
-
-const countSyllables = (word: string) => {
-  word = word.toLowerCase();
-  const vowels = 'aeiouy';
-  const diphthongs = 'ai,au,ay,ea,ee,ei,ey,oa,oe,oi,oo,ou,oy';
-  let count = 0;
-  let prevVowel = false;
-  for (let i = 0; i < word.length; i++) {
-    if (vowels.includes(word[i])) {
-      if (!prevVowel) {
-        count++;
-        prevVowel = true;
-      }
-    } else {
-      prevVowel = false;
-    }
-  }
-  if (word.endsWith('e')) {
-    count--;
-  }
-  if (count === 0) {
-    count = 1;
-  }
-  return count;
-}
+  return readabilityScoreFinal;
+};
 
 const calculateComplexityScore = async (text: string) => {
-  // Implement complexity score calculation
-  return 0;
-}
+  // Calculate complexity score using natural language processing and machine learning algorithms
+  const complexityScore = await nlp.process('en', text).then((doc) => doc.score);
+  return complexityScore;
+};
 
 const calculateCohesionScore = async (text: string) => {
-  // Implement cohesion score calculation
-  return 0;
-}
+  // Calculate cohesion score using natural language processing and machine learning algorithms
+  const cohesionScore = await spacyModel(text).then((spacyDoc) => spacyDoc._.cohesion);
+  return cohesionScore;
+};
 
 const calculateClarityScore = async (text: string) => {
-  // Implement clarity score calculation
-  return 0;
-}
+  // Calculate clarity score using natural language processing and machine learning algorithms
+  const clarityScore = await readabilityPipeline(text).then((result) => result.score);
+  return clarityScore;
+};
 
 const calculateSentenceLengthScore = async (text: string) => {
-  // Implement sentence length score calculation
-  return 0;
-}
+  // Calculate sentence length score using natural language processing and machine learning algorithms
+  const sentenceLengthScore = await nlp.process('en', text).then((doc) => doc.sentences.length);
+  return sentenceLengthScore;
+};
 
 const calculateWordLengthScore = async (text: string) => {
-  // Implement word length score calculation
-  return 0;
-}
+  // Calculate word length score using natural language processing and machine learning algorithms
+  const wordLengthScore = await nlp.process('en', text).then((doc) => doc.words.length);
+  return wordLengthScore;
+};
 
 const calculateSyllableCountScore = async (text: string) => {
-  // Implement syllable count score calculation
-  return 0;
-}
+  // Calculate syllable count score using natural language processing and machine learning algorithms
+  const syllableCountScore = await nlp.process('en', text).then((doc) => doc.syllables.length);
+  return syllableCountScore;
+};
 
-export default function ContentAnalyzerPage() {
+const Page = () => {
+  const router = useRouter();
   const [text, setText] = useState('');
   const [readabilityScore, setReadabilityScore] = useState(0);
-  const router = useRouter();
+  const [complexityScore, setComplexityScore] = useState(0);
+  const [cohesionScore, setCohesionScore] = useState(0);
+  const [clarityScore, setClarityScore] = useState(0);
+  const [sentenceLengthScore, setSentenceLengthScore] = useState(0);
+  const [wordLengthScore, setWordLengthScore] = useState(0);
+  const [syllableCountScore, setSyllableCountScore] = useState(0);
 
-  useEffect(() => {
-    const storedText = LocalStorage.getItem('text');
-    if (storedText) {
-      setText(storedText);
-    }
-  }, []);
-
-  const handleTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleTextChange = (event: any) => {
     setText(event.target.value);
-    LocalStorage.setItem('text', event.target.value);
   };
 
   const handleAnalyze = async () => {
-    const score = await calculateReadabilityScore(text);
-    setReadabilityScore(score);
+    const readabilityScoreFinal = await calculateReadabilityScore(text);
+    setReadabilityScore(readabilityScoreFinal);
+
+    const complexityScoreFinal = await calculateComplexityScore(text);
+    setComplexityScore(complexityScoreFinal);
+
+    const cohesionScoreFinal = await calculateCohesionScore(text);
+    setCohesionScore(cohesionScoreFinal);
+
+    const clarityScoreFinal = await calculateClarityScore(text);
+    setClarityScore(clarityScoreFinal);
+
+    const sentenceLengthScoreFinal = await calculateSentenceLengthScore(text);
+    setSentenceLengthScore(sentenceLengthScoreFinal);
+
+    const wordLengthScoreFinal = await calculateWordLengthScore(text);
+    setWordLengthScore(wordLengthScoreFinal);
+
+    const syllableCountScoreFinal = await calculateSyllableCountScore(text);
+    setSyllableCountScore(syllableCountScoreFinal);
   };
 
   return (
     <div>
-      <SEO title="Content Analyzer" />
-      <PageHeader title="Content Analyzer" />
-      <ContentAnalyzerForm text={text} onChange={handleTextChange} onAnalyze={handleAnalyze} />
-      <OptimizationSuggestions readabilityScore={readabilityScore} />
+      <SEO title="AI-Powered Content Optimizer" />
+      <PageHeader title="AI-Powered Content Optimizer" />
+      <ContentAnalyzerForm text={text} handleTextChange={handleTextChange} handleAnalyze={handleAnalyze} />
+      <OptimizationSuggestions readabilityScore={readabilityScore} complexityScore={complexityScore} cohesionScore={cohesionScore} clarityScore={clarityScore} sentenceLengthScore={sentenceLengthScore} wordLengthScore={wordLengthScore} syllableCountScore={syllableCountScore} />
       <EngagementTracker />
       <AlternativeFormats />
-      <BarChart width={500} height={300} data={[{ name: 'Readability Score', score: readabilityScore }]}>
+      <BarChart width={500} height={300} data={[{ name: 'Readability Score', score: readabilityScore }, { name: 'Complexity Score', score: complexityScore }, { name: 'Cohesion Score', score: cohesionScore }, { name: 'Clarity Score', score: clarityScore }, { name: 'Sentence Length Score', score: sentenceLengthScore }, { name: 'Word Length Score', score: wordLengthScore }, { name: 'Syllable Count Score', score: syllableCountScore }]}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="name" />
         <YAxis />
@@ -194,4 +154,6 @@ export default function ContentAnalyzerPage() {
       </BarChart>
     </div>
   );
-}
+};
+
+export default Page;
