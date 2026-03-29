@@ -67,8 +67,8 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
             'Content-Type': 'application/json'
           }
         });
-        const events = await response.json();
-        return events.items.map((event: any) => ({
+        const data = await response.json();
+        return data.items.map((event: any) => ({
           id: event.id,
           title: event.summary,
           start: new Date(event.start.dateTime),
@@ -88,12 +88,10 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
         setOnboardingStep(0);
       } catch (error) {
         console.error('Error disconnecting from Google Calendar:', error);
-        setConnectionStatus('Error disconnecting from Google Calendar');
-        setConnectionMessage('Error disconnecting from Google Calendar. Please try again.');
       }
     },
     name: 'Google Calendar',
-    icon: 'https://www.google.com/calendar/images/google_calendar_64.png',
+    icon: 'https://developers.google.com/identity/images/g-logo.png',
     description: 'Connect your Google Calendar account to sync your events.',
     authUrl: 'https://accounts.google.com/o/oauth2/auth',
     isAuthenticated: () => {
@@ -108,15 +106,15 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
         }
       },
       {
-        title: 'Step 2: Review and sync your events',
-        description: 'Review the events synced from your Google Calendar account and make any necessary adjustments.',
+        title: 'Step 2: Review your events',
+        description: 'Review your synced events to ensure they are accurate and up-to-date.',
         action: () => {
           setOnboardingStep(2);
         }
       },
       {
         title: 'Step 3: Complete the setup',
-        description: 'You have completed the setup. You can now manage your events and calendar integrations.',
+        description: 'You have completed the setup. You can now manage your events and calendar settings.',
         action: () => {
           setOnboardingStep(3);
         }
@@ -125,64 +123,81 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
   }
 };
 
-const App = () => {
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [connectionStatus, setConnectionStatus] = useState<string>('');
-  const [connectionMessage, setConnectionMessage] = useState<string>('');
-  const [onboardingStep, setOnboardingStep] = useState<number>(0);
-  const [successMessage, setSuccessMessage] = useState<string>('');
-  const [errorMessage, setError] = useState<string>('');
-  const [tooltip, setTooltip] = useState<string>('');
+const [events, setEvents] = useState<CalendarEvent[]>([]);
+const [connectionStatus, setConnectionStatus] = useState<string>('');
+const [connectionMessage, setConnectionMessage] = useState<string>('');
+const [onboardingStep, setOnboardingStep] = useState<number>(0);
+const [successMessage, setSuccessMessage] = useState<string>('');
+const [errorMessage, setError] = useState<string>('');
+const [tooltip, setTooltip] = useState<string>('');
 
-  useEffect(() => {
-    if (calendarIntegrations.GoogleCalendar.isAuthenticated()) {
-      calendarIntegrations.GoogleCalendar.getEvents().then((events) => {
-        setEvents(events);
-      });
-    }
-  }, []);
-
-  return (
-    <Layout>
-      <SEO title="AI-Powered Content Optimizer" />
-      <DndProvider backend={HTML5Backend}>
-        <Calendar events={events} />
-      </DndProvider>
-      {connectionStatus && (
-        <div>
-          <p>{connectionStatus}</p>
-          <p>{connectionMessage}</p>
-        </div>
-      )}
-      {onboardingStep > 0 && (
-        <div>
-          <h2>Onboarding Steps</h2>
-          {calendarIntegrations.GoogleCalendar.onboardingSteps.map((step, index) => (
-            <div key={index}>
-              <h3>{step.title}</h3>
-              <p>{step.description}</p>
-              <button onClick={step.action}>Next</button>
-            </div>
-          ))}
-        </div>
-      )}
-      {successMessage && (
-        <div>
-          <p>{successMessage}</p>
-        </div>
-      )}
-      {errorMessage && (
-        <div>
-          <p>{errorMessage}</p>
-        </div>
-      )}
-      {tooltip && (
-        <Tooltip>
-          <p>{tooltip}</p>
-        </Tooltip>
-      )}
-    </Layout>
-  );
+const handleConnect = (token: string) => {
+  calendarIntegrations.GoogleCalendar.connect(token);
 };
 
-export default App;
+const handleDisconnect = () => {
+  calendarIntegrations.GoogleCalendar.disconnect();
+};
+
+const handleGetEvents = async () => {
+  try {
+    const events = await calendarIntegrations.GoogleCalendar.getEvents();
+    setEvents(events);
+  } catch (error) {
+    console.error('Error retrieving events:', error);
+  }
+};
+
+useEffect(() => {
+  if (calendarIntegrations.GoogleCalendar.isAuthenticated()) {
+    handleGetEvents();
+  }
+}, []);
+
+return (
+  <Layout>
+    <SEO title="Content Calendar" />
+    <DndProvider backend={HTML5Backend}>
+      <Calendar events={events} />
+      <div>
+        <h2>Connect your Google Calendar account</h2>
+        <p>{connectionMessage}</p>
+        {connectionStatus === 'Connected to Google Calendar' && (
+          <button onClick={handleDisconnect}>Disconnect</button>
+        )}
+        {connectionStatus === 'Disconnected from Google Calendar' && (
+          <button onClick={() => window.location.href = calendarIntegrations.GoogleCalendar.authUrl}>Connect</button>
+        )}
+        {onboardingStep === 1 && (
+          <div>
+            <h3>Onboarding Step 1: Review your events</h3>
+            <p>Please review your synced events to ensure they are accurate and up-to-date.</p>
+            <button onClick={() => setOnboardingStep(2)}>Next Step</button>
+          </div>
+        )}
+        {onboardingStep === 2 && (
+          <div>
+            <h3>Onboarding Step 2: Complete the setup</h3>
+            <p>You have completed the setup. You can now manage your events and calendar settings.</p>
+            <button onClick={() => setOnboardingStep(3)}>Finish</button>
+          </div>
+        )}
+        {successMessage && (
+          <div>
+            <h3>Success!</h3>
+            <p>{successMessage}</p>
+          </div>
+        )}
+        {errorMessage && (
+          <div>
+            <h3>Error!</h3>
+            <p>{errorMessage}</p>
+          </div>
+        )}
+        {tooltip && (
+          <Tooltip>{tooltip}</Tooltip>
+        )}
+      </div>
+    </DndProvider>
+  </Layout>
+);
