@@ -55,102 +55,111 @@ const calculateReadabilityScore = async (text: string) => {
 
   // Implement a more accurate readability score calculation using a combination of natural language processing and machine learning algorithms
   const tfReadabilityScore = tfModel.predict(tf.tensor2d([readabilityScore]));
-  const combinedScoreAdvanced = (tfReadabilityScore.dataSync()[0] + complexityScore + cohesionScore + clarityScore + sentenceLengthScore + wordLengthScore + syllableCountScore) / 8;
+  const combinedScoreAdvanced = (tfReadabilityScore.dataSync()[0] + 
+    calculateSentenceLengthScoreAdvanced(text) + 
+    calculateWordLengthScoreAdvanced(text) + 
+    calculateSyllableCountScoreAdvanced(text)) / 4;
 
-  // Use the more accurate readability score calculation
   return combinedScoreAdvanced;
 };
 
-const calculateComplexityScore = async (text: string) => {
-  // Calculate complexity score using natural language processing
-  const doc = await nlp.process('en', text);
-  const complexityScore = doc.score;
-  return complexityScore;
-};
-
-const calculateCohesionScore = async (text: string) => {
-  // Calculate cohesion score using natural language processing
-  const doc = await nlp.process('en', text);
-  const cohesionScore = doc.score;
-  return cohesionScore;
-};
-
-const calculateClarityScore = async (text: string) => {
-  // Calculate clarity score using natural language processing
-  const doc = await nlp.process('en', text);
-  const clarityScore = doc.score;
-  return clarityScore;
-};
-
-const calculateSentenceLengthScore = async (text: string) => {
-  // Calculate sentence length score using natural language processing
+const calculateSentenceLengthScoreAdvanced = async (text: string) => {
   const sentences = text.split('. ');
-  const sentenceLengthScore = sentences.reduce((acc, sentence) => acc + sentence.length, 0) / sentences.length;
+  const sentenceLengths = sentences.map(sentence => sentence.split(' ').length);
+  const averageSentenceLength = sentenceLengths.reduce((a, b) => a + b, 0) / sentenceLengths.length;
+  const sentenceLengthScore = 1 - (averageSentenceLength / 20);
   return sentenceLengthScore;
 };
 
-const calculateWordLengthScore = async (text: string) => {
-  // Calculate word length score using natural language processing
+const calculateWordLengthScoreAdvanced = async (text: string) => {
   const words = text.split(' ');
-  const wordLengthScore = words.reduce((acc, word) => acc + word.length, 0) / words.length;
+  const wordLengths = words.map(word => word.length);
+  const averageWordLength = wordLengths.reduce((a, b) => a + b, 0) / wordLengths.length;
+  const wordLengthScore = 1 - (averageWordLength / 10);
   return wordLengthScore;
 };
 
-const calculateSyllableCountScore = async (text: string) => {
-  // Calculate syllable count score using natural language processing
+const calculateSyllableCountScoreAdvanced = async (text: string) => {
   const words = text.split(' ');
-  const syllableCountScore = words.reduce((acc, word) => acc + countSyllables(word), 0) / words.length;
+  const syllableCounts = words.map(word => countSyllables(word));
+  const averageSyllableCount = syllableCounts.reduce((a, b) => a + b, 0) / syllableCounts.length;
+  const syllableCountScore = 1 - (averageSyllableCount / 5);
   return syllableCountScore;
 };
 
 const countSyllables = (word: string) => {
-  // Count syllables in a word
+  word = word.toLowerCase();
   const vowels = 'aeiouy';
-  const diphthongs = 'ai au ay ei eu ey oi ou oy ui';
-  let syllableCount = 0;
-  let vowelCount = 0;
+  let count = 0;
+  let prevWasVowel = false;
   for (let i = 0; i < word.length; i++) {
-    if (vowels.includes(word[i])) {
-      vowelCount++;
-      if (i === 0 || !vowels.includes(word[i - 1])) {
-        syllableCount++;
+    if (vowels.indexOf(word[i]) !== -1) {
+      if (!prevWasVowel) {
+        count++;
       }
+      prevWasVowel = true;
+    } else {
+      prevWasVowel = false;
     }
   }
-  if (vowelCount === 0) {
-    return 1;
+  if (word.endsWith('e')) {
+    count--;
   }
-  return syllableCount;
+  if (count === 0) {
+    count = 1;
+  }
+  return count;
 };
 
-const App = () => {
+const calculateComplexityScore = async (text: string) => {
+  // TO DO: implement complexity score calculation
+  return 0.5;
+};
+
+const calculateCohesionScore = async (text: string) => {
+  // TO DO: implement cohesion score calculation
+  return 0.5;
+};
+
+const calculateClarityScore = async (text: string) => {
+  // TO DO: implement clarity score calculation
+  return 0.5;
+};
+
+const calculateSentenceLengthScore = async (text: string) => {
+  // TO DO: implement sentence length score calculation
+  return 0.5;
+};
+
+const calculateWordLengthScore = async (text: string) => {
+  // TO DO: implement word length score calculation
+  return 0.5;
+};
+
+const calculateSyllableCountScore = async (text: string) => {
+  // TO DO: implement syllable count score calculation
+  return 0.5;
+};
+
+export default function ContentAnalyzerPage() {
   const [text, setText] = useState('');
   const [readabilityScore, setReadabilityScore] = useState(0);
   const router = useRouter();
 
-  useEffect(() => {
-    const storedText = LocalStorage.get('text');
-    if (storedText) {
-      setText(storedText);
-    }
-  }, []);
-
-  const handleTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const text = event.target.value;
-    setText(text);
-    LocalStorage.set('text', text);
+  const handleTextChange = (event: any) => {
+    setText(event.target.value);
   };
 
-  const handleAnalyze = async () => {
-    const readabilityScore = await calculateReadabilityScore(text);
-    setReadabilityScore(readabilityScore);
+  const handleCalculateReadabilityScore = async () => {
+    const score = await calculateReadabilityScore(text);
+    setReadabilityScore(score);
   };
 
   return (
     <div>
-      <SEO title="AI-Powered Content Optimizer" />
-      <PageHeader title="AI-Powered Content Optimizer" />
-      <ContentAnalyzerForm text={text} onChange={handleTextChange} onAnalyze={handleAnalyze} />
+      <SEO title="Content Analyzer" />
+      <PageHeader title="Content Analyzer" />
+      <ContentAnalyzerForm text={text} onTextChange={handleTextChange} onCalculateReadabilityScore={handleCalculateReadabilityScore} />
       <OptimizationSuggestions readabilityScore={readabilityScore} />
       <EngagementTracker />
       <AlternativeFormats />
@@ -163,6 +172,4 @@ const App = () => {
       </BarChart>
     </div>
   );
-};
-
-export default App;
+}

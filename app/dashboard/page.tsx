@@ -59,6 +59,11 @@ interface WidgetLayout {
   widgets: Widget[];
 }
 
+const cache = {
+  analyticsData: {},
+  contentSuggestions: {},
+};
+
 const initialWidgets: Widget[] = [
   {
     id: 1,
@@ -124,11 +129,38 @@ const initialWidgets: Widget[] = [
         >
           Unlock Your Content's Full Potential with Our Premium Plan
         </h1>
-
       </div>
     ),
   },
 ];
+
+const fetchAnalyticsData = async (widgetId: number) => {
+  if (cache.analyticsData[widgetId]) {
+    return cache.analyticsData[widgetId];
+  }
+  try {
+    const response = await axios.get(`/api/analytics/${widgetId}`);
+    cache.analyticsData[widgetId] = response.data;
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+};
+
+const fetchContentSuggestions = async (widgetId: number) => {
+  if (cache.contentSuggestions[widgetId]) {
+    return cache.contentSuggestions[widgetId];
+  }
+  try {
+    const response = await axios.get(`/api/content-suggestions/${widgetId}`);
+    cache.contentSuggestions[widgetId] = response.data;
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+};
 
 const DashboardPage = () => {
   const router = useRouter();
@@ -139,50 +171,46 @@ const DashboardPage = () => {
     widgets: initialWidgets,
   });
 
-  const memoizedWidgets = useMemo(() => widgets, [widgets]);
-  const memoizedWidgetLayout = useMemo(() => widgetLayout, [widgetLayout]);
+  const handleWidgetClick = async (widget: Widget) => {
+    if (widget.onClick) {
+      widget.onClick();
+    }
+    if (widget.analyticsData) {
+      const analyticsData = await fetchAnalyticsData(widget.id);
+      if (analyticsData) {
+        // Update the widget with the fetched analytics data
+        setWidgets(
+          widgets.map((w) =>
+            w.id === widget.id ? { ...w, analyticsData } : w
+          )
+        );
+      }
+    }
+    if (widget.contentSuggestions) {
+      const contentSuggestions = await fetchContentSuggestions(widget.id);
+      if (contentSuggestions) {
+        // Update the widget with the fetched content suggestions
+        setWidgets(
+          widgets.map((w) =>
+            w.id === widget.id ? { ...w, contentSuggestions } : w
+          )
+        );
+      }
+    }
+  };
 
-  const handleWidgetClick = useCallback((widget: Widget) => {
-    widget.onClick();
-  }, []);
-
-  const handleWidgetDragEnd = useCallback((result: any) => {
+  const handleDragEnd = (result: any) => {
     if (!result.destination) return;
-
     const { source, destination } = result;
-    const newWidgets = [...memoizedWidgets];
-
+    const newWidgets = [...widgets];
     const [removed] = newWidgets.splice(source.index, 1);
     newWidgets.splice(destination.index, 0, removed);
-
     setWidgets(newWidgets);
-  }, [memoizedWidgets]);
-
-  useEffect(() => {
-    const fetchAnalyticsData = async () => {
-      try {
-        const response = await axios.get('/api/analytics');
-        const analyticsData = response.data;
-
-        setWidgets(
-          memoizedWidgets.map((widget) => {
-            if (widget.analyticsData) {
-              return { ...widget, analyticsData };
-            }
-            return widget;
-          })
-        );
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
-    fetchAnalyticsData();
-  }, [memoizedWidgets]);
+  };
 
   return (
     <DndProvider>
-      <DragDropContext onDragEnd={handleWidgetDragEnd}>
+      <DragDropContext onDragEnd={handleDragEnd}>
         <DashboardHeader />
         <NavigationMenu />
         <div className="dashboard-container">
@@ -193,8 +221,12 @@ const DashboardPage = () => {
                 ref={provided.innerRef}
                 className="widgets-container"
               >
-                {memoizedWidgetLayout.widgets.map((widget, index) => (
-                  <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+                {widgets.map((widget, index) => (
+                  <Draggable
+                    key={widget.id}
+                    draggableId={widget.id.toString()}
+                    index={index}
+                  >
                     {(provided) => (
                       <div
                         {...provided.draggableProps}
@@ -215,7 +247,6 @@ const DashboardPage = () => {
             )}
           </Droppable>
         </div>
-        <WidgetSettings />
       </DragDropContext>
     </DndProvider>
   );
