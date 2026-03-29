@@ -37,9 +37,13 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
         // Automatically retrieve events after connecting
         calendarIntegrations.GoogleCalendar.getEvents().then((events) => {
           setEvents(events);
+          // Provide feedback to the user
+          alert('You have been connected to Google Calendar. Your events are being synced.');
         });
       } catch (error) {
         console.error('Error connecting to Google Calendar:', error);
+        // Provide feedback to the user
+        alert('Error connecting to Google Calendar. Please try again.');
       }
     },
     getEvents: async () => {
@@ -66,6 +70,8 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
         return [];
       } catch (error) {
         console.error('Error fetching Google Calendar events:', error);
+        // Provide feedback to the user
+        alert('Error fetching Google Calendar events. Please try again.');
         return [];
       }
     },
@@ -83,36 +89,41 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
         }
       } catch (error) {
         console.error('Error disconnecting from Google Calendar:', error);
+        // Provide feedback to the user
+        alert('Error disconnecting from Google Calendar. Please try again.');
       }
     },
-    isAuthenticated: () => {
-      return localStorage.getItem('googleCalendarToken') !== null;
-    },
     name: 'Google Calendar',
-    icon: '',
-    description: 'Connect your Google Calendar to view and manage your events.',
+    icon: 'google-calendar-icon',
+    description: 'Connect your Google Calendar account to sync your events.',
     authUrl: 'https://accounts.google.com/o/oauth2/auth',
+    isAuthenticated: () => {
+      const token = localStorage.getItem('googleCalendarToken');
+      return token !== null;
+    },
     onboardingSteps: [
       {
-        title: 'Step 1: Connect your Google Calendar',
-        description: 'Click the "Connect" button to authorize access to your Google Calendar.',
+        title: 'Step 1: Connect your Google Calendar account',
+        description: 'Click the "Connect" button to authenticate with Google Calendar.',
         action: () => {
-          // Redirect to Google Calendar authorization URL
-          window.location.href = calendarIntegrations.GoogleCalendar.authUrl;
+          // Provide instructions to the user
+          alert('Please click the "Connect" button to authenticate with Google Calendar.');
         },
       },
       {
-        title: 'Step 2: Authenticate with Google',
-        description: 'Enter your Google account credentials to authenticate.',
+        title: 'Step 2: Authorize access to your Google Calendar account',
+        description: 'Grant permission for our app to access your Google Calendar account.',
         action: () => {
-          // Handle authentication logic
+          // Provide instructions to the user
+          alert('Please grant permission for our app to access your Google Calendar account.');
         },
       },
       {
-        title: 'Step 3: Authorize access to your Google Calendar',
-        description: 'Click "Allow" to grant access to your Google Calendar.',
+        title: 'Step 3: Sync your Google Calendar events',
+        description: 'Our app will automatically sync your Google Calendar events.',
         action: () => {
-          // Handle authorization logic
+          // Provide feedback to the user
+          alert('Your Google Calendar events are being synced.');
         },
       },
     ],
@@ -123,10 +134,9 @@ const [events, setEvents] = useState<CalendarEvent[]>([]);
 const [connected, setConnected] = useState(false);
 
 useEffect(() => {
-  // Check if the user is already connected to Google Calendar
-  if (calendarIntegrations.GoogleCalendar.isAuthenticated()) {
+  const token = localStorage.getItem('googleCalendarToken');
+  if (token) {
     setConnected(true);
-    // Automatically retrieve events when the component mounts
     calendarIntegrations.GoogleCalendar.getEvents().then((events) => {
       setEvents(events);
     });
@@ -134,28 +144,42 @@ useEffect(() => {
 }, []);
 
 const handleConnect = () => {
-  // Redirect to Google Calendar authorization URL
+  // Provide instructions to the user
+  alert('Please click the "Connect" button to authenticate with Google Calendar.');
+  // Redirect to Google Calendar authentication URL
   window.location.href = calendarIntegrations.GoogleCalendar.authUrl;
 };
 
 const handleDisconnect = () => {
-  calendarIntegrations.GoogleCalendar.disconnect();
+  // Confirm disconnection before proceeding
+  if (confirm('Are you sure you want to disconnect from Google Calendar?')) {
+    calendarIntegrations.GoogleCalendar.disconnect();
+  }
 };
 
-const App = () => {
-  return (
-    <Layout>
-      <SEO title="AI-Powered Content Optimizer" />
-      <DndProvider backend={HTML5Backend}>
-        <Calendar events={events} />
-        {connected ? (
-          <button onClick={handleDisconnect}>Disconnect from Google Calendar</button>
-        ) : (
-          <button onClick={handleConnect}>Connect to Google Calendar</button>
-        )}
-      </DndProvider>
-    </Layout>
-  );
-};
-
-export default App;
+return (
+  <Layout>
+    <SEO title="Content Calendar" />
+    <DndProvider backend={HTML5Backend}>
+      <Calendar events={events} />
+      {connected ? (
+        <button onClick={handleDisconnect}>Disconnect from Google Calendar</button>
+      ) : (
+        <button onClick={handleConnect}>Connect to Google Calendar</button>
+      )}
+      <Tooltip>
+        {connected
+          ? 'You are connected to Google Calendar. Your events are being synced.'
+          : 'Please connect to Google Calendar to sync your events.'}
+      </Tooltip>
+      <Image src="/google-calendar-icon.png" alt="Google Calendar Icon" />
+      {calendarIntegrations.GoogleCalendar.onboardingSteps.map((step, index) => (
+        <div key={index}>
+          <h2>{step.title}</h2>
+          <p>{step.description}</p>
+          <button onClick={step.action}>Next</button>
+        </div>
+      ))}
+    </DndProvider>
+  </Layout>
+);

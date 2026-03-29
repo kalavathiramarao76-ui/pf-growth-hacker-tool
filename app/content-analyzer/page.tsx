@@ -55,79 +55,97 @@ const calculateReadabilityScore = async (text: string) => {
 
   // Implement a more accurate readability score calculation using a combination of natural language processing and machine learning algorithms
   const tfReadabilityScore = tfModel.predict(tf.tensor2d([readabilityScore]));
-  const combinedScoreAdvanced = (tfReadabilityScore.dataSync()[0] + readabilityScoreNlp + readabilityScoreSpacy + complexityScore + cohesionScore + clarityScore + sentenceLengthScore + wordLengthScore + syllableCountScore) / 10;
+  const combinedScoreAdvanced = (tfReadabilityScore.dataSync()[0] + 
+    calculateFleschKincaidGradeLevel(text) + 
+    calculateGunningFogIndex(text) + 
+    calculateSMOGReadabilityFormula(text) + 
+    calculateColemanLiauIndex(text)) / 5;
 
   return combinedScoreAdvanced;
 };
 
-const calculateComplexityScore = async (text: string) => {
-  // Calculate complexity score using natural language processing
-  const doc = await nlp.process('en', text);
-  const complexityScore = doc.score;
-  return complexityScore;
+const calculateFleschKincaidGradeLevel = (text: string) => {
+  const sentences = text.split('.').filter(sentence => sentence.trim() !== '');
+  const words = text.split(' ').filter(word => word.trim() !== '');
+  const syllables = words.reduce((acc, word) => acc + countSyllables(word), 0);
+  const gradeLevel = 206.835 - 1.015 * (words.length / sentences.length) - 84.6 * (syllables / words.length);
+  return gradeLevel;
 };
 
-const calculateCohesionScore = async (text: string) => {
-  // Calculate cohesion score using natural language processing
-  const doc = await nlp.process('en', text);
-  const cohesionScore = doc.score;
-  return cohesionScore;
+const calculateGunningFogIndex = (text: string) => {
+  const sentences = text.split('.').filter(sentence => sentence.trim() !== '');
+  const words = text.split(' ').filter(word => word.trim() !== '');
+  const complexWords = words.filter(word => countSyllables(word) >= 3);
+  const percentage = (complexWords.length / words.length) * 100;
+  const gradeLevel = 0.4 * (words.length / sentences.length) + percentage;
+  return gradeLevel;
 };
 
-const calculateClarityScore = async (text: string) => {
-  // Calculate clarity score using natural language processing
-  const doc = await nlp.process('en', text);
-  const clarityScore = doc.score;
-  return clarityScore;
+const calculateSMOGReadabilityFormula = (text: string) => {
+  const sentences = text.split('.').filter(sentence => sentence.trim() !== '');
+  const words = text.split(' ').filter(word => word.trim() !== '');
+  const complexWords = words.filter(word => countSyllables(word) >= 3);
+  const percentage = (complexWords.length / words.length) * 100;
+  const gradeLevel = 1.043 * Math.sqrt(percentage * (30 / sentences.length)) + 3.1291;
+  return gradeLevel;
 };
 
-const calculateSentenceLengthScore = async (text: string) => {
-  // Calculate sentence length score using natural language processing
-  const sentences = text.split('.');
-  const sentenceLengthScore = sentences.length / text.length;
-  return sentenceLengthScore;
-};
-
-const calculateWordLengthScore = async (text: string) => {
-  // Calculate word length score using natural language processing
-  const words = text.split(' ');
-  const wordLengthScore = words.length / text.length;
-  return wordLengthScore;
-};
-
-const calculateSyllableCountScore = async (text: string) => {
-  // Calculate syllable count score using natural language processing
-  const words = text.split(' ');
-  let syllableCount = 0;
-  for (const word of words) {
-    syllableCount += countSyllables(word);
-  }
-  const syllableCountScore = syllableCount / words.length;
-  return syllableCountScore;
+const calculateColemanLiauIndex = (text: string) => {
+  const sentences = text.split('.').filter(sentence => sentence.trim() !== '');
+  const words = text.split(' ').filter(word => word.trim() !== '');
+  const letters = words.reduce((acc, word) => acc + word.length, 0);
+  const l = letters / words.length;
+  const s = sentences.length / words.length;
+  const gradeLevel = 0.0588 * l * 100 - 0.296 * s * 100 - 15.8;
+  return gradeLevel;
 };
 
 const countSyllables = (word: string) => {
   word = word.toLowerCase();
   const vowels = 'aeiouy';
+  const diphthongs = 'ai,au,ay,ea,ee,ei,ey,oa,oo,ou,oy';
   let count = 0;
-  let prev = false;
+  let prev = '';
   for (let i = 0; i < word.length; i++) {
-    if (vowels.indexOf(word[i]) !== -1) {
-      if (!prev) {
-        count++;
-        prev = true;
-      }
-    } else {
-      prev = false;
+    if (vowels.includes(word[i]) && !prev.includes(word[i])) {
+      count++;
     }
-  }
-  if (word.endsWith('e')) {
-    count--;
+    prev = word[i];
   }
   if (count === 0) {
-    count = 1;
+    return 1;
   }
   return count;
+};
+
+const calculateComplexityScore = async (text: string) => {
+  // Implement complexity score calculation
+  return 0;
+};
+
+const calculateCohesionScore = async (text: string) => {
+  // Implement cohesion score calculation
+  return 0;
+};
+
+const calculateClarityScore = async (text: string) => {
+  // Implement clarity score calculation
+  return 0;
+};
+
+const calculateSentenceLengthScore = async (text: string) => {
+  // Implement sentence length score calculation
+  return 0;
+};
+
+const calculateWordLengthScore = async (text: string) => {
+  // Implement word length score calculation
+  return 0;
+};
+
+const calculateSyllableCountScore = async (text: string) => {
+  // Implement syllable count score calculation
+  return 0;
 };
 
 const App = () => {
@@ -148,7 +166,7 @@ const App = () => {
     <div>
       <SEO title="Content Analyzer" />
       <PageHeader title="Content Analyzer" />
-      <ContentAnalyzerForm text={text} onChange={handleTextChange} onAnalyze={handleAnalyze} />
+      <ContentAnalyzerForm text={text} onTextChange={handleTextChange} onAnalyze={handleAnalyze} />
       <OptimizationSuggestions readabilityScore={readabilityScore} />
       <EngagementTracker />
       <AlternativeFormats />
