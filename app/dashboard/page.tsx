@@ -127,7 +127,7 @@ const initialWidgets: Widget[] = [
             color: '#3498db',
           }}
         >
-          Unlock Your Full Potential
+          Unlock Your Potential
         </h1>
       </div>
     ),
@@ -137,38 +137,59 @@ const initialWidgets: Widget[] = [
 const DashboardPage = () => {
   const [widgets, setWidgets] = useState(initialWidgets);
   const [widgetLayout, setWidgetLayout] = useState<WidgetLayout>({
-    columns: 3,
-    rows: 2,
+    columns: 2,
+    rows: 3,
     widgets: initialWidgets,
   });
-  const [analyticsData, setAnalyticsData] = useState({});
-  const [contentSuggestions, setContentSuggestions] = useState({});
-
-  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const fetchAnalyticsData = useCallback(async () => {
     try {
       const response = await axios.get('/api/analytics');
-      setAnalyticsData(response.data);
-      cache.analyticsData = response.data;
+      const analyticsData = response.data;
+      cache.analyticsData = analyticsData;
+      setWidgets((prevWidgets) =>
+        prevWidgets.map((widget) => {
+          if (widget.analyticsData) {
+            return { ...widget, analyticsData: analyticsData };
+          }
+          return widget;
+        })
+      );
     } catch (error) {
-      console.error(error);
+      setError(error);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
   const fetchContentSuggestions = useCallback(async () => {
     try {
       const response = await axios.get('/api/content-suggestions');
-      setContentSuggestions(response.data);
-      cache.contentSuggestions = response.data;
+      const contentSuggestions = response.data;
+      cache.contentSuggestions = contentSuggestions;
+      setWidgets((prevWidgets) =>
+        prevWidgets.map((widget) => {
+          if (widget.contentSuggestions) {
+            return { ...widget, contentSuggestions: contentSuggestions };
+          }
+          return widget;
+        })
+      );
     } catch (error) {
-      console.error(error);
+      setError(error);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchAnalyticsData();
-    fetchContentSuggestions();
+    const fetchAllData = async () => {
+      setLoading(true);
+      await Promise.all([fetchAnalyticsData(), fetchContentSuggestions()]);
+    };
+    fetchAllData();
   }, [fetchAnalyticsData, fetchContentSuggestions]);
 
   const handleWidgetClick = (widget: Widget) => {
@@ -185,55 +206,38 @@ const DashboardPage = () => {
 
   const handleDragEnd = (result: any) => {
     if (!result.destination) return;
-
     const { source, destination } = result;
-    const newWidgets = [...widgetLayout.widgets];
+    const newWidgets = [...widgets];
     const [removed] = newWidgets.splice(source.index, 1);
-
     newWidgets.splice(destination.index, 0, removed);
-
-    setWidgetLayout({
-      ...widgetLayout,
-      widgets: newWidgets,
-    });
+    setWidgets(newWidgets);
   };
-
-  const memoizedWidgets = useMemo(() => {
-    return widgets.map((widget) => {
-      return (
-        <Draggable key={widget.id} draggableId={widget.id.toString()} index={widgets.indexOf(widget)}>
-          {(provided) => (
-            <div
-              ref={provided.innerRef}
-              {...provided.draggableProps}
-              {...provided.dragHandleProps}
-            >
-              <DashboardCard
-                title={widget.title}
-                icon={widget.icon}
-                onClick={() => handleWidgetClick(widget)}
-                settings={() => handleWidgetSettings(widget)}
-                analyticsData={analyticsData[widget.id]}
-                contentSuggestions={contentSuggestions[widget.id]}
-              />
-            </div>
-          )}
-        </Draggable>
-      );
-    });
-  }, [widgets, analyticsData, contentSuggestions]);
 
   return (
     <DndProvider>
       <DragDropContext onDragEnd={handleDragEnd}>
-        <Droppable droppableId="widgets">
-          {(provided) => (
-            <div {...provided.droppableProps} ref={provided.innerRef}>
-              {memoizedWidgets}
-              {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
+        <DashboardHeader />
+        <NavigationMenu />
+        <div className="dashboard-widgets">
+          {widgets.map((widget, index) => (
+            <Draggable key={widget.id} draggableId={String(widget.id)} index={index}>
+              {(provided) => (
+                <div
+                  ref={provided.innerRef}
+                  {...provided.draggableProps}
+                  {...provided.dragHandleProps}
+                >
+                  <DashboardCard
+                    key={widget.id}
+                    widget={widget}
+                    onClick={() => handleWidgetClick(widget)}
+                    onSettingsClick={() => handleWidgetSettings(widget)}
+                  />
+                </div>
+              )}
+            </Draggable>
+          ))}
+        </div>
       </DragDropContext>
     </DndProvider>
   );
