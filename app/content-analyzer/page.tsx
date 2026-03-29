@@ -55,97 +55,185 @@ const calculateReadabilityScore = async (text: string) => {
 
   // Implement a more accurate readability score calculation using a combination of natural language processing and machine learning algorithms
   const tfReadabilityScore = tfModel.predict(tf.tensor2d([readabilityScore]));
-  const combinedScoreAdvanced = (tfReadabilityScore.dataSync()[0] + complexityScore + cohesionScore + clarityScore + sentenceLengthScore + wordLengthScore + syllableCountScore) / 8;
+  const combinedScoreAdvanced = (tfReadabilityScore.dataSync()[0] + 
+    calculateSentenceStructureScore(text) + 
+    calculateWordChoiceScore(text) + 
+    calculateSyntaxScore(text) + 
+    calculateSemanticsScore(text)) / 5;
 
-  // Use the more accurate readability score calculation
-  const readabilityScoreFinal = combinedScoreAdvanced;
+  return combinedScoreAdvanced;
+};
 
-  return readabilityScoreFinal;
+const calculateSentenceStructureScore = async (text: string) => {
+  const sentenceStructureScore = await calculateSentenceLengthScore(text) * 0.3 + 
+    await calculateSentenceComplexityScore(text) * 0.2 + 
+    await calculateSentenceVarietyScore(text) * 0.5;
+  return sentenceStructureScore;
+};
+
+const calculateWordChoiceScore = async (text: string) => {
+  const wordChoiceScore = await calculateWordLengthScore(text) * 0.4 + 
+    await calculateWordFrequencyScore(text) * 0.3 + 
+    await calculateWordConcretenessScore(text) * 0.3;
+  return wordChoiceScore;
+};
+
+const calculateSyntaxScore = async (text: string) => {
+  const syntaxScore = await calculatePartOfSpeechScore(text) * 0.5 + 
+    await calculateDependencyParseScore(text) * 0.5;
+  return syntaxScore;
+};
+
+const calculateSemanticsScore = async (text: string) => {
+  const semanticsScore = await calculateNamedEntityRecognitionScore(text) * 0.4 + 
+    await calculateCoreferenceResolutionScore(text) * 0.3 + 
+    await calculateSemanticRoleLabelingScore(text) * 0.3;
+  return semanticsScore;
+};
+
+const calculateSentenceLengthScore = async (text: string) => {
+  const sentences = text.split('. ');
+  const averageSentenceLength = sentences.reduce((acc, sentence) => acc + sentence.split(' ').length, 0) / sentences.length;
+  return averageSentenceLength;
+};
+
+const calculateWordLengthScore = async (text: string) => {
+  const words = text.split(' ');
+  const averageWordLength = words.reduce((acc, word) => acc + word.length, 0) / words.length;
+  return averageWordLength;
+};
+
+const calculateSyllableCountScore = async (text: string) => {
+  const words = text.split(' ');
+  const syllableCount = words.reduce((acc, word) => acc + countSyllables(word), 0);
+  return syllableCount;
+};
+
+const countSyllables = (word: string) => {
+  word = word.toLowerCase();
+  const vowels = 'aeiouy';
+  const diphthongs = ['ai', 'au', 'ay', 'ea', 'ee', 'ei', 'ey', 'ie', 'oi', 'oo', 'ou', 'oy', 'ua', 'ue', 'ui', 'uy'];
+  let syllableCount = 0;
+  let index = 0;
+  while (index < word.length) {
+    if (vowels.includes(word[index])) {
+      syllableCount++;
+      index++;
+      while (index < word.length && vowels.includes(word[index])) {
+        index++;
+      }
+    } else if (diphthongs.includes(word.substring(index, index + 2))) {
+      syllableCount++;
+      index += 2;
+    } else {
+      index++;
+    }
+  }
+  return syllableCount;
 };
 
 const calculateComplexityScore = async (text: string) => {
-  // Calculate complexity score using natural language processing and machine learning algorithms
-  const complexityScore = await nlp.process('en', text).then((doc) => doc.score);
+  const complexityScore = await calculateSentenceLengthScore(text) * 0.3 + 
+    await calculateWordLengthScore(text) * 0.2 + 
+    await calculateSyllableCountScore(text) * 0.5;
   return complexityScore;
 };
 
 const calculateCohesionScore = async (text: string) => {
-  // Calculate cohesion score using natural language processing and machine learning algorithms
-  const cohesionScore = await spacyModel(text).then((spacyDoc) => spacyDoc._.cohesion);
+  const cohesionScore = await calculateSentenceStructureScore(text) * 0.4 + 
+    await calculateWordChoiceScore(text) * 0.3 + 
+    await calculateSyntaxScore(text) * 0.3;
   return cohesionScore;
 };
 
 const calculateClarityScore = async (text: string) => {
-  // Calculate clarity score using natural language processing and machine learning algorithms
-  const clarityScore = await readabilityPipeline(text).then((result) => result.score);
+  const clarityScore = await calculateSemanticsScore(text) * 0.5 + 
+    await calculateSyntaxScore(text) * 0.3 + 
+    await calculateWordChoiceScore(text) * 0.2;
   return clarityScore;
 };
 
-const calculateSentenceLengthScore = async (text: string) => {
-  // Calculate sentence length score using natural language processing and machine learning algorithms
-  const sentenceLengthScore = await nlp.process('en', text).then((doc) => doc.sentences.length);
-  return sentenceLengthScore;
+const calculatePartOfSpeechScore = async (text: string) => {
+  const partOfSpeechTags = await nlp.process('en', text);
+  const partOfSpeechScore = partOfSpeechTags.score;
+  return partOfSpeechScore;
 };
 
-const calculateWordLengthScore = async (text: string) => {
-  // Calculate word length score using natural language processing and machine learning algorithms
-  const wordLengthScore = await nlp.process('en', text).then((doc) => doc.words.length);
-  return wordLengthScore;
+const calculateDependencyParseScore = async (text: string) => {
+  const dependencyParse = await spacyModel(text);
+  const dependencyParseScore = dependencyParse._.dependencyParse;
+  return dependencyParseScore;
 };
 
-const calculateSyllableCountScore = async (text: string) => {
-  // Calculate syllable count score using natural language processing and machine learning algorithms
-  const syllableCountScore = await nlp.process('en', text).then((doc) => doc.syllables.length);
-  return syllableCountScore;
+const calculateNamedEntityRecognitionScore = async (text: string) => {
+  const namedEntities = await nlp.process('en', text);
+  const namedEntityRecognitionScore = namedEntities.score;
+  return namedEntityRecognitionScore;
 };
 
-const Page = () => {
-  const router = useRouter();
+const calculateCoreferenceResolutionScore = async (text: string) => {
+  const coreferenceResolution = await spacyModel(text);
+  const coreferenceResolutionScore = coreferenceResolution._.coreferenceResolution;
+  return coreferenceResolutionScore;
+};
+
+const calculateSemanticRoleLabelingScore = async (text: string) => {
+  const semanticRoleLabeling = await nlp.process('en', text);
+  const semanticRoleLabelingScore = semanticRoleLabeling.score;
+  return semanticRoleLabelingScore;
+};
+
+const calculateSentenceLengthScoreAdvanced = async (text: string) => {
+  const sentenceLengthScore = await calculateSentenceLengthScore(text);
+  const sentenceLengthScoreAdvanced = sentenceLengthScore * 0.6 + 
+    await calculateSentenceComplexityScore(text) * 0.2 + 
+    await calculateSentenceVarietyScore(text) * 0.2;
+  return sentenceLengthScoreAdvanced;
+};
+
+const calculateSentenceComplexityScore = async (text: string) => {
+  const sentences = text.split('. ');
+  const averageSentenceComplexity = sentences.reduce((acc, sentence) => acc + sentence.split(' ').length, 0) / sentences.length;
+  return averageSentenceComplexity;
+};
+
+const calculateSentenceVarietyScore = async (text: string) => {
+  const sentences = text.split('. ');
+  const sentenceVariety = sentences.reduce((acc, sentence) => acc + sentence.split(' ').length, 0) / sentences.length;
+  return sentenceVariety;
+};
+
+const App = () => {
   const [text, setText] = useState('');
   const [readabilityScore, setReadabilityScore] = useState(0);
-  const [complexityScore, setComplexityScore] = useState(0);
-  const [cohesionScore, setCohesionScore] = useState(0);
-  const [clarityScore, setClarityScore] = useState(0);
-  const [sentenceLengthScore, setSentenceLengthScore] = useState(0);
-  const [wordLengthScore, setWordLengthScore] = useState(0);
-  const [syllableCountScore, setSyllableCountScore] = useState(0);
+  const router = useRouter();
 
-  const handleTextChange = (event: any) => {
+  useEffect(() => {
+    const storedText = LocalStorage.get('text');
+    if (storedText) {
+      setText(storedText);
+    }
+  }, []);
+
+  const handleTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setText(event.target.value);
+    LocalStorage.set('text', event.target.value);
   };
 
   const handleAnalyze = async () => {
-    const readabilityScoreFinal = await calculateReadabilityScore(text);
-    setReadabilityScore(readabilityScoreFinal);
-
-    const complexityScoreFinal = await calculateComplexityScore(text);
-    setComplexityScore(complexityScoreFinal);
-
-    const cohesionScoreFinal = await calculateCohesionScore(text);
-    setCohesionScore(cohesionScoreFinal);
-
-    const clarityScoreFinal = await calculateClarityScore(text);
-    setClarityScore(clarityScoreFinal);
-
-    const sentenceLengthScoreFinal = await calculateSentenceLengthScore(text);
-    setSentenceLengthScore(sentenceLengthScoreFinal);
-
-    const wordLengthScoreFinal = await calculateWordLengthScore(text);
-    setWordLengthScore(wordLengthScoreFinal);
-
-    const syllableCountScoreFinal = await calculateSyllableCountScore(text);
-    setSyllableCountScore(syllableCountScoreFinal);
+    const readabilityScore = await calculateReadabilityScore(text);
+    setReadabilityScore(readabilityScore);
   };
 
   return (
     <div>
       <SEO title="AI-Powered Content Optimizer" />
       <PageHeader title="AI-Powered Content Optimizer" />
-      <ContentAnalyzerForm text={text} handleTextChange={handleTextChange} handleAnalyze={handleAnalyze} />
-      <OptimizationSuggestions readabilityScore={readabilityScore} complexityScore={complexityScore} cohesionScore={cohesionScore} clarityScore={clarityScore} sentenceLengthScore={sentenceLengthScore} wordLengthScore={wordLengthScore} syllableCountScore={syllableCountScore} />
+      <ContentAnalyzerForm text={text} onTextChange={handleTextChange} onAnalyze={handleAnalyze} />
+      <OptimizationSuggestions readabilityScore={readabilityScore} />
       <EngagementTracker />
       <AlternativeFormats />
-      <BarChart width={500} height={300} data={[{ name: 'Readability Score', score: readabilityScore }, { name: 'Complexity Score', score: complexityScore }, { name: 'Cohesion Score', score: cohesionScore }, { name: 'Clarity Score', score: clarityScore }, { name: 'Sentence Length Score', score: sentenceLengthScore }, { name: 'Word Length Score', score: wordLengthScore }, { name: 'Syllable Count Score', score: syllableCountScore }]}>
+      <BarChart width={500} height={300} data={[{ name: 'Readability Score', score: readabilityScore }]}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="name" />
         <YAxis />
@@ -156,4 +244,4 @@ const Page = () => {
   );
 };
 
-export default Page;
+export default App;

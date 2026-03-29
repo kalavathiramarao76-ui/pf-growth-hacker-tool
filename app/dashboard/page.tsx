@@ -155,28 +155,33 @@ const fetchContentSuggestions = async (widgetId: number) => {
 };
 
 const DashboardPage = () => {
-  const router = useRouter();
   const [widgets, setWidgets] = useState(initialWidgets);
   const [analyticsData, setAnalyticsData] = useState(cache.analyticsData);
   const [contentSuggestions, setContentSuggestions] = useState(cache.contentSuggestions);
 
-  const fetchAndCacheAnalyticsData = async (widgetId: number) => {
-    if (!analyticsData[widgetId]) {
-      const data = await fetchAnalyticsData(widgetId);
-      if (data) {
-        setAnalyticsData((prevData) => ({ ...prevData, [widgetId]: data }));
+  const fetchAndCacheAnalyticsData = useCallback(
+    async (widgetId: number) => {
+      if (!analyticsData[widgetId]) {
+        const data = await fetchAnalyticsData(widgetId);
+        if (data) {
+          setAnalyticsData((prevData) => ({ ...prevData, [widgetId]: data }));
+        }
       }
-    }
-  };
+    },
+    [analyticsData]
+  );
 
-  const fetchAndCacheContentSuggestions = async (widgetId: number) => {
-    if (!contentSuggestions[widgetId]) {
-      const data = await fetchContentSuggestions(widgetId);
-      if (data) {
-        setContentSuggestions((prevData) => ({ ...prevData, [widgetId]: data }));
+  const fetchAndCacheContentSuggestions = useCallback(
+    async (widgetId: number) => {
+      if (!contentSuggestions[widgetId]) {
+        const data = await fetchContentSuggestions(widgetId);
+        if (data) {
+          setContentSuggestions((prevData) => ({ ...prevData, [widgetId]: data }));
+        }
       }
-    }
-  };
+    },
+    [contentSuggestions]
+  );
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -188,22 +193,22 @@ const DashboardPage = () => {
           if (widget.contentSuggestions) {
             return fetchAndCacheContentSuggestions(widget.id);
           }
-          return null;
+          return Promise.resolve();
         })
       );
     };
     fetchInitialData();
-  }, [widgets]);
+  }, [widgets, fetchAndCacheAnalyticsData, fetchAndCacheContentSuggestions]);
 
-  const handleWidgetClick = async (widget: Widget) => {
+  const handleWidgetClick = (widget: Widget) => {
     if (widget.onClick) {
       widget.onClick();
     }
     if (widget.analyticsData) {
-      await fetchAndCacheAnalyticsData(widget.id);
+      fetchAndCacheAnalyticsData(widget.id);
     }
     if (widget.contentSuggestions) {
-      await fetchAndCacheContentSuggestions(widget.id);
+      fetchAndCacheContentSuggestions(widget.id);
     }
   };
 
@@ -215,31 +220,21 @@ const DashboardPage = () => {
             <div ref={provided.innerRef} {...provided.droppableProps}>
               <DashboardHeader />
               <NavigationMenu />
-              <div className="dashboard-widgets">
-                {widgets.map((widget, index) => (
-                  <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
-                    {(provided) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        className="dashboard-widget"
-                      >
-                        <DashboardCard
-                          title={widget.title}
-                          icon={widget.icon}
-                          onClick={() => handleWidgetClick(widget)}
-                          analyticsData={analyticsData[widget.id]}
-                          contentSuggestions={contentSuggestions[widget.id]}
-                          isInteractive={widget.isInteractive}
-                          isCustomizable={widget.isCustomizable}
-                        />
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </div>
+              {widgets.map((widget, index) => (
+                <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
+                  {(provided) => (
+                    <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                      <DashboardCard
+                        widget={widget}
+                        onClick={() => handleWidgetClick(widget)}
+                        analyticsData={analyticsData[widget.id]}
+                        contentSuggestions={contentSuggestions[widget.id]}
+                      />
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
             </div>
           )}
         </Droppable>
