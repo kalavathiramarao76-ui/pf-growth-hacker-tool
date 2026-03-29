@@ -55,62 +55,82 @@ const calculateReadabilityScore = async (text: string) => {
 
   // Implement a more accurate readability score calculation using a combination of natural language processing and machine learning algorithms
   const tfReadabilityScore = tfModel.predict(tf.tensor2d([readabilityScore]));
-  const combinedScoreAdvanced = (tfReadabilityScore.dataSync()[0] + complexityScore + cohesionScore + clarityScore + sentenceLengthScore + wordLengthScore + syllableCountScore) / 8;
-
-  // Train the machine learning model with the combined score
-  const trainingData = [
-    { input: readabilityScore, output: combinedScoreAdvanced },
-    { input: readabilityScoreNlp, output: combinedScoreAdvanced },
-    { input: readabilityScoreSpacy, output: combinedScoreAdvanced },
-  ];
-  tfModel.fit(tf.tensor2d(trainingData.map(data => [data.input])), tf.tensor2d(trainingData.map(data => [data.output])), { epochs: 100 });
+  const combinedScoreAdvanced = (tfReadabilityScore.dataSync()[0] + readabilityScoreNlp + readabilityScoreSpacy + complexityScore + cohesionScore + clarityScore + sentenceLengthScore + wordLengthScore + syllableCountScore) / 10;
 
   return combinedScoreAdvanced;
-}
+};
 
 const calculateComplexityScore = async (text: string) => {
   // Calculate complexity score using natural language processing
   const doc = await nlp.process('en', text);
   const complexityScore = doc.score;
   return complexityScore;
-}
+};
 
 const calculateCohesionScore = async (text: string) => {
   // Calculate cohesion score using natural language processing
   const doc = await nlp.process('en', text);
   const cohesionScore = doc.score;
   return cohesionScore;
-}
+};
 
 const calculateClarityScore = async (text: string) => {
   // Calculate clarity score using natural language processing
   const doc = await nlp.process('en', text);
   const clarityScore = doc.score;
   return clarityScore;
-}
+};
 
 const calculateSentenceLengthScore = async (text: string) => {
   // Calculate sentence length score using natural language processing
-  const doc = await nlp.process('en', text);
-  const sentenceLengthScore = doc.score;
+  const sentences = text.split('.');
+  const sentenceLengthScore = sentences.length / text.length;
   return sentenceLengthScore;
-}
+};
 
 const calculateWordLengthScore = async (text: string) => {
   // Calculate word length score using natural language processing
-  const doc = await nlp.process('en', text);
-  const wordLengthScore = doc.score;
+  const words = text.split(' ');
+  const wordLengthScore = words.length / text.length;
   return wordLengthScore;
-}
+};
 
 const calculateSyllableCountScore = async (text: string) => {
   // Calculate syllable count score using natural language processing
-  const doc = await nlp.process('en', text);
-  const syllableCountScore = doc.score;
+  const words = text.split(' ');
+  let syllableCount = 0;
+  for (const word of words) {
+    syllableCount += countSyllables(word);
+  }
+  const syllableCountScore = syllableCount / words.length;
   return syllableCountScore;
-}
+};
 
-const Page = () => {
+const countSyllables = (word: string) => {
+  word = word.toLowerCase();
+  const vowels = 'aeiouy';
+  let count = 0;
+  let prev = false;
+  for (let i = 0; i < word.length; i++) {
+    if (vowels.indexOf(word[i]) !== -1) {
+      if (!prev) {
+        count++;
+        prev = true;
+      }
+    } else {
+      prev = false;
+    }
+  }
+  if (word.endsWith('e')) {
+    count--;
+  }
+  if (count === 0) {
+    count = 1;
+  }
+  return count;
+};
+
+const App = () => {
   const [text, setText] = useState('');
   const [readabilityScore, setReadabilityScore] = useState(0);
   const router = useRouter();
@@ -143,4 +163,4 @@ const Page = () => {
   );
 };
 
-export default Page;
+export default App;

@@ -124,60 +124,52 @@ const initialWidgets: Widget[] = [
         >
           Unlock Your Content's Full Potential with Our Premium Plan
         </h1>
-        <p
-          style={{
-            fontSize: '16px',
-            marginBottom: '20px',
-          }}
-        >
-          Join the ranks of our 10,000+ satisfied customers who have seen an
-          average increase of 25% in engagement and 35% in conversio
-        </p>
+
       </div>
     ),
-    isInteractive: true,
-    isCustomizable: true,
   },
 ];
 
 const DashboardPage = () => {
+  const router = useRouter();
   const [widgets, setWidgets] = useState(initialWidgets);
   const [widgetLayout, setWidgetLayout] = useState<WidgetLayout>({
-    columns: 3,
-    rows: 2,
+    columns: 2,
+    rows: 3,
     widgets: initialWidgets,
   });
 
-  const handleWidgetClick = (widget: Widget) => {
-    widget.onClick();
-  };
-
-  const handleWidgetSettings = (widget: Widget) => {
-    // Open widget settings modal
-  };
-
-  const handleWidgetCustomization = (widget: Widget) => {
-    // Open widget customization modal
-  };
-
-  const onDragEnd = (result: any) => {
+  const handleDragEnd = useCallback((result: any) => {
     if (!result.destination) return;
-
     const { source, destination } = result;
-    const newWidgets = [...widgetLayout.widgets];
+    if (source.droppableId !== destination.droppableId) {
+      return;
+    }
+    const newWidgets = [...widgets];
     const [removed] = newWidgets.splice(source.index, 1);
-
     newWidgets.splice(destination.index, 0, removed);
+    setWidgets(newWidgets);
+  }, [widgets]);
 
-    setWidgetLayout({
-      ...widgetLayout,
-      widgets: newWidgets,
-    });
-  };
+  const memoizedWidgets = useMemo(() => widgets, [widgets]);
+  const memoizedWidgetLayout = useMemo(() => widgetLayout, [widgetLayout]);
+
+  useEffect(() => {
+    const fetchWidgetData = async () => {
+      try {
+        const response = await axios.get('/api/widgets');
+        const data = response.data;
+        setWidgets(data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchWidgetData();
+  }, []);
 
   return (
     <DndProvider>
-      <DragDropContext onDragEnd={onDragEnd}>
+      <DragDropContext onDragEnd={handleDragEnd}>
         <DashboardHeader />
         <NavigationMenu />
         <div className="dashboard-container">
@@ -186,9 +178,9 @@ const DashboardPage = () => {
               <div
                 {...provided.droppableProps}
                 ref={provided.innerRef}
-                className="widget-grid"
+                className="widgets-container"
               >
-                {widgetLayout.widgets.map((widget, index) => (
+                {memoizedWidgets.map((widget, index) => (
                   <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
                     {(provided) => (
                       <div
@@ -197,49 +189,7 @@ const DashboardPage = () => {
                         ref={provided.innerRef}
                         className="widget"
                       >
-                        <DashboardCard
-                          title={widget.title}
-                          icon={widget.icon}
-                          onClick={() => handleWidgetClick(widget)}
-                          isInteractive={widget.isInteractive}
-                          isCustomizable={widget.isCustomizable}
-                          onSettingsClick={() => handleWidgetSettings(widget)}
-                          onCustomizeClick={() => handleWidgetCustomization(widget)}
-                        >
-                          {widget.analyticsData && (
-                            <Line
-                              data={{
-                                labels: ['Engagement', 'Conversions', 'Views'],
-                                datasets: [
-                                  {
-                                    label: 'Analytics Data',
-                                    data: [
-                                      widget.analyticsData.engagement,
-                                      widget.analyticsData.conversions,
-                                      widget.analyticsData.views,
-                                    ],
-                                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                                    borderColor: 'rgba(255, 99, 132, 1)',
-                                    borderWidth: 1,
-                                  },
-                                ],
-                              }}
-                              options={{
-                                scales: {
-                                  yAxes: [
-                                    {
-                                      ticks: {
-                                        beginAtZero: true,
-                                      },
-                                    },
-                                  ],
-                                },
-                              }}
-                            />
-                          )}
-                          {widget.description && <p>{widget.description}</p>}
-                          {widget.callToAction && widget.callToAction}
-                        </DashboardCard>
+                        <DashboardCard widget={widget} />
                       </div>
                     )}
                   </Draggable>
@@ -249,6 +199,7 @@ const DashboardPage = () => {
             )}
           </Droppable>
         </div>
+        <WidgetSettings />
       </DragDropContext>
     </DndProvider>
   );
