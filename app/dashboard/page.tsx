@@ -127,17 +127,18 @@ const initialWidgets: Widget[] = [
             color: '#3498db',
           }}
         >
-          Unlock Your Content's Full Potential with Our Premium Plan
+          Unlock Your Full Potential
         </h1>
       </div>
     ),
   },
 ];
 
-const fetchAnalyticsData = async (widgetId: number) => {
+const getAnalyticsData = async (widgetId: number) => {
   if (cache.analyticsData[widgetId]) {
     return cache.analyticsData[widgetId];
   }
+
   try {
     const response = await axios.get(`/api/analytics/${widgetId}`);
     cache.analyticsData[widgetId] = response.data;
@@ -148,10 +149,11 @@ const fetchAnalyticsData = async (widgetId: number) => {
   }
 };
 
-const fetchContentSuggestions = async (widgetId: number) => {
+const getContentSuggestions = async (widgetId: number) => {
   if (cache.contentSuggestions[widgetId]) {
     return cache.contentSuggestions[widgetId];
   }
+
   try {
     const response = await axios.get(`/api/content-suggestions/${widgetId}`);
     cache.contentSuggestions[widgetId] = response.data;
@@ -172,39 +174,32 @@ const DashboardPage = () => {
   });
 
   const handleWidgetClick = async (widget: Widget) => {
-    if (widget.onClick) {
-      widget.onClick();
-    }
     if (widget.analyticsData) {
-      const analyticsData = await fetchAnalyticsData(widget.id);
+      const analyticsData = await getAnalyticsData(widget.id);
       if (analyticsData) {
-        // Update the widget with the fetched analytics data
-        setWidgets(
-          widgets.map((w) =>
-            w.id === widget.id ? { ...w, analyticsData } : w
-          )
-        );
+        widget.analyticsData = analyticsData;
       }
     }
+
     if (widget.contentSuggestions) {
-      const contentSuggestions = await fetchContentSuggestions(widget.id);
+      const contentSuggestions = await getContentSuggestions(widget.id);
       if (contentSuggestions) {
-        // Update the widget with the fetched content suggestions
-        setWidgets(
-          widgets.map((w) =>
-            w.id === widget.id ? { ...w, contentSuggestions } : w
-          )
-        );
+        widget.contentSuggestions = contentSuggestions;
       }
     }
+
+    widget.onClick();
   };
 
   const handleDragEnd = (result: any) => {
     if (!result.destination) return;
+
     const { source, destination } = result;
     const newWidgets = [...widgets];
     const [removed] = newWidgets.splice(source.index, 1);
+
     newWidgets.splice(destination.index, 0, removed);
+
     setWidgets(newWidgets);
   };
 
@@ -222,11 +217,7 @@ const DashboardPage = () => {
                 className="widgets-container"
               >
                 {widgets.map((widget, index) => (
-                  <Draggable
-                    key={widget.id}
-                    draggableId={widget.id.toString()}
-                    index={index}
-                  >
+                  <Draggable key={widget.id} draggableId={widget.id.toString()} index={index}>
                     {(provided) => (
                       <div
                         {...provided.draggableProps}
@@ -235,8 +226,13 @@ const DashboardPage = () => {
                         className="widget"
                       >
                         <DashboardCard
-                          widget={widget}
+                          title={widget.title}
+                          icon={widget.icon}
                           onClick={() => handleWidgetClick(widget)}
+                          analyticsData={widget.analyticsData}
+                          contentSuggestions={widget.contentSuggestions}
+                          isInteractive={widget.isInteractive}
+                          isCustomizable={widget.isCustomizable}
                         />
                       </div>
                     )}
