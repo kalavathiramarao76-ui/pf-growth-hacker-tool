@@ -61,87 +61,90 @@ const calendarIntegrations: { [key: string]: CalendarIntegration } = {
     getEvents: async () => {
       try {
         // Implement Google Calendar event retrieval logic
-        const token = localStorage.getItem('googleCalendarToken');
-        if (token) {
-          const response = await fetch('https://www.googleapis.com/calendar/v3/users/me/events', {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-          if (!response.ok) {
-            throw new Error(`Error fetching Google Calendar events: ${response.status}`);
+        const response = await fetch('https://www.googleapis.com/calendar/v3/users/me/events', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('googleCalendarToken')}`,
+            'Content-Type': 'application/json'
           }
-          const data = await response.json();
-          return data.items.map((event: any) => ({
-            id: event.id,
-            title: event.summary,
-            start: new Date(event.start.dateTime || event.start.date),
-            end: new Date(event.end.dateTime || event.end.date),
-          }));
-        } else {
-          throw new Error('No Google Calendar token found');
-        }
+        });
+        const events = await response.json();
+        return events.items.map((event: any) => ({
+          id: event.id,
+          title: event.summary,
+          start: new Date(event.start.dateTime),
+          end: new Date(event.end.dateTime)
+        }));
       } catch (error) {
-        console.error('Error fetching Google Calendar events:', error);
+        console.error('Error retrieving Google Calendar events:', error);
         throw error;
       }
     },
     disconnect: () => {
-      // Implement Google Calendar disconnection logic
-      localStorage.removeItem('googleCalendarToken');
-      setConnectionStatus('Disconnected from Google Calendar');
-      setConnectionMessage('You have been disconnected from Google Calendar.');
-      setOnboardingStep(0);
+      try {
+        // Implement Google Calendar disconnection logic
+        localStorage.removeItem('googleCalendarToken');
+        setConnectionStatus('Disconnected from Google Calendar');
+        setConnectionMessage('You have been disconnected from Google Calendar.');
+        setOnboardingStep(0);
+      } catch (error) {
+        console.error('Error disconnecting from Google Calendar:', error);
+        setConnectionStatus('Error disconnecting from Google Calendar');
+        setConnectionMessage('Error disconnecting from Google Calendar. Please try again.');
+      }
     },
     name: 'Google Calendar',
-    icon: 'https://www.google.com/calendar/images/favicon.ico',
-    description: 'Connect your Google Calendar account to sync your events',
+    icon: 'https://www.google.com/calendar/images/google_calendar_64.png',
+    description: 'Connect your Google Calendar account to sync your events.',
     authUrl: 'https://accounts.google.com/o/oauth2/auth',
     isAuthenticated: () => {
-      const token = localStorage.getItem('googleCalendarToken');
-      return token !== null;
+      return localStorage.getItem('googleCalendarToken') !== null;
     },
     onboardingSteps: [
       {
-        title: 'Connect your Google Calendar account',
-        description: 'Click the "Connect" button to authenticate with Google Calendar',
+        title: 'Step 1: Connect your Google Calendar account',
+        description: 'Click the "Connect" button to authorize access to your Google Calendar account.',
         action: () => {
-          // Implement authentication logic
           window.location.href = calendarIntegrations.GoogleCalendar.authUrl;
-        },
+        }
       },
       {
-        title: 'Review your events',
-        description: 'Review the events that have been synced from your Google Calendar account',
+        title: 'Step 2: Review and sync your events',
+        description: 'Review the events synced from your Google Calendar account and make any necessary adjustments.',
         action: () => {
-          // Implement event review logic
           setOnboardingStep(2);
-        },
+        }
       },
       {
-        title: 'Complete the setup',
-        description: 'You have completed the setup process',
+        title: 'Step 3: Complete the setup',
+        description: 'You have completed the setup. You can now manage your events and calendar integrations.',
         action: () => {
-          // Implement setup completion logic
           setOnboardingStep(3);
-        },
-      },
-    ],
-  },
+        }
+      }
+    ]
+  }
 };
 
-const [events, setEvents] = useState<CalendarEvent[]>([]);
-const [connectionStatus, setConnectionStatus] = useState<string>('');
-const [connectionMessage, setConnectionMessage] = useState<string>('');
-const [onboardingStep, setOnboardingStep] = useState<number>(0);
-const [successMessage, setSuccessMessage] = useState<string>('');
-const [errorMessage, setError] = useState<string>('');
-const [tooltip, setTooltip] = useState<string>('');
+const App = () => {
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [connectionStatus, setConnectionStatus] = useState<string>('');
+  const [connectionMessage, setConnectionMessage] = useState<string>('');
+  const [onboardingStep, setOnboardingStep] = useState<number>(0);
+  const [successMessage, setSuccessMessage] = useState<string>('');
+  const [errorMessage, setError] = useState<string>('');
+  const [tooltip, setTooltip] = useState<string>('');
 
-function Page() {
+  useEffect(() => {
+    if (calendarIntegrations.GoogleCalendar.isAuthenticated()) {
+      calendarIntegrations.GoogleCalendar.getEvents().then((events) => {
+        setEvents(events);
+      });
+    }
+  }, []);
+
   return (
     <Layout>
-      <SEO title="Content Calendar" />
+      <SEO title="AI-Powered Content Optimizer" />
       <DndProvider backend={HTML5Backend}>
         <Calendar events={events} />
       </DndProvider>
@@ -178,9 +181,8 @@ function Page() {
           <p>{tooltip}</p>
         </Tooltip>
       )}
-      <button onClick={() => calendarIntegrations.GoogleCalendar.connect('token')}>Connect to Google Calendar</button>
     </Layout>
   );
-}
+};
 
-export default Page;
+export default App;

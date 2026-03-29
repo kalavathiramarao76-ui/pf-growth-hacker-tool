@@ -93,155 +93,210 @@ const calculateSemanticsScore = async (text: string) => {
 
 const calculateSentenceLengthScore = async (text: string) => {
   const sentences = text.split('. ');
-  const averageSentenceLength = sentences.reduce((acc, sentence) => acc + sentence.split(' ').length, 0) / sentences.length;
+  const averageSentenceLength = sentences.reduce((sum, sentence) => sum + sentence.split(' ').length, 0) / sentences.length;
   return averageSentenceLength;
 };
 
 const calculateWordLengthScore = async (text: string) => {
   const words = text.split(' ');
-  const averageWordLength = words.reduce((acc, word) => acc + word.length, 0) / words.length;
+  const averageWordLength = words.reduce((sum, word) => sum + word.length, 0) / words.length;
   return averageWordLength;
 };
 
 const calculateSyllableCountScore = async (text: string) => {
   const words = text.split(' ');
-  const syllableCount = words.reduce((acc, word) => acc + countSyllables(word), 0);
+  const syllableCount = words.reduce((sum, word) => sum + countSyllables(word), 0);
   return syllableCount;
 };
 
 const countSyllables = (word: string) => {
   word = word.toLowerCase();
   const vowels = 'aeiouy';
-  const diphthongs = ['ai', 'au', 'ay', 'ea', 'ee', 'ei', 'ey', 'ie', 'oi', 'oo', 'ou', 'oy', 'ua', 'ue', 'ui', 'uy'];
-  let syllableCount = 0;
-  let index = 0;
-  while (index < word.length) {
-    if (vowels.includes(word[index])) {
-      syllableCount++;
-      index++;
-      while (index < word.length && vowels.includes(word[index])) {
-        index++;
+  const diphthongs = 'ai au ay ei ey eu ie ou oy ui';
+  let count = 0;
+  let prevVowel = false;
+  for (let i = 0; i < word.length; i++) {
+    if (vowels.includes(word[i])) {
+      if (!prevVowel) {
+        count++;
+        prevVowel = true;
       }
-    } else if (diphthongs.includes(word.substring(index, index + 2))) {
-      syllableCount++;
-      index += 2;
     } else {
-      index++;
+      prevVowel = false;
     }
   }
-  return syllableCount;
+  if (word.endsWith('e')) {
+    count--;
+  }
+  if (count === 0) {
+    count = 1;
+  }
+  return count;
 };
 
 const calculateComplexityScore = async (text: string) => {
-  const complexityScore = await calculateSentenceLengthScore(text) * 0.3 + 
-    await calculateWordLengthScore(text) * 0.2 + 
-    await calculateSyllableCountScore(text) * 0.5;
+  const complexityScore = await calculateSentenceLengthScore(text) * 0.5 + 
+    await calculateWordLengthScore(text) * 0.3 + 
+    await calculateSyllableCountScore(text) * 0.2;
   return complexityScore;
 };
 
 const calculateCohesionScore = async (text: string) => {
-  const cohesionScore = await calculateSentenceStructureScore(text) * 0.4 + 
-    await calculateWordChoiceScore(text) * 0.3 + 
-    await calculateSyntaxScore(text) * 0.3;
+  const cohesionScore = await calculateSentenceStructureScore(text) * 0.6 + 
+    await calculateWordChoiceScore(text) * 0.4;
   return cohesionScore;
 };
 
 const calculateClarityScore = async (text: string) => {
-  const clarityScore = await calculateSemanticsScore(text) * 0.5 + 
-    await calculateSyntaxScore(text) * 0.3 + 
-    await calculateWordChoiceScore(text) * 0.2;
+  const clarityScore = await calculateSyntaxScore(text) * 0.5 + 
+    await calculateSemanticsScore(text) * 0.5;
   return clarityScore;
 };
 
 const calculatePartOfSpeechScore = async (text: string) => {
-  const partOfSpeechTags = await nlp.process('en', text);
-  const partOfSpeechScore = partOfSpeechTags.score;
-  return partOfSpeechScore;
+  const posTags = await getPartOfSpeechTags(text);
+  const posScore = posTags.reduce((sum, tag) => sum + getPartOfSpeechScore(tag), 0) / posTags.length;
+  return posScore;
+};
+
+const getPartOfSpeechTags = async (text: string) => {
+  const posTags = await spacyModel(text);
+  return posTags.map(tag => tag.pos_);
+};
+
+const getPartOfSpeechScore = (tag: string) => {
+  switch (tag) {
+    case 'NN':
+      return 0.8;
+    case 'VB':
+      return 0.7;
+    case 'JJ':
+      return 0.6;
+    case 'RB':
+      return 0.5;
+    default:
+      return 0.4;
+  }
 };
 
 const calculateDependencyParseScore = async (text: string) => {
-  const dependencyParse = await spacyModel(text);
-  const dependencyParseScore = dependencyParse._.dependencyParse;
-  return dependencyParseScore;
+  const dependencies = await getDependencies(text);
+  const dependencyScore = dependencies.reduce((sum, dependency) => sum + getDependencyScore(dependency), 0) / dependencies.length;
+  return dependencyScore;
+};
+
+const getDependencies = async (text: string) => {
+  const dependencies = await spacyModel(text);
+  return dependencies.map(dependency => dependency.dep_);
+};
+
+const getDependencyScore = (dependency: string) => {
+  switch (dependency) {
+    case 'nsubj':
+      return 0.8;
+    case 'dobj':
+      return 0.7;
+    case 'iobj':
+      return 0.6;
+    case 'csubj':
+      return 0.5;
+    default:
+      return 0.4;
+  }
 };
 
 const calculateNamedEntityRecognitionScore = async (text: string) => {
-  const namedEntities = await nlp.process('en', text);
-  const namedEntityRecognitionScore = namedEntities.score;
-  return namedEntityRecognitionScore;
+  const entities = await getEntities(text);
+  const entityScore = entities.reduce((sum, entity) => sum + getEntityScore(entity), 0) / entities.length;
+  return entityScore;
+};
+
+const getEntities = async (text: string) => {
+  const entities = await spacyModel(text);
+  return entities.map(entity => entity.ent_type_);
+};
+
+const getEntityScore = (entity: string) => {
+  switch (entity) {
+    case 'PERSON':
+      return 0.8;
+    case 'ORGANIZATION':
+      return 0.7;
+    case 'LOCATION':
+      return 0.6;
+    case 'DATE':
+      return 0.5;
+    default:
+      return 0.4;
+  }
 };
 
 const calculateCoreferenceResolutionScore = async (text: string) => {
-  const coreferenceResolution = await spacyModel(text);
-  const coreferenceResolutionScore = coreferenceResolution._.coreferenceResolution;
-  return coreferenceResolutionScore;
+  const coreferences = await getCoreferences(text);
+  const coreferenceScore = coreferences.reduce((sum, coreference) => sum + getCoreferenceScore(coreference), 0) / coreferences.length;
+  return coreferenceScore;
+};
+
+const getCoreferences = async (text: string) => {
+  const coreferences = await spacyModel(text);
+  return coreferences.map(coreference => coreference.coref_);
+};
+
+const getCoreferenceScore = (coreference: string) => {
+  switch (coreference) {
+    case 'IDENT':
+      return 0.8;
+    case 'REFL':
+      return 0.7;
+    case 'PRON':
+      return 0.6;
+    default:
+      return 0.4;
+  }
 };
 
 const calculateSemanticRoleLabelingScore = async (text: string) => {
-  const semanticRoleLabeling = await nlp.process('en', text);
-  const semanticRoleLabelingScore = semanticRoleLabeling.score;
-  return semanticRoleLabelingScore;
+  const semanticRoles = await getSemanticRoles(text);
+  const semanticRoleScore = semanticRoles.reduce((sum, semanticRole) => sum + getSemanticRoleScore(semanticRole), 0) / semanticRoles.length;
+  return semanticRoleScore;
+};
+
+const getSemanticRoles = async (text: string) => {
+  const semanticRoles = await spacyModel(text);
+  return semanticRoles.map(semanticRole => semanticRole.semrole_);
+};
+
+const getSemanticRoleScore = (semanticRole: string) => {
+  switch (semanticRole) {
+    case 'ARG0':
+      return 0.8;
+    case 'ARG1':
+      return 0.7;
+    case 'ARG2':
+      return 0.6;
+    default:
+      return 0.4;
+  }
 };
 
 const calculateSentenceLengthScoreAdvanced = async (text: string) => {
   const sentenceLengthScore = await calculateSentenceLengthScore(text);
-  const sentenceLengthScoreAdvanced = sentenceLengthScore * 0.6 + 
-    await calculateSentenceComplexityScore(text) * 0.2 + 
+  const sentenceLengthScoreAdvanced = sentenceLengthScore * 0.5 + 
+    await calculateSentenceComplexityScore(text) * 0.3 + 
     await calculateSentenceVarietyScore(text) * 0.2;
   return sentenceLengthScoreAdvanced;
 };
 
 const calculateSentenceComplexityScore = async (text: string) => {
-  const sentences = text.split('. ');
-  const averageSentenceComplexity = sentences.reduce((acc, sentence) => acc + sentence.split(' ').length, 0) / sentences.length;
-  return averageSentenceComplexity;
+  const sentenceComplexityScore = await calculateSentenceLengthScore(text) * 0.4 + 
+    await calculateWordLengthScore(text) * 0.3 + 
+    await calculateSyllableCountScore(text) * 0.3;
+  return sentenceComplexityScore;
 };
 
 const calculateSentenceVarietyScore = async (text: string) => {
-  const sentences = text.split('. ');
-  const sentenceVariety = sentences.reduce((acc, sentence) => acc + sentence.split(' ').length, 0) / sentences.length;
-  return sentenceVariety;
+  const sentenceVarietyScore = await calculateSentenceLengthScore(text) * 0.5 + 
+    await calculateWordLengthScore(text) * 0.3 + 
+    await calculateSyllableCountScore(text) * 0.2;
+  return sentenceVarietyScore;
 };
-
-const App = () => {
-  const [text, setText] = useState('');
-  const [readabilityScore, setReadabilityScore] = useState(0);
-  const router = useRouter();
-
-  useEffect(() => {
-    const storedText = LocalStorage.get('text');
-    if (storedText) {
-      setText(storedText);
-    }
-  }, []);
-
-  const handleTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setText(event.target.value);
-    LocalStorage.set('text', event.target.value);
-  };
-
-  const handleAnalyze = async () => {
-    const readabilityScore = await calculateReadabilityScore(text);
-    setReadabilityScore(readabilityScore);
-  };
-
-  return (
-    <div>
-      <SEO title="AI-Powered Content Optimizer" />
-      <PageHeader title="AI-Powered Content Optimizer" />
-      <ContentAnalyzerForm text={text} onTextChange={handleTextChange} onAnalyze={handleAnalyze} />
-      <OptimizationSuggestions readabilityScore={readabilityScore} />
-      <EngagementTracker />
-      <AlternativeFormats />
-      <BarChart width={500} height={300} data={[{ name: 'Readability Score', score: readabilityScore }]}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="name" />
-        <YAxis />
-        <Tooltip />
-        <Bar dataKey="score" fill="#8884d8" />
-      </BarChart>
-    </div>
-  );
-};
-
-export default App;
